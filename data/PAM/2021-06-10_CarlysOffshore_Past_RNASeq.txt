@@ -1,0 +1,111 @@
+SampleName	species	Tank	Temp	Geno	Timepoint	TFPAM	T0PAM	T1PAM	T2PAM	T3PAM	T4PAM	T5PAM	Start/EndTimes			Tank	Time on Spec	Record	PAR
+OPa01-30-TF	Past	1	30	1	TF											1			
+OPa02-30-TF	Past	1	30	2	TF											2			
+OPa03-30-TF	Past	1	30	3	TF											3			
+OPa04-30-TF	Past	1	30	4	TF											4			
+OPa05-30-TF	Past	1	30	5	TF														
+OPa01-30-T0	Past	1	30	1	T0		0.484												
+OPa02-30-T0	Past	1	30	2	T0		0.472												
+OPa03-30-T0	Past	1	30	3	T0		0.506												
+OPa04-30-T0	Past	1	30	4	T0		0.504												
+OPa05-30-T0	Past	1	30	5	T0		0.506												
+OPa01-30-T1	Past	1	30	1	T1			0.421					17:04						
+OPa02-30-T1	Past	1	30	2	T1			0.526											
+OPa03-30-T1	Past	1	30	3	T1			0.462											
+OPa04-30-T1	Past	1	30	4	T1			0.569											
+OPa05-30-T1	Past	1	30	5	T1			0.541											
+OPa01-34-T1	Past	2	34	1	T1			0.32					17:08						
+OPa02-34-T1	Past	2	34	2	T1			0.517											
+OPa03-34-T1	Past	2	34	3	T1			0.52											
+OPa04-34-T1	Past	2	34	4	T1			0.436											
+OPa05-34-T1	Past	2	34	5	T1			0.445											
+OPa01-37-T1	Past	3	37	1	T1			0.269					17:11						
+OPa02-37-T1	Past	3	37	2	T1			0.25											
+OPa03-37-T1	Past	3	37	3	T1			0.197											
+OPa04-37-T1	Past	3	37	4	T1			0.228											
+OPa05-37-T1	Past	3	37	5	T1			0.292											
+OPa01-39-T1	Past	4	39	1	T1			0.14					17:15						
+OPa02-39-T1	Past	4	39	2	T1			0.159											
+OPa03-39-T1	Past	4	39	3	T1			0.14											
+OPa04-39-T1	Past	4	39	4	T1			0.149											
+OPa05-39-T1	Past	4	39	5	T1			0.154					17:18						
+OPa01-30-T2	Past	1	30	1	T2				0.523				20:02						
+OPa02-30-T2	Past	1	30	2	T2				0.497										
+OPa03-30-T2	Past	1	30	3	T2				0.487										
+OPa04-30-T2	Past	1	30	4	T2				0.578										
+OPa05-30-T2	Past	1	30	5	T2				0.513										
+OPa01-34-T2	Past	2	34	1	T2				0.461										
+OPa02-34-T2	Past	2	34	2	T2				0.538										
+OPa03-34-T2	Past	2	34	3	T2				0.479										
+OPa04-34-T2	Past	2	34	4	T2				0.511										
+OPa05-34-T2	Past	2	34	5	T2				0.419										
+OPa01-37-T2	Past	3	37	1	T2				0.151										
+OPa02-37-T2	Past	3	37	2	T2				0.241										
+OPa03-37-T2	Past	3	37	3	T2				0.137										
+OPa04-37-T2	Past	3	37	4	T2				0.15										
+OPa05-37-T2	Past	3	37	5	T2				0.19										
+OPa01-39-T2	Past	4	39	1	T2				0.049										
+OPa02-39-T2	Past	4	39	2	T2				0.139										
+OPa03-39-T2	Past	4	39	3	T2				0.021										
+OPa04-39-T2	Past	4	39	4	T2				0.039										
+OPa05-39-T2	Past	4	39	5	T2				0.059				20:25						
+OPa01-30-T3	Past	1	30	1	T3					0.526			21:00						
+OPa02-30-T3	Past	1	30	2	T3					0.544									
+OPa03-30-T3	Past	1	30	3	T3					0.554									
+OPa04-30-T3	Past	1	30	4	T3					0.569									
+OPa05-30-T3	Past	1	30	5	T3					0.533			21:04						
+OPa01-34-T3	Past	2	34	1	T3					0.513									
+OPa02-34-T3	Past	2	34	2	T3					0.502			21:12						
+OPa03-34-T3	Past	2	34	3	T3					0.543									
+OPa04-34-T3	Past	2	34	4	T3					0.527									
+OPa05-34-T3	Past	2	34	5	T3					0.563			21:14						
+OPa01-37-T3	Past	3	37	1	T3					0.183			21:18						
+OPa02-37-T3	Past	3	37	2	T3					0.257									
+OPa03-37-T3	Past	3	37	3	T3					0.181									
+OPa04-37-T3	Past	3	37	4	T3					0.192									
+OPa05-37-T3	Past	3	37	5	T3					0.288			21:20						
+OPa01-39-T3	Past	4	39	1	T3					0			21:23						
+OPa02-39-T3	Past	4	39	2	T3					0									
+OPa03-39-T3	Past	4	39	3	T3					0									
+OPa04-39-T3	Past	4	39	4	T3					0.054									
+OPa05-39-T3	Past	4	39	5	T3					0.061			21:27						
+OPa01-30-T4	Past	1	30	1	T4					0.544			21:05						
+OPa02-30-T4	Past	1	30	2	T4					0.555									
+OPa03-30-T4	Past	1	30	3	T4					0.575									
+OPa04-30-T4	Past	1	30	4	T4					0.523									
+OPa05-30-T4	Past	1	30	5	T4					0.559			21.1						
+OPa01-34-T4	Past	2	34	1	T4					0.536									
+OPa02-34-T4	Past	2	34	2	T4					0.572									
+OPa03-34-T4	Past	2	34	3	T4					0.586									
+OPa04-34-T4	Past	2	34	4	T4					0.599									
+OPa05-34-T4	Past	2	34	5	T4					0.571									
+OPa01-37-T4	Past	3	37	1	T4					0.164									
+OPa02-37-T4	Past	3	37	2	T4					0.332									
+OPa03-37-T4	Past	3	37	3	T4					0.289									
+OPa04-37-T4	Past	3	37	4	T4					0.34									
+OPa05-37-T4	Past	3	37	5	T4					0.251									
+OPa01-39-T4	Past	4	39	1	T4					0									
+OPa02-39-T4	Past	4	39	2	T4					0									
+OPa03-39-T4	Past	4	39	3	T4					0									
+OPa04-39-T4	Past	4	39	4	T4					0.024									
+OPa05-39-T4	Past	4	39	5	T4					0									
+OPa01-30-T5	Past	1	30	1	T5		0.522	0.516	0.567	0.552			14:06						
+OPa02-30-T5	Past	1	30	2	T5		0.504	0.518	0.561	0.558									
+OPa03-30-T5	Past	1	30	3	T5		0.455	0.456	0.551	0.537									
+OPa04-30-T5	Past	1	30	4	T5		0.522	0.517	0.576	0.519									
+OPa05-30-T5	Past	1	30	5	T5		0.469	0.515	0.54	0.571									
+OPa01-34-T5	Past	2	34	1	T5		0.525	0.447	0.43	0.477			14:08						
+OPa02-34-T5	Past	2	34	2	T5		0.499	0.544	0.552	0.584			17:24						
+OPa03-34-T5	Past	2	34	3	T5		0.55	0.533	0.535	0.559									
+OPa04-34-T5	Past	2	34	4	T5		0.402	0.485	0.553	0.603									
+OPa05-34-T5	Past	2	34	5	T5		0.47	0.454	0.549	0.592									
+OPa01-37-T5	Past	3	37	1	T5		0.56	0.187	0.148	0.205			14:09						
+OPa02-37-T5	Past	3	37	2	T5		0.587	0.282	0.331	0.379									
+OPa03-37-T5	Past	3	37	3	T5		0.478	0.22	0.203	0.322									
+OPa04-37-T5	Past	3	37	4	T5		0.4	0.236	0.297	0.376									
+OPa05-37-T5	Past	3	37	5	T5		0.383	0.251	0.164	0.314									
+OPa01-39-T5	Past	4	39	1	T5		0.55	0.039	0.112	0.033			14:11						
+OPa02-39-T5	Past	4	39	2	T5		0.53	0.022	0.007	0									
+OPa03-39-T5	Past	4	39	3	T5		0.44	0.027	0.004	0.013									
+OPa04-39-T5	Past	4	39	4	T5		0.319	0.101	0 (low signal)	0.03									
+OPa05-39-T5	Past	4	39	5	T5		0.4	0.009	0.035	0.025			14:13						

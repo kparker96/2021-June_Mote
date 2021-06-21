@@ -1,0 +1,111 @@
+SampleName	species	Tank	Temp	Geno	Timepoint	TFPAM	T0PAM	T1PAM	T2PAM	T3PAM
+Ipa06-30-TF	Past	1	30	6	TF	0.64				
+Ipa07-30-TF	Past	1	30	7	TF	0.592				
+Ipa08-30-TF	Past	1	30	8	TF	0.65				
+Ipa09-30-TF	Past	1	30	9	TF	0.652				
+Ipa10-30-TF	Past	1	30	10	TF	0.584				
+Ipa06-30-T0	Past	1	30	6	T0		0.602			
+Ipa07-30-T0	Past	1	30	7	T0		0.517			
+Ipa08-30-T0	Past	1	30	8	T0		0.559			
+Ipa09-30-T0	Past	1	30	9	T0		0.544			
+Ipa10-30-T0	Past	1	30	10	T0		0.633			
+Ipa06-30-T1	Past	1	30	6	T1			0.516		
+Ipa07-30-T1	Past	1	30	7	T1			0.53		
+Ipa08-30-T1	Past	1	30	8	T1			0.469		
+Ipa09-30-T1	Past	1	30	9	T1			0.529		
+Ipa10-30-T1	Past	1	30	10	T1			0.546		
+Ipa06-34-T1	Past	2	34	6	T1			0.595		
+Ipa07-34-T1	Past	2	34	7	T1			0.482		
+Ipa08-34-T1	Past	2	34	8	T1			0.43		
+Ipa09-34-T1	Past	2	34	9	T1			0.525		
+Ipa10-34-T1	Past	2	34	10	T1			0.516		
+Ipa06-37-T1	Past	3	37	6	T1			0.208		
+Ipa07-37-T1	Past	3	37	7	T1			0.398		
+Ipa08-37-T1	Past	3	37	8	T1			0.463		
+Ipa09-37-T1	Past	3	37	9	T1			0.381		
+Ipa10-37-T1	Past	3	37	10	T1			0.367		
+Ipa06-39-T1	Past	4	39	6	T1			0.131		
+Ipa07-39-T1	Past	4	39	7	T1			0.204		
+Ipa08-39-T1	Past	4	39	8	T1			0.212		
+Ipa09-39-T1	Past	4	39	9	T1			0.163		
+Ipa10-39-T1	Past	4	39	10	T1			0.133		
+Ipa06-30-T2	Past	1	30	6	T2				0.519	
+Ipa07-30-T2	Past	1	30	7	T2				0.526	
+Ipa08-30-T2	Past	1	30	8	T2				0.518	
+Ipa09-30-T2	Past	1	30	9	T2				0.561	
+Ipa10-30-T2	Past	1	30	10	T2				0.524	
+Ipa06-34-T2	Past	2	34	6	T2				0.505	
+Ipa07-34-T2	Past	2	34	7	T2				0.506	
+Ipa08-34-T2	Past	2	34	8	T2				0.525	
+Ipa09-34-T2	Past	2	34	9	T2				0.531	
+Ipa10-34-T2	Past	2	34	10	T2				0.528	
+Ipa06-37-T2	Past	3	37	6	T2				0.311	
+Ipa07-37-T2	Past	3	37	7	T2				0.205	
+Ipa08-37-T2	Past	3	37	8	T2				0.283	
+Ipa09-37-T2	Past	3	37	9	T2				0.312	
+Ipa10-37-T2	Past	3	37	10	T2				0.193	
+Ipa06-39-T2	Past	4	39	6	T2				0.07	
+Ipa07-39-T2	Past	4	39	7	T2				0.028	
+Ipa08-39-T2	Past	4	39	8	T2				0	
+Ipa09-39-T2	Past	4	39	9	T2				0.08	
+Ipa10-39-T2	Past	4	39	10	T2				0.016	
+Ipa06-30-T3	Past	1	30	6	T3					0.61
+Ipa07-30-T3	Past	1	30	7	T3					0.574
+Ipa08-30-T3	Past	1	30	8	T3					0.579
+Ipa09-30-T3	Past	1	30	9	T3					0.605
+Ipa10-30-T3	Past	1	30	10	T3					0.567
+Ipa06-34-T3	Past	2	34	6	T3					0.47
+Ipa07-34-T3	Past	2	34	7	T3					0.584
+Ipa08-34-T3	Past	2	34	8	T3					0.578
+Ipa09-34-T3	Past	2	34	9	T3					0.592
+Ipa10-34-T3	Past	2	34	10	T3					0.568
+Ipa06-37-T3	Past	3	37	6	T3					0.407
+Ipa07-37-T3	Past	3	37	7	T3					0.452
+Ipa08-37-T3	Past	3	37	8	T3					0.512
+Ipa09-37-T3	Past	3	37	9	T3					0.434
+Ipa10-37-T3	Past	3	37	10	T3					0.374
+Ipa06-39-T3	Past	4	39	6	T3					0.073
+Ipa07-39-T3	Past	4	39	7	T3					0.031
+Ipa08-39-T3	Past	4	39	8	T3					0.015
+Ipa09-39-T3	Past	4	39	9	T3					0.114
+Ipa10-39-T3	Past	4	39	10	T3					0.026
+Ipa06-30-T4	Past	1	30	6	T4					0.583
+Ipa07-30-T4	Past	1	30	7	T4					0.613
+Ipa08-30-T4	Past	1	30	8	T4					0.623
+Ipa09-30-T4	Past	1	30	9	T4					0.603
+Ipa10-30-T4	Past	1	30	10	T4					0.549
+Ipa06-34-T4	Past	2	34	6	T4					0.613
+Ipa07-34-T4	Past	2	34	7	T4					0.596
+Ipa08-34-T4	Past	2	34	8	T4					0.62
+Ipa09-34-T4	Past	2	34	9	T4					0.604
+Ipa10-34-T4	Past	2	34	10	T4					0.591
+Ipa06-37-T4	Past	3	37	6	T4					0.429
+Ipa07-37-T4	Past	3	37	7	T4					0.533
+Ipa08-37-T4	Past	3	37	8	T4					0.539
+Ipa09-37-T4	Past	3	37	9	T4					0.349
+Ipa10-37-T4	Past	3	37	10	T4					0.408
+Ipa06-39-T4	Past	4	39	6	T4					0.051
+Ipa07-39-T4	Past	4	39	7	T4					0.128
+Ipa08-39-T4	Past	4	39	8	T4					0.069
+Ipa09-39-T4	Past	4	39	9	T4					0.104
+Ipa10-39-T4	Past	4	39	10	T4					0.027
+Ipa06-30-T5	Past	1	30	6	T5		0.617	0.597	0.558	0.617
+Ipa07-30-T5	Past	1	30	7	T5		0.513	0.461	0.505	0.415
+Ipa08-30-T5	Past	1	30	8	T5		0.517	0.454	0.485	0.609
+Ipa09-30-T5	Past	1	30	9	T5		0.597	0.45	0.466	0.613
+Ipa10-30-T5	Past	1	30	10	T5		0.592	0.524	0.569	0.601
+Ipa06-34-T5	Past	2	34	6	T5		0.471	0.449	0.524	0.59
+Ipa07-34-T5	Past	2	34	7	T5		0.402	0.479	0.535	0.608
+Ipa08-34-T5	Past	2	34	8	T5		0.403	0.452	0.525	0.621
+Ipa09-34-T5	Past	2	34	9	T5		0.448	0.625	0.542	0.599
+Ipa10-34-T5	Past	2	34	10	T5		0.372	0.554	0.529	0.556
+Ipa06-37-T5	Past	3	37	6	T5		0.639	0.367	0.247	0.499
+Ipa07-37-T5	Past	3	37	7	T5		0.561	0.445	0.357	0.526
+Ipa08-37-T5	Past	3	37	8	T5		0.476	0.397	0.218	0.505
+Ipa09-37-T5	Past	3	37	9	T5		0.6	0.453	0.316	0.517
+Ipa10-37-T5	Past	3	37	10	T5		0.539	0.289	0.147	0.369
+Ipa06-39-T5	Past	4	39	6	T5		0.568	0.118	0.023	0
+Ipa07-39-T5	Past	4	39	7	T5		0.499	0.194	0.056	0.194
+Ipa08-39-T5	Past	4	39	8	T5		0.454	0.204	0.013	0.148
+Ipa09-39-T5	Past	4	39	9	T5		0.525	0.24	0.007	0.032
+Ipa10-39-T5	Past	4	39	10	T5		0.555	0.11	0.029	0.039
