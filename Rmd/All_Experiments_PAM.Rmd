@@ -31,20 +31,37 @@ OPa <- readxl::read_xlsx("data/PAM/2021-06-10_Past-4temps-Offshore.xlsx") %>%
   select(-Temp)
 
 NAc <- readxl::read_xlsx("data/PAM/2021-06-11_Acer-4temps-MoteLooeNursery_Run2.xlsx") %>%
-  mutate(TagNumber = Genotype) %>%
-  rename(Comments = Comment)
+  mutate(TagNumber = Genotype,
+         Comments = Comment) %>%
+  select(-Comment)
 
 # Combine all Datasets 
-Full_PAM <- rbind(IPa, OPa, NAc) %>%
+Allpam <- rbind(IPa, OPa, NAc) %>%
   mutate(Species = case_when(Species == "Acropora cervicornis" ~ "ACERV",
                              Species == "Porites astreoides" ~ "PAST")) %>%
-  select(sample_ID = SampleName, species = Species, Genotype, Location, Temperature = Temp_Setpoint, Timepoint, FvFm = PAM) %>%
+  select(sample_ID = SampleName, species = Species, Geno = Genotype, Location, Temp = Temp_Setpoint, Timepoint, FvFm = PAM) %>%
   filter(Timepoint != "TF",
          Timepoint != "T0")
+
+Allpam$Geno<-as.factor(Allpam$Geno)
+Allpam$Temp<-as.factor(Allpam$Temp)
 ```
 
-```{r}
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
 
 str(Full_PAM)
 
