@@ -21,10 +21,10 @@ library(tidyverse)
 
 # IMPORT DATA #
 ```{r}
-OPa <- readxl::read_xlsx("data/PAM/2021-06-10_Past-4temps-Offshore.xlsx")
+MAc <- readxl::read_xlsx("data/PAM/2021-06-11_Acer-4temps-MoteLooeNursery_Run2.xlsx")
 
-Allpam <- OPa %>%
-  mutate(Species = case_when(Species == "Porites astreoides" ~ "PAST")) %>%
+Allpam <- MAc %>%
+  mutate(Species = case_when(Species == "Acropora cervicornis" ~ "ACER")) %>%
   select(sample_ID = SampleName, species = Species, Geno = Genotype, Location, Temp = Temp_Setpoint, Timepoint, FvFm = PAM) %>%
   mutate(TP_ID = case_when(grepl("T1", sample_ID) ~ "T1",
                            grepl("T2", sample_ID) ~ "T2",
@@ -80,7 +80,7 @@ ED(DRCpamgeno, c(50))[,1]
 # Population Average 
 temp_x<- seq(30, 40.5, length = 100)
 
-pdf("plots/2021-06-10_T3_CarlysOffshorePastRNASeq_DRC.pdf",10,7)
+pdf("plots/2021-06-11_MoteLooeNursery_AcerRNASeq_DRC.pdf",10,7)
 line_width=2
 Colorz="blue"
 Syms=16
@@ -90,29 +90,29 @@ matplot(temp_x, predict(DRCpamgeno, data.frame(Temp = temp_x), interval="confide
 polygon(c(temp_x, rev(temp_x)),c(predict(DRCpamgeno, data.frame(Temp = temp_x), interval="confidence")[,2],rev(predict(DRCpamgeno, data.frame(Temp = temp_x), interval="confidence")[,3])), col=Colorz, density = Denscity)
 matpoints(temp_x, predict(DRCpamgeno, data.frame(Temp = temp_x), interval="confidence"),
           type="l",col=Colorz,lty=c(1,3,3),lwd=line_width)
-with(T3PAM,matpoints(Temp,FvFm,pch=Syms, col=Colorz, cex=1.5))
+with(T3PAM,matpoints(Temp,T3PAM,pch=Syms, col=Colorz, cex=1.5))
 
-title(main="Offshore Porites astreoides")
+title(main="Mote Looe Nursery Acropora cervicornis")
 abline(v=mean(ED(DRCpamgeno, c(50))[,1]), col=Colorz)
 text(mean(ED(DRCpamgeno, c(50))[,1])+0.6, 0.65,labels=as.character(round(mean(ED(DRCpamgeno, c(50))[,1]), digits=2)),col=Colorz, cex=1.5)
 dev.off()
 
 # Individual Genotypes
-pdf("plots/2021-06-10_T3_CarlysOffshorePastRNASeq_DRC_genofits.pdf",10,7)
+pdf("plots/2021-06-11_MoteLooeNursery_AcerRNASeq_DRC_genofits.pdf",10,7)
 par(mar=c(5.1,5.1,4.1,2.1))
 Line_width=2.5
-with(T3PAM, plot(Temp,FvFm,xlim=c(29.5,41),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab="Temperature °C"))
+with(T3PAM, plot(Temp,FvFm,xlim=c(29.5,39.5),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab="Temperature °C"))
 Colours<-c('#4575b4','#74add1','#fee090','#f46d43','#d73027')
-for(i in order(DRCpamgeno$coefficients[11:15])){
+for(i in order(DRCpamgeno$coefficients[17:24])){
   Geno=names(table(T3PAM$Geno))[i]
   print(Geno)
   print(summary(mod1<-drm(FvFm ~ Temp, data=T3PAM[T3PAM$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
   points(T3PAM[T3PAM$Geno==Geno,"Temp"],T3PAM[T3PAM$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
   lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
 }
-title(main="Offshore Porites astreoides")
-abline(v=DRCpamgeno$coefficients[11:15][order(DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
-legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(DRCpamgeno$coefficients)[11:15][order(DRCpamgeno$coefficients[11:15])],": ",round(DRCpamgeno$coefficients[11:15][order(DRCpamgeno$coefficients[11:15])], digits=2)))
+title(main="Mote Looe Nursery Acropora cervicornis")
+abline(v=DRCpamgeno$coefficients[17:24][order(DRCpamgeno$coefficients[17:24])], col=Colours, lwd=Line_width)
+legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(DRCpamgeno$coefficients[17:24])[order(DRCpamgeno$coefficients[17:24])],": ",round(DRCpamgeno$coefficients[17:24][order(DRCpamgeno$coefficients[17:24])], digits=2)))
 dev.off()
 
 ```
