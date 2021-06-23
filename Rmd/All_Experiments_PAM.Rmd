@@ -40,16 +40,139 @@ Allpam <- rbind(IPa, OPa, NAc) %>%
   mutate(Species = case_when(Species == "Acropora cervicornis" ~ "ACERV",
                              Species == "Porites astreoides" ~ "PAST")) %>%
   select(sample_ID = SampleName, species = Species, Geno = Genotype, Location, Temp = Temp_Setpoint, Timepoint, FvFm = PAM) %>%
-  filter(Timepoint != "TF",
-         Timepoint != "T0")
+  mutate(TP_ID = case_when(grepl("T1", sample_ID) ~ "T1",
+                           grepl("T2", sample_ID) ~ "T2",
+                           grepl("T3", sample_ID) ~ "T3",
+                           grepl("T4", sample_ID) ~ "T4",
+                           grepl("T5", sample_ID) ~ "T5",
+                           grepl("T0", sample_ID) ~ "T0",
+                           grepl("TF", sample_ID) ~ "TF"))
 
+
+Allpam$FacTemp<-as.factor(Allpam$Temp)
 Allpam$Geno<-as.factor(Allpam$Geno)
-Allpam$Temp<-as.factor(Allpam$Temp)
+Allpam$Temp<- as.integer(Allpam$Temp)
+Allpam<-as.data.frame(Allpam)
+```
+
+```{r}
+T3PAM <- Allpam %>%
+  filter(TP_ID == "T3")
+
+
+DRCpam = drm(FvFm ~ Temp, data = T3PAM,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(DRCpam)
+plot(DRCpam)
+
 ```
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Dose-response curve model fitting
+```{r model, results = 'hide'}
+# Select whether to use target temp or actual recorded max temp for model fitting
+df <- if (temp.adjust) {
+  df %>% select(-target_temp)
+} else {
+  df %>% mutate(max_temp = target_temp) %>% select(-target_temp)
+}
+
+# Define function to fit 3-parameter LL model to data and return NULL if fitting error
+ll3 <- function(data) {
+  drm(fvfm ~ max_temp, data = data, 
+      fct = LL.3(names = c("hill", "max", "ED50")),
+      upperl = c(120, 0.72, 40),
+      lowerl = c(10, 0.55, 30))}
+tryll3 <- possibly(ll3, otherwise = NULL)
+
+# Fit model to each coral, get parameters, fitted values, and residuals
+initmods <- df %>%
+  nest(data = c(max_temp, f, fm, fvfmraw, fvfm, problem)) %>%
+  # Fit the model to each coral
+  mutate(ll3 = map(data, tryll3)) %>%
+  # Get model parameters and fitted values/residuals
+  mutate(pars = map(ll3, tidy),
+         pred = map2(ll3, data, ~augment(.x, drop_na(.y, fvfm))))
+
+# Extract ed50 parameter values from model fits
+ed50 <- initmods %>% 
+  select(nursery, geno, pars) %>%
+  unnest(pars) %>%
+  filter(term == "ED50")
+
+# Collect raw data, fitted values, and diagnostics
+vals <- initmods %>%
+  select(nursery, geno, pred) %>%
+  unnest(pred) %>%
+  full_join(ed50) %>%
+  full_join(df) %>%
+  rename(ed50 = estimate)
+
+# Identify problematic data points based on cook's distance and residuals
+counts <- vals %>% 
+  group_by(nursery, geno) %>% 
+  summarise(n = sum(!is.na(fvfm)))
+dff <- vals %>%
+  left_join(counts) %>%
+  group_by(nursery, geno) %>%
+  mutate(resid.thresh = 2*sd(.resid, na.rm = T)) %>%  # Calculate residual threshold as 2 standard deviations
+  mutate(cooksd.thresh = 4/n) %>%   # Calculate cook's distance threshold as 4/n
+  mutate(max_to_remove = floor(n * 0.2)) %>%
+  ungroup() %>%
+  mutate(problem = case_when(.cooksd > cooksd.thresh & .resid > 0 ~ "high cook's distance",
+                             .resid > resid.thresh ~ "high residual", 
+                             TRUE ~ problem)) %>%
+  group_by(nursery, geno, outlier = problem %in% c("high cook's distance", "high residual")) %>%
+  mutate(n.outliers = n(),
+         rank.out = order(.cooksd, decreasing = TRUE)) %>%
+  ungroup() %>%
+  mutate(fvfm = case_when(outlier & rank.out <= max_to_remove ~ NA_real_, 
+                          TRUE ~ fvfm)) 
+
+
+# Refit models without problematic points
+fmods <- dff %>%
+  select(nursery, geno, max_temp, f, fm, fvfmraw, problem, fvfm) %>%
+  nest(data = c(max_temp, f, fm, fvfmraw, fvfm, problem)) %>%
+  # Fit the model to each coral
+  mutate(ll3 = map(data, tryll3)) %>%
+  # Get model parameters and fitted values/residuals
+  mutate(pars = map(ll3, tidy),
+         pred = map2(ll3, data, ~augment(.x, drop_na(.y, fvfm))))
+
+# Extract ed50 parameter values from model fits
+fed50 <- fmods %>% 
+  select(nursery, geno, pars) %>%
+  unnest(pars) %>%
+  filter(term == "ED50")
+
+# Collect raw data, fitted values, and ed50 estimates
+fvals <- fmods %>%
+  select(nursery, geno, pred) %>%
+  unnest(pred) %>%
+  full_join(fed50) %>%
+  full_join(select(dff, nursery, geno, max_temp, f, fm, fvfmraw, problem, fvfm)) %>%
+  rename(ed50 = estimate)
+```
 
 
 
