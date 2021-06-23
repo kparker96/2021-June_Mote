@@ -17,6 +17,7 @@ library(emmeans)
 library(car)
 library(drc)
 library(tidyverse)
+library(data.table)
 ```
 
 # IMPORT DATA #
@@ -114,5 +115,160 @@ title(main="Offshore Porites astreoides")
 abline(v=DRCpamgeno$coefficients[11:15][order(DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
 legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(DRCpamgeno$coefficients)[11:15][order(DRCpamgeno$coefficients[11:15])],": ",round(DRCpamgeno$coefficients[11:15][order(DRCpamgeno$coefficients[11:15])], digits=2)))
 dev.off()
+```
 
+# T3 **SAMPLES** ANALYSIS
+```{r}
+justT3 <- Allpam %>%
+  filter(TP_ID == "T3")
+
+aggregate(FvFm ~ Temp, data=justT3, summary)
+aggregate(FvFm ~ Temp, data=justT3, length)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=justT3)
+leveneTest(FvFm ~ FacTemp, data=justT3)
+aggregate(FvFm ~ FacTemp, data=justT3, FUN= function(x) shapiro.test(x)$p.value)
+
+justT3_n1 <-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), justT3)
+summary(justT3_n1)
+
+print(lsmeans(justT3_n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+
+# Full Curve Fit 
+T3_DRCpam = drm(FvFm ~ Temp, data = justT3,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T3_DRCpam)
+plot(T3_DRCpam)
+
+T3_DRCpamgeno = drm(FvFm ~ Temp, data = justT3, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T3_DRCpamgeno)
+compParm(T3_DRCpamgeno, 'ed50')
+compParm(T3_DRCpamgeno, 'ed50', "-")
+plot(T3_DRCpamgeno)
+
+T3_ED <- ED(T3_DRCpamgeno, c(50), interval = "delta")
+
+T3_df<- as.data.frame(T3_ED) 
+
+T3_ED50 <- setDT(T3_df, keep.rownames = "Geno") %>%
+  mutate(Timepoint = "T3") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05"))
+T3_ED50_geno <- T3_ED50 %>%
+  select(Genotype, Timepoint, ED50 = Estimate)
+```
+
+# T4 **SAMPLES** ANALYSIS
+```{r}
+justT4 <- Allpam %>%
+  filter(TP_ID == "T4")
+
+aggregate(FvFm ~ Temp, data=justT4, summary)
+aggregate(FvFm ~ Temp, data=justT4, length)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=justT4)
+leveneTest(FvFm ~ FacTemp, data=justT4)
+aggregate(FvFm ~ FacTemp, data=justT4, FUN= function(x) shapiro.test(x)$p.value)
+
+justT4_n1 <-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), justT4)
+summary(justT4_n1)
+
+print(lsmeans(justT4_n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+
+# Full Curve Fit 
+T4_DRCpam = drm(FvFm ~ Temp, data = justT4,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T4_DRCpam)
+plot(T4_DRCpam)
+
+T4_DRCpamgeno = drm(FvFm ~ Temp, data = justT4, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T4_DRCpamgeno)
+compParm(T4_DRCpamgeno, 'ed50')
+compParm(T4_DRCpamgeno, 'ed50', "-")
+plot(T4_DRCpamgeno)
+
+T4_ED <- ED(T4_DRCpamgeno, c(50), interval = "delta")
+
+T4_df<- as.data.frame(T4_ED) 
+
+T4_ED50 <- setDT(T4_df, keep.rownames = "Geno") %>%
+  mutate(Timepoint = "T4") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05"))
+T4_ED50_geno <- T4_ED50 %>%
+  select(Genotype, Timepoint, ED50 = Estimate)
+```
+
+# T5 **SAMPLES** ANALYSIS
+```{r}
+justT5 <- Allpam %>%
+  filter(TP_ID == "T5")
+
+aggregate(FvFm ~ Temp, data=justT5, summary)
+aggregate(FvFm ~ Temp, data=justT5, length)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=justT5)
+leveneTest(FvFm ~ FacTemp, data=justT5)
+aggregate(FvFm ~ FacTemp, data=justT5, FUN= function(x) shapiro.test(x)$p.value)
+
+justT5_n1 <-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), justT5)
+summary(justT5_n1)
+
+print(lsmeans(justT5_n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+
+# Full Curve Fit 
+T5_DRCpam = drm(FvFm ~ Temp, data = justT5,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T5_DRCpam)
+plot(T5_DRCpam)
+
+T5_DRCpamgeno = drm(FvFm ~ Temp, data = justT5, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T5_DRCpamgeno)
+compParm(T5_DRCpamgeno, 'ed50')
+compParm(T5_DRCpamgeno, 'ed50', "-")
+plot(T5_DRCpamgeno)
+
+T5_ED <- ED(T5_DRCpamgeno, c(50), interval = "delta")
+
+T5_df<- as.data.frame(T5_ED) 
+
+T5_ED50 <- setDT(T5_df, keep.rownames = "Geno") %>%
+  mutate(Timepoint = "T5") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05"))
+T5_ED50_geno <- T5_ED50 %>%
+  select(Genotype, Timepoint, ED50 = Estimate)
+```
+
+# COMPARING T3 VS T4 VS T5 ED50s #
+```{r}
+All_ED50 <- rbind(T3_ED50_geno, T4_ED50_geno, T5_ED50_geno) 
+
+ggplot(All_ED50, aes(x = Timepoint, y = ED50, color = Genotype)) +
+  geom_point(size = 5) +
+  geom_line()
+
+library("writexl")
+
+All_ED50 %>%
+  spread(key = Timepoint, value = ED50) %>%
+  write_xlsx("ED50/Past_Offshore_Genets_ED50.xlsx")
 ```

@@ -266,7 +266,6 @@ ggplot(All_ED50, aes(x = Timepoint, y = ED50, color = Genotype)) +
   geom_point(size = 5) +
   geom_line()
 
-install.packages("writexl")
 library("writexl")
 
 All_ED50 %>%
