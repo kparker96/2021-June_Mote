@@ -38,7 +38,7 @@ Allpam <- IPa %>%
 Allpam$FacTemp<-as.factor(Allpam$Temp)
 Allpam$Geno<-as.factor(Allpam$Geno)
 Allpam$Temp<- as.integer(Allpam$Temp)
-
+Allpam<-as.data.frame(Allpam)
 ```
 
 # T3 ANALYSIS (T3 & T4 & T5 Samples) #
