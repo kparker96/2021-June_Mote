@@ -21,6 +21,7 @@ library(tidyr)
 library(dplyr)
 library(plyr)
 library(reshape2)
+library(data.table)
 ```
 
 # IMPORT DATA #
@@ -39,7 +40,7 @@ NAc <- readxl::read_xlsx("data/PAM/2021-06-11_Acer-4temps-MoteLooeNursery_Run2.x
 Allpam <- rbind(IPa, OPa, NAc) %>%
   mutate(Species = case_when(Species == "Acropora cervicornis" ~ "ACERV",
                              Species == "Porites astreoides" ~ "PAST")) %>%
-  select(sample_ID = SampleName, species = Species, Geno = Genotype, Location, Temp = Temp_Setpoint, Timepoint, FvFm = PAM) %>%
+  select(TubeNumber, sample_ID = SampleName, species = Species, Geno = Genotype, Treatment, Temp = Temp_Setpoint, Timepoint, FvFm = PAM) %>%
   mutate(TP_ID = case_when(grepl("T1", sample_ID) ~ "T1",
                            grepl("T2", sample_ID) ~ "T2",
                            grepl("T3", sample_ID) ~ "T3",
@@ -55,15 +56,166 @@ Allpam$Temp<- as.integer(Allpam$Temp)
 Allpam<-as.data.frame(Allpam)
 ```
 
+# PORITES #
 ```{r}
-T3PAM <- Allpam %>%
-  filter(TP_ID == "T3")
+PAST <- Allpam %>%
+  filter(species == "PAST")
+
+Past_TP <-  PAST %>%
+  filter(TubeNumber != "NA") %>%
+  select(Geno, Treatment, Temp, TP_ID, FvFm) %>%
+  filter(Treatment != "Field", 
+         Treatment != "Initial")
+
+ggplot(Past_TP, aes(x = TP_ID, y = FvFm, color = Geno)) +
+  geom_point() +
+  facet_wrap(~Treatment)
+
+Past_TP$Treatment_f = factor(Past_TP$Treatment, levels=c('Control','Low','Medium','High'))
+
+ggplot(Past_TP, aes(x = TP_ID, y = FvFm, color = Geno)) +
+  geom_point() +
+  facet_grid(Geno~Treatment_f) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint")
+
+ggsave(filename = "plots/Past_FvFm_Treatment_TP.png", width = 300, height = 250, units = "mm")
+
+x <- Past_TP %>%
+  filter(Geno == "06")
+
+DRCpamgeno = drm(FvFm ~ Temp, data = x, curveid = TP_ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(DRCpamgeno)
+compParm(DRCpamgeno, 'ed50')
+compParm(DRCpamgeno, 'ed50', "-")
+plot(DRCpamgeno)
+
+ggplot(x, aes(x = Temp, y = FvFm, color = TP_ID)) +
+  geom_line()
+
+```
+
+```{r}
+Past_T5 <- PAST %>%
+  filter(TubeNumber != "NA") %>%
+  filter(TP_ID == "T5") %>%
+  select(sample_ID, Geno, Treatment, Temp, Timepoint, FvFm)
+
+Past_T5_PAM <- PAST %>%
+  filter(TubeNumber == "NA",
+         TP_ID == "T5") %>%
+  select(sample_ID, Geno, Treatment, Temp, Timepoint, FvFm)
+
+a <- rbind(Past_T5, Past_T5_PAM)
+
+ggplot(a, aes(x = Temp, y = FvFm)) +
+  geom_point() +
+  facet_grid(Timepoint~Geno)
 
 
-DRCpam = drm(FvFm ~ Temp, data = T3PAM,
-                 fct = LL.3(names = c('hill', 'max', 'ed50')))
-summary(DRCpam)
-plot(DRCpam)
+ggplot(Past, aes(x = Temp, y = FvFm, color = Geno)) +
+  geom_point() +
+  facet_grid(~Geno) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint")
+```
+
+# T1 #
+```{r}
+T1 <- PAST %>%
+  filter(TP_ID == "T1")
+
+DRCpamgeno = drm(FvFm ~ Temp, data = T1, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(DRCpamgeno)
+compParm(DRCpamgeno, 'ed50')
+compParm(DRCpamgeno, 'ed50', "-")
+plot(DRCpamgeno)
+
+T1_ED <- ED(DRCpamgeno, c(50), interval = "delta")
+
+T1_df<- as.data.frame(T1_ED) 
+
+T1_ED50 <- setDT(T1_df, keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05",
+                              grepl(":06", Geno) ~ "06",
+                              grepl(":07", Geno) ~ "07",
+                              grepl(":08", Geno) ~ "08",
+                              grepl(":09", Geno) ~ "09",
+                              grepl(":10", Geno) ~ "10"))
+T1_ED50_geno <- T1_ED50 %>%
+  select(Genotype, ED50 = Estimate)
+
+
+
+
+```
+
+
+
+
+```{r}
+T1 <- PAST %>%
+  filter(TP_ID == "T1") %>%
+  select(Geno, FvFm, Temp)
+
+
+demo.LL.3 <- drm(FvFm ~ Temp, data = T1, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+demo.fits <- expand.grid(conc=exp(seq(log(1.00e-04), log(1.00e-09), length=100)))
+
+pm <- predict(demo.LL.3, newdata=demo.fits, interval="confidence") 
+    demo.fits$p <- pm[,1]
+    demo.fits$pmin <- pm[,2]
+    demo.fits$pmax <- pm[,3]
+
+
+demo1$XX <- demo1$X
+demo1$XX[demo1$XX == 0] <- 1.00e-09
+
+ggplot(demo1, aes(x = variable, y = value)) +
+  geom_point() +
+  geom_ribbon(data=demo.fits, aes(x=conc, y=p, ymin=pmin, ymax=pmax), alpha=0.2) +
+  geom_line(data=demo.fits, aes(x=conc, y=p)) +
+  coord_trans(x="log") 
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+Allpam$Temp <- as.character(Allpam$Temp)
+
+ggplot(Allpam, aes(x = Temp, y =FvFm)) +
+ geom_violin() 
+  
+
+  
 
 ```
 
