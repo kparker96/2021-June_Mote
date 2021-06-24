@@ -182,6 +182,7 @@ T3_ED50_geno <- T3_ED50 %>%
 # T4 **SAMPLES** ANALYSIS
 ```{r}
 justT4 <- Allpam %>%
+  filter(Timepoint == "T3") %>%
   filter(TP_ID == "T4")
 
 aggregate(FvFm ~ Temp, data=justT4, summary)
@@ -229,6 +230,7 @@ T4_ED50_geno <- T4_ED50 %>%
 # T5 **SAMPLES** ANALYSIS
 ```{r}
 justT5 <- Allpam %>%
+  filter(Timepoint == "T3") %>%
   filter(TP_ID == "T5")
 
 aggregate(FvFm ~ Temp, data=justT5, summary)
@@ -294,7 +296,7 @@ All_ED50 %>%
 temp_x<- seq(30, 40.5, length = 100)
 
 # Individual Genotypes
-pdf("plots/IPa__DRC_TP_genofits.pdf",width = 8, height = 13)
+pdf("plots/IPa__DRC_TP_T3_genofits.pdf",width = 8, height = 13)
 par(mar=c(5.1,5.1,4.1,2.1), mfrow=c(3,1))
 Line_width=2.5
 
