@@ -272,3 +272,55 @@ All_ED50 %>%
   spread(key = Timepoint, value = ED50) %>%
   write_xlsx("ED50/Past_Offshore_Genets_ED50.xlsx")
 ```
+
+# PLOTTING DRC FOR ALL GENOTYPES PER TIMEPOINT #
+```{r}
+# Population Average 
+temp_x<- seq(30, 40.5, length = 100)
+
+# Individual Genotypes
+pdf("plots/OPa__DRC_TP_genofits.pdf",width = 8, height = 13)
+par(mar=c(5.1,5.1,4.1,2.1), mfrow=c(3,1))
+Line_width=2.5
+
+with(justT3, plot(Temp,FvFm,xlim=c(29.5,41),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab=element_blank()))
+Colours<-c('#4575b4','#74add1','#fee090','#f46d43','#d73027')
+for(i in order(T3_DRCpamgeno$coefficients[11:15])){
+  Geno=names(table(justT3$Geno))[i]
+  print(Geno)
+  print(summary(mod1<-drm(FvFm ~ Temp, data=justT3[justT3$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
+  points(justT3[justT3$Geno==Geno,"Temp"],justT3[justT3$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
+  lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
+}
+title(main="Ipa T3")
+abline(v=T3_DRCpamgeno$coefficients[11:15][order(T3_DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
+legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(T3_DRCpamgeno$coefficients)[11:15][order(T3_DRCpamgeno$coefficients[11:15])],": ",round(T3_DRCpamgeno$coefficients[11:15][order(T3_DRCpamgeno$coefficients[11:15])], digits=2)))
+
+with(justT4, plot(Temp,FvFm,xlim=c(29.5,41),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab=element_blank()))
+Colours<-c('#4575b4','#74add1','#fee090','#f46d43','#d73027')
+for(i in order(T4_DRCpamgeno$coefficients[11:15])){
+  Geno=names(table(justT4$Geno))[i]
+  print(Geno)
+  print(summary(mod1<-drm(FvFm ~ Temp, data=justT4[justT4$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
+  points(justT4[justT4$Geno==Geno,"Temp"],justT4[justT4$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
+  lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
+}
+title(main="Ipa T4")
+abline(v=T4_DRCpamgeno$coefficients[11:15][order(T4_DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
+legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(T4_DRCpamgeno$coefficients)[11:15][order(T4_DRCpamgeno$coefficients[11:15])],": ",round(T4_DRCpamgeno$coefficients[11:15][order(T4_DRCpamgeno$coefficients[11:15])], digits=2)))
+
+with(justT5, plot(Temp,FvFm,xlim=c(29.5,41),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab="Temperature °C"))
+Colours<-c('#4575b4','#74add1','#fee090','#f46d43','#d73027')
+for(i in order(T5_DRCpamgeno$coefficients[11:15])){
+  Geno=names(table(justT5$Geno))[i]
+  print(Geno)
+  print(summary(mod1<-drm(FvFm ~ Temp, data=justT5[justT5$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
+  points(justT5[justT5$Geno==Geno,"Temp"],justT5[justT5$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
+  lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
+}
+title(main="Ipa T5")
+abline(v=T5_DRCpamgeno$coefficients[11:15][order(T5_DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
+legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(T5_DRCpamgeno$coefficients)[11:15][order(T5_DRCpamgeno$coefficients[11:15])],": ",round(T5_DRCpamgeno$coefficients[11:15][order(T5_DRCpamgeno$coefficients[11:15])], digits=2)))
+
+dev.off()
+```
