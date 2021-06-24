@@ -293,7 +293,7 @@ right_join(Our_Acer, Ross_Acer, by = "Genotype") %>%
 temp_x<- seq(30, 40.5, length = 100)
 
 # Individual Genotypes
-pdf("plots/Acer_DRC_TP_genofits.pdf", width = 8, height = 13)
+pdf("plots/NAc_DRC_TP_genofits.pdf", width = 8, height = 13)
 par(mar=c(5.1,5.1,4.1,2.1), mfrow=c(3,1))
 Line_width=2.5
 
@@ -329,17 +329,14 @@ for(i in order(T5_DRCpamgeno$coefficients[17:24])){
   Geno=names(table(justT5$Geno))[i]
   print(Geno)
   print(summary(mod1<-drm(FvFm ~ Temp, data=justT5[justT5$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
-  points(justT4[justT4$Geno==Geno,"Temp"],justT5[justT5$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
+  points(justT5[justT5$Geno==Geno,"Temp"],justT5[justT5$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
   lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
 }
 title(main="NAc T5")
 abline(v=T5_DRCpamgeno$coefficients[17:24][order(T5_DRCpamgeno$coefficients[17:24])], col=Colours, lwd=Line_width)
 legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(T5_DRCpamgeno$coefficients[17:24])[order(T5_DRCpamgeno$coefficients[17:24])],": ",round(T5_DRCpamgeno$coefficients[17:24][order(T5_DRCpamgeno$coefficients[17:24])], digits=2)))
 
-
 dev.off()
-
-
 
 ```
 
