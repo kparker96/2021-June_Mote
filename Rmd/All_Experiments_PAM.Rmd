@@ -102,13 +102,100 @@ select(-Geno, ED50 = Estimate) %>%
                             Genotype == "09" | Genotype == "10" ~ "inshore"))
 
 Past_ED50_TP <- Past_ED_df %>%
-  select(Genotype, TP_ID, site, ED50) 
+  select(Genotype, TP_ID, site, ED50)
+
+Genotype <- Past_ED50_TP$Genotype
 
 ggplot(Past_ED50_TP, aes(x = TP_ID, y = ED50, color = Genotype)) +
-  geom_point(size = 2)+
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype, nudge_x = 0.25) +
   facet_wrap(~site) +
-  theme(legend.position = "bottom") 
+  theme_bw() +
+  theme(legend.position = "none") 
+
+ggsave(filename = "plots/Past_Rank_ED50_all_TP_genofits.png", width = 174, height = 100, units = "mm")
+
   
+geno_ED50s_TP <- Past_ED50_TP %>%
+  spread(key = TP_ID, value = ED50) %>%
+  group_by(Genotype) %>%
+  mutate(avgfit = mean(c(T1, T2, T3, T4, T5)),
+         min = min(c(T1, T2, T3, T4, T5)),
+         max = max(c(T1, T2, T3, T4, T5)),
+         diff = max - min) 
+
+library("writexl")
+geno_ED50s_TP %>%
+  write_xlsx("ED50/Past_all_TPs_Genets_ED50.xlsx")
+
+```
+
+# PAST ED50S PER GENO PER T3 SAMPLING TIMEPOINT (T3, T4, & T5 SAMPLES FROM T3) #
+```{r}
+T3_Past <- PAST %>%
+  filter(Timepoint == "T3")%>%
+  mutate(ID = paste(Geno,TP_ID))
+
+Past_T3_DRC <- drm(FvFm ~ Temperature, data = T3_Past, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Past_T3_DRC)
+compParm(Past_T3_DRC, 'ed50')
+compParm(Past_T3_DRC, 'ed50', "-")
+plot(Past_T3_DRC)
+
+Past_T3_ED <- ED(Past_T3_DRC, c(50), interval = "delta")
+
+Past_T3_ED_df <- as.data.frame(Past_T3_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05",
+                              grepl(":06", Geno) ~ "06",
+                              grepl(":07", Geno) ~ "07",
+                              grepl(":08", Geno) ~ "08",
+                              grepl(":09", Geno) ~ "09",
+                              grepl(":10", Geno) ~ "10")) %>%
+  mutate(TP_ID = case_when(grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+select(-Geno, ED50 = Estimate) %>%
+  mutate(site = case_when(Genotype == "01" | Genotype == "02" | Genotype == "03" | 
+                            Genotype == "04" | Genotype == "05" ~ "offshore",
+                          Genotype == "06" | Genotype == "07" | Genotype == "08" | 
+                            Genotype == "09" | Genotype == "10" ~ "inshore"))
+
+Past_ED50_T3 <- Past_T3_ED_df %>%
+  select(Genotype, TP_ID, site, ED50) %>%
+  filter(ED50 < 50) # Geno 08 T4 sample is very high 
+
+Genotype_T3 <- Past_ED50_T3$Genotype
+
+ggplot(Past_ED50_T3, aes(x = TP_ID, y = ED50, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype_T3, nudge_x = 0.25) +
+  facet_wrap(~site) +
+  theme_bw() +
+  theme(legend.position = "none") 
+
+ggsave(filename = "plots/Past_Rank_ED50_all_TP_genofits.png", width = 174, height = 100, units = "mm")
+
+  
+geno_ED50s_T3 <- Past_ED50_T3 %>%
+  spread(key = TP_ID, value = ED50) %>%
+  group_by(Genotype) %>%
+  mutate(avgfit = mean(c(T3, T4, T5)),
+         min = min(c(T3, T4, T5)),
+         max = max(c(T3, T4, T5)),
+         diff = max - min) 
+
+library("writexl")
+geno_ED50s_T3 %>%
+  write_xlsx("ED50/Past_T3_Genets_ED50.xlsx")
+
+
 ```
 
 
@@ -142,8 +229,7 @@ ggplot(Past_ED50_TP, aes(x = TP_ID, y = ED50, color = Genotype)) +
 
 
 
-
-
+# SANDBOXING AND RANDOM REFERENCE CODE CHUNKS #
 
 ```{r}
 Acer_T3 <- Allpam %>%
