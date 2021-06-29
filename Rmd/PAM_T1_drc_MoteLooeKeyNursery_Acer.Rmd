@@ -342,3 +342,8 @@ dev.off()
 
 ```
 
+# PLOT ROSS' DATA AS 4 TEMP #
+```{r}
+
+```
+

@@ -15,6 +15,7 @@ library(lmerTest)
 library(emmeans)
 library(sjPlot)
 library(drc)
+library(car)
 library(Rmisc)
 library(ggplot2)
 library(tidyr)
@@ -245,7 +246,65 @@ ggsave(filename = "plots/Acer_Rank_ED50_all_TP_genofits.png", width = 174, heigh
 
 ```
 
+# CALC ROSS DATA AS 4 TEMP EXPERIMENT #
+```{r}
+RossPam <- readxl::read_xlsx("data/PAM/Ross_Mote_Pam_Data.xlsx") %>%
+  select(geno, FvFm = fvfm, Temp = target_temp) %>%
+  mutate(FacTemp = as.factor(Temp))
+  
+Ross_df <- RossPam %>%
+  filter(Temp == 37 | Temp == 35 | Temp == 33 | Temp == 30) %>%
+  mutate(Geno = case_when(geno == "ML7" ~ "07",
+                              geno == "ML31" ~ "31",
+                              geno == "ML34" ~ "34",
+                              geno == "ML41" ~ "41",
+                              geno == "ML48" ~ "48",
+                              geno == "ML50" ~ "50",
+                              geno == "ML62" ~ "62")) %>%
+  filter(Geno > 0) %>%
+  group_by(Geno) %>%
+  mutate(Genoavg = mean(FvFm)) %>%
+  ungroup() %>%
+  select(Geno, Temp, FacTemp, FvFm = Genoavg)
 
+Ross_df <- unique(Ross_df)
+
+Ross_df$Geno<-as.factor(Ross_df$Geno)
+Ross_df$Temp<- as.integer(Ross_df$Temp)
+Ross_df<-as.data.frame(Ross_df)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=Ross_df)
+leveneTest(FvFm ~ FacTemp, data=Ross_df)
+aggregate(FvFm ~ FacTemp, data=Ross_df, FUN= function(x) shapiro.test(x)$p.value)
+
+n1<-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), Ross_df)
+summary(n1)
+
+print(lsmeans(n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+# Full Curve Fit 
+Ross_DRCpam = drm(FvFm ~ Temp, data = Ross_df,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(DRCpam)
+plot(DRCpam)
+
+DRCpamgeno = drm(FvFm ~ Temp, data = T3PAM, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(DRCpamgeno)
+compParm(DRCpamgeno, 'ed50')
+compParm(DRCpamgeno, 'ed50', "-")
+plot(DRCpamgeno)
+ED(DRCpamgeno, c(50))[,1]
+
+
+
+
+
+
+
+
+```
 
 
 
