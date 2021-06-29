@@ -195,10 +195,55 @@ library("writexl")
 geno_ED50s_T3 %>%
   write_xlsx("ED50/Past_T3_Genets_ED50.xlsx")
 
-
 ```
 
+# ACER ED50s PER GENO PER TIMEPOINT #
+```{r}
+Acer_TP <- ACER %>%
+  filter(TP_ID == "T1" | TP_ID == "T2" | TP_ID == "T3" | TP_ID == "T4" & Timepoint == "T4" | TP_ID == "T5" & Timepoint == "T5") %>%
+  mutate(ID = paste(Geno,TP_ID))
 
+Acer_TP_DRC <- drm(FvFm ~ Temperature, data = Acer_TP, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Acer_TP_DRC)
+compParm(Acer_TP_DRC, 'ed50')
+compParm(Acer_TP_DRC, 'ed50', "-")
+plot(Acer_TP_DRC)
+
+Acer_TP_ED <- ED(Acer_TP_DRC, c(50), interval = "delta")
+
+Acer_ED_df <- as.data.frame(Acer_TP_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":07", Geno) ~ "07",
+                              grepl(":31", Geno) ~ "31",
+                              grepl(":34", Geno) ~ "34",
+                              grepl(":41", Geno) ~ "41",
+                              grepl(":48", Geno) ~ "48",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl(":62", Geno) ~ "62",
+                              grepl(":CM5", Geno) ~ "CM5")) %>%
+  mutate(TP_ID = case_when(grepl("T1", Geno)~ "T1",
+                           grepl("T2", Geno)~ "T2",
+                           grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+select(-Geno, ED50 = Estimate) 
+
+Acer_ED50_TP <- Acer_ED_df %>%
+  select(Genotype, TP_ID, ED50)
+
+Genotype <- Acer_ED50_TP$Genotype
+
+ggplot(Acer_ED50_TP, aes(x = TP_ID, y = ED50, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype, nudge_x = 0.05) +
+  theme_bw() +
+  theme(legend.position = "none") 
+
+ggsave(filename = "plots/Acer_Rank_ED50_all_TP_genofits.png", width = 174, height = 100, units = "mm")
+
+```
 
 
 
