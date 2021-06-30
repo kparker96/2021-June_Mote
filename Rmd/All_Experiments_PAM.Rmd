@@ -57,7 +57,7 @@ Allpam$Temperature<- as.integer(Allpam$Temperature)
 Allpam<-as.data.frame(Allpam)
 
 PAST <- Allpam %>%
-  filter(species == "PAST")
+  filter(species == "PAST") 
 
 ACER <- Allpam %>%
   filter(species == "ACER")
@@ -198,6 +198,107 @@ geno_ED50s_T3 %>%
 
 ```
 
+# PAST PAM MEASUREMENT PLOTTING #
+```{r}
+Past_PAM_TP <-  PAST %>%
+  filter(TubeNumber != "NA") %>%
+  select(Genotype = Geno, Treatment, Temp, TP_ID, FvFm) %>%
+  filter(Treatment != "Field", 
+         Treatment != "Initial") %>%
+  mutate(site = case_when(Genotype == "01" | Genotype == "02" | Genotype == "03" | 
+                            Genotype == "04" | Genotype == "05" ~ "offshore",
+                          Genotype == "06" | Genotype == "07" | Genotype == "08" | 
+                            Genotype == "09" | Genotype == "10.0" ~ "inshore"))
+
+# Inshore Genotypes #
+inshore <- Past_PAM_TP %>%
+  filter(site == "inshore")
+
+inshore_geno <- inshore$Genotype
+
+inshore$Treatment_f = factor(inshore$Treatment, levels=c('Control','Low','Medium','High'))
+
+ggplot(inshore, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= inshore_geno, nudge_x = 0.25) +
+  facet_grid(~Treatment_f) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# Offshore Genotypes #
+offshore <- Past_PAM_TP %>%
+  filter(site == "offshore")
+
+offshore_geno <- offshore$Genotype
+
+offshore$Treatment_f = factor(offshore$Treatment, levels=c('Control','Low','Medium','High'))
+
+ggplot(offshore, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= offshore_geno, nudge_x = 0.25) +
+  facet_grid(~Treatment_f) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+# Each Genotype PAM Individually Plotted per Tank #
+ggplot(inshore, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point(size = 2) +
+  facet_grid(Genotype~Treatment_f) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint")
+
+ggplot(offshore, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point() +
+  facet_grid(Genotype~Treatment_f) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint")
+
+
+# Each Genotype per Timepoint #
+ggplot(inshore, aes(x = TP_ID, y = FvFm, color = Treatment)) +
+  geom_point(size = 2) +
+  facet_wrap(~Genotype) +
+  theme_bw() +
+  theme(legend.position = c(0.75,0.25)) +
+  xlab("Timepoint")
+
+ggplot(offshore, aes(x = TP_ID, y = FvFm, color = Treatment)) +
+  geom_point(size = 2) +
+  facet_wrap(~Genotype) +
+  theme_bw() +
+  theme(legend.position = c(0.75,0.25)) +
+  xlab("Timepoint")
+
+```
+
+
+```{r}
+Past_T5 <- PAST %>%
+  filter(TubeNumber != "NA") %>%
+  filter(TP_ID == "T5") %>%
+  select(sample_ID, Geno, Treatment, Temp, Timepoint, FvFm)
+
+Past_T5_PAM <- PAST %>%
+  filter(TubeNumber == "NA",
+         TP_ID == "T5") %>%
+  select(sample_ID, Geno, Treatment, Temp, Timepoint, FvFm)
+
+Past <- rbind(Past_T5, Past_T5_PAM)
+
+ggplot(a, aes(x = Temp, y = FvFm)) +
+  geom_point() +
+  facet_grid(Timepoint~Geno)
+
+ggplot(Past, aes(x = Temp, y = FvFm, color = Timepoint)) +
+  geom_point() +
+  facet_wrap(~Geno) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint")
+```
+
 # ACER ED50s PER GENO PER TIMEPOINT #
 ```{r}
 Acer_TP <- ACER %>%
@@ -317,32 +418,71 @@ Ross_ED50 <- setDT(Ross_ED_df, keep.rownames = "Geno") %>%
 
 Ross_ED50_geno <- Ross_ED50 %>%
   select(Genotype, ED50 = Estimate)
-
-
-
-
-
-
-
-
 ```
 
+# CALC COURTNEY'S DATA AS 4 TEMP EXPERIMENT #
+```{r}
+CourtPam <- readxl::read_xlsx("data/PAM/Courtney_Mote_Pam_Data.xlsx") %>%
+  select(Genotype, FvFm = Y, Temp) %>%
+  mutate(FacTemp = as.factor(Temp))
+
+  
+Court_df <- CourtPam %>%
+  filter(Temp == 37 | Temp == 34.4 | Temp == 32.9 | Temp == 30.2) %>%
+  mutate(Geno = case_when(Genotype == "AC7" ~ "07",
+                          Genotype == "AC31" ~ "31",
+                          Genotype == "AC41" ~ "41",
+                          Genotype == "AC50" ~ "50",
+                          Genotype == "AC62" ~ "62")) %>%
+  select(Geno, FacTemp, Temp, FvFm) %>%
+  filter(Geno > 0)
 
 
+Court_df$Geno<-as.factor(Court_df$Geno)
+Court_df$Temp<- as.integer(Court_df$Temp)
+Court_df$FvFm<- as.numeric(Court_df$FvFm)
+Court_df<-as.data.frame(Court_df)
 
+str(Court_df)
 
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=Court_df)
+leveneTest(FvFm ~ FacTemp, data=Court_df)
+aggregate(FvFm ~ FacTemp, data=Court_df, FUN= function(x) shapiro.test(x)$p.value)
 
+n1<-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), Court_df)
+summary(n1)
 
+print(lsmeans(n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
 
+# Full Curve Fit 
+Court_DRCpam = drm(FvFm ~ Temp, data = Court_df,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(Court_DRCpam)
+plot(Court_DRCpam)
 
+Court_DRCpamgeno = drm(FvFm ~ Temp, data = Court_df, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(Court_DRCpamgeno)
+compParm(Court_DRCpamgeno, 'ed50')
+compParm(Court_DRCpamgeno, 'ed50', "-")
+plot(Court_DRCpamgeno)
+ED(Court_DRCpamgeno, c(50))[,1]
 
+Court_ED <- ED(Court_DRCpamgeno, c(50), interval = "delta")
 
+Court_ED_df<- as.data.frame(Court_ED) 
 
+Court_ED50 <- setDT(Court_ED_df, keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl("e:07", Geno) ~ "07",
+                              grepl("e:31", Geno) ~ "31",
+                              grepl("e:41", Geno) ~ "41",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl("e:62", Geno) ~ "62"))
 
-
-
-
-
+Court_ED50_geno <- Court_ED50 %>%
+  select(Genotype, ED50 = Estimate)
+```
 
 
 
@@ -450,6 +590,22 @@ ggplot() +
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -571,61 +727,6 @@ geom_line(data = AC07_preddata, aes(x = Temp, y = Y), color = 'royalblue2', show
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #### PLOT  DRC for experiment####
 DRC_plot<- ggplot() +
   geom_jitter(data = Acer_T3, aes(x = Temperature, y = FvFm), size = 1, width = 0.25) +
@@ -717,386 +818,4 @@ DRC_plot<- ggplot() +
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# PORITES #
-```{r}
-PAST <- Allpam %>%
-  filter(species == "PAST")
-
-Past_TP <-  PAST %>%
-  filter(TubeNumber != "NA") %>%
-  select(Geno, Treatment, Temp, TP_ID, FvFm) %>%
-  filter(Treatment != "Field", 
-         Treatment != "Initial")
-
-ggplot(Past_TP, aes(x = TP_ID, y = FvFm, color = Geno)) +
-  geom_point() +
-  facet_wrap(~Treatment)
-
-Past_TP$Treatment_f = factor(Past_TP$Treatment, levels=c('Control','Low','Medium','High'))
-
-ggplot(Past_TP, aes(x = TP_ID, y = FvFm, color = Geno)) +
-  geom_point() +
-  facet_grid(Geno~Treatment_f) +
-  theme_bw() +
-  theme(legend.position = "none") +
-  xlab("Timepoint")
-
-ggsave(filename = "plots/Past_FvFm_Treatment_TP.png", width = 300, height = 250, units = "mm")
-
-x <- Past_TP %>%
-  filter(Geno == "06")
-
-DRCpamgeno = drm(FvFm ~ Temp, data = x, curveid = TP_ID,
-             fct = LL.3(names = c('hill', 'max', 'ed50')))
-summary(DRCpamgeno)
-compParm(DRCpamgeno, 'ed50')
-compParm(DRCpamgeno, 'ed50', "-")
-plot(DRCpamgeno)
-
-ggplot(x, aes(x = Temp, y = FvFm, color = TP_ID)) +
-  geom_line()
-
-```
-
-```{r}
-Past_T5 <- PAST %>%
-  filter(TubeNumber != "NA") %>%
-  filter(TP_ID == "T5") %>%
-  select(sample_ID, Geno, Treatment, Temp, Timepoint, FvFm)
-
-Past_T5_PAM <- PAST %>%
-  filter(TubeNumber == "NA",
-         TP_ID == "T5") %>%
-  select(sample_ID, Geno, Treatment, Temp, Timepoint, FvFm)
-
-a <- rbind(Past_T5, Past_T5_PAM)
-
-ggplot(a, aes(x = Temp, y = FvFm)) +
-  geom_point() +
-  facet_grid(Timepoint~Geno)
-
-
-ggplot(Past, aes(x = Temp, y = FvFm, color = Geno)) +
-  geom_point() +
-  facet_grid(~Geno) +
-  theme_bw() +
-  theme(legend.position = "none") +
-  xlab("Timepoint")
-```
-
-# T1 #
-```{r}
-T1 <- PAST %>%
-  filter(TP_ID == "T1")
-
-DRCpamgeno = drm(FvFm ~ Temp, data = T1, curveid = Geno,
-             fct = LL.3(names = c('hill', 'max', 'ed50')))
-summary(DRCpamgeno)
-compParm(DRCpamgeno, 'ed50')
-compParm(DRCpamgeno, 'ed50', "-")
-plot(DRCpamgeno)
-
-T1_ED <- ED(DRCpamgeno, c(50), interval = "delta")
-
-T1_df<- as.data.frame(T1_ED) 
-
-T1_ED50 <- setDT(T1_df, keep.rownames = "Geno") %>%
-  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
-                              grepl(":02", Geno) ~ "02",
-                              grepl(":03", Geno) ~ "03",
-                              grepl(":04", Geno) ~ "04",
-                              grepl(":05", Geno) ~ "05",
-                              grepl(":06", Geno) ~ "06",
-                              grepl(":07", Geno) ~ "07",
-                              grepl(":08", Geno) ~ "08",
-                              grepl(":09", Geno) ~ "09",
-                              grepl(":10", Geno) ~ "10"))
-T1_ED50_geno <- T1_ED50 %>%
-  select(Genotype, ED50 = Estimate)
-
-
-
-
-```
-
-
-
-
-```{r}
-T1 <- PAST %>%
-  filter(TP_ID == "T1") %>%
-  select(Geno, FvFm, Temp)
-
-
-demo.LL.3 <- drm(FvFm ~ Temp, data = T1, curveid = Geno,
-             fct = LL.3(names = c('hill', 'max', 'ed50')))
-
-demo.fits <- expand.grid(conc=exp(seq(log(1.00e-04), log(1.00e-09), length=100)))
-
-pm <- predict(demo.LL.3, newdata=demo.fits, interval="confidence") 
-    demo.fits$p <- pm[,1]
-    demo.fits$pmin <- pm[,2]
-    demo.fits$pmax <- pm[,3]
-
-
-demo1$XX <- demo1$X
-demo1$XX[demo1$XX == 0] <- 1.00e-09
-
-ggplot(demo1, aes(x = variable, y = value)) +
-  geom_point() +
-  geom_ribbon(data=demo.fits, aes(x=conc, y=p, ymin=pmin, ymax=pmax), alpha=0.2) +
-  geom_line(data=demo.fits, aes(x=conc, y=p)) +
-  coord_trans(x="log") 
-
-
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-
-Allpam$Temp <- as.character(Allpam$Temp)
-
-ggplot(Allpam, aes(x = Temp, y =FvFm)) +
- geom_violin() 
-  
-
-  
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Dose-response curve model fitting
-```{r model, results = 'hide'}
-# Select whether to use target temp or actual recorded max temp for model fitting
-df <- if (temp.adjust) {
-  df %>% select(-target_temp)
-} else {
-  df %>% mutate(max_temp = target_temp) %>% select(-target_temp)
-}
-
-# Define function to fit 3-parameter LL model to data and return NULL if fitting error
-ll3 <- function(data) {
-  drm(fvfm ~ max_temp, data = data, 
-      fct = LL.3(names = c("hill", "max", "ED50")),
-      upperl = c(120, 0.72, 40),
-      lowerl = c(10, 0.55, 30))}
-tryll3 <- possibly(ll3, otherwise = NULL)
-
-# Fit model to each coral, get parameters, fitted values, and residuals
-initmods <- df %>%
-  nest(data = c(max_temp, f, fm, fvfmraw, fvfm, problem)) %>%
-  # Fit the model to each coral
-  mutate(ll3 = map(data, tryll3)) %>%
-  # Get model parameters and fitted values/residuals
-  mutate(pars = map(ll3, tidy),
-         pred = map2(ll3, data, ~augment(.x, drop_na(.y, fvfm))))
-
-# Extract ed50 parameter values from model fits
-ed50 <- initmods %>% 
-  select(nursery, geno, pars) %>%
-  unnest(pars) %>%
-  filter(term == "ED50")
-
-# Collect raw data, fitted values, and diagnostics
-vals <- initmods %>%
-  select(nursery, geno, pred) %>%
-  unnest(pred) %>%
-  full_join(ed50) %>%
-  full_join(df) %>%
-  rename(ed50 = estimate)
-
-# Identify problematic data points based on cook's distance and residuals
-counts <- vals %>% 
-  group_by(nursery, geno) %>% 
-  summarise(n = sum(!is.na(fvfm)))
-dff <- vals %>%
-  left_join(counts) %>%
-  group_by(nursery, geno) %>%
-  mutate(resid.thresh = 2*sd(.resid, na.rm = T)) %>%  # Calculate residual threshold as 2 standard deviations
-  mutate(cooksd.thresh = 4/n) %>%   # Calculate cook's distance threshold as 4/n
-  mutate(max_to_remove = floor(n * 0.2)) %>%
-  ungroup() %>%
-  mutate(problem = case_when(.cooksd > cooksd.thresh & .resid > 0 ~ "high cook's distance",
-                             .resid > resid.thresh ~ "high residual", 
-                             TRUE ~ problem)) %>%
-  group_by(nursery, geno, outlier = problem %in% c("high cook's distance", "high residual")) %>%
-  mutate(n.outliers = n(),
-         rank.out = order(.cooksd, decreasing = TRUE)) %>%
-  ungroup() %>%
-  mutate(fvfm = case_when(outlier & rank.out <= max_to_remove ~ NA_real_, 
-                          TRUE ~ fvfm)) 
-
-
-# Refit models without problematic points
-fmods <- dff %>%
-  select(nursery, geno, max_temp, f, fm, fvfmraw, problem, fvfm) %>%
-  nest(data = c(max_temp, f, fm, fvfmraw, fvfm, problem)) %>%
-  # Fit the model to each coral
-  mutate(ll3 = map(data, tryll3)) %>%
-  # Get model parameters and fitted values/residuals
-  mutate(pars = map(ll3, tidy),
-         pred = map2(ll3, data, ~augment(.x, drop_na(.y, fvfm))))
-
-# Extract ed50 parameter values from model fits
-fed50 <- fmods %>% 
-  select(nursery, geno, pars) %>%
-  unnest(pars) %>%
-  filter(term == "ED50")
-
-# Collect raw data, fitted values, and ed50 estimates
-fvals <- fmods %>%
-  select(nursery, geno, pred) %>%
-  unnest(pred) %>%
-  full_join(fed50) %>%
-  full_join(select(dff, nursery, geno, max_temp, f, fm, fvfmraw, problem, fvfm)) %>%
-  rename(ed50 = estimate)
-```
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-
-str(Full_PAM)
-
-ACER_DRC <- drm(FvFm ~ Temperature, data = Full_PAM[Full_PAM$species=="ACER",], curveid=sample_ID, fct = LL.3())
-
-
-summary(ACER_DRC)
-plot(ACER_DRC)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# IMPORT DATA #
-```{r}
-
-
-Full_PAM$species<-as.factor(Full_PAM$species)
-Full_PAM$Timepoint<-as.factor(Full_PAM$Timepoint)
-Full_PAM$Genotype<-as.factor(Full_PAM$Genotype)
-Full_PAM$Location<-as.factor(Full_PAM$Location)
-Full_PAM$Temperature<-as.numeric(Full_PAM$Temperature)
-Full_PAM$sample_ID<-as.factor(Full_PAM$sample_ID)
-
-
-# Inshore Past
-InshorePa <-read.delim("data/PAM/2021-06-08_CarlysInshore_Past_RNASeq.txt")
-
-IPa <- InshorePa %>%
-  gather(key = "Tp", value = FvFm, -SampleName, -species, -Tank, -Temp, -Geno, -Timepoint) %>%
-  filter(!is.na(FvFm)) %>%
-  select(species, sample_ID = SampleName, Tank, Temperature = Temp, Timepoint, FvFm) %>%
-  mutate(replicate = case_when(Tank == 1 ~ "C",
-                               Tank == 2 ~ "L",
-                               Tank == 3 ~ "M",
-                               Tank == 4 ~ "H"))
-# Offshore Past 
-OffshorePa <- read.delim("data/PAM/2021-06-10_CarlysOffshore_Past_RNASeq.txt") %>%
-  select(-Start.EndTimes, -X, -X.1, -Tank.1, -Time.on.Spec, -Record, -PAR)
-
-
-
-
-
-```
 
