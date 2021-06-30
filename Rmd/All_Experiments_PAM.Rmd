@@ -251,6 +251,7 @@ ggsave(filename = "plots/Acer_Rank_ED50_all_TP_genofits.png", width = 174, heigh
 RossPam <- readxl::read_xlsx("data/PAM/Ross_Mote_Pam_Data.xlsx") %>%
   select(geno, FvFm = fvfm, Temp = target_temp) %>%
   mutate(FacTemp = as.factor(Temp))
+
   
 Ross_df <- RossPam %>%
   filter(Temp == 37 | Temp == 35 | Temp == 33 | Temp == 30) %>%
@@ -262,7 +263,7 @@ Ross_df <- RossPam %>%
                               geno == "ML50" ~ "50",
                               geno == "ML62" ~ "62")) %>%
   filter(Geno > 0) %>%
-  group_by(Geno) %>%
+  group_by(Geno, Temp) %>%
   mutate(Genoavg = mean(FvFm)) %>%
   ungroup() %>%
   select(Geno, Temp, FacTemp, FvFm = Genoavg)
@@ -272,6 +273,7 @@ Ross_df <- unique(Ross_df)
 Ross_df$Geno<-as.factor(Ross_df$Geno)
 Ross_df$Temp<- as.integer(Ross_df$Temp)
 Ross_df<-as.data.frame(Ross_df)
+
 
 # Homoscedasticity/ Equal Variance Testing 
 bartlett.test(FvFm ~ FacTemp, data=Ross_df)
@@ -283,19 +285,38 @@ summary(n1)
 
 print(lsmeans(n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
 
+str(Ross_df)
+
 # Full Curve Fit 
 Ross_DRCpam = drm(FvFm ~ Temp, data = Ross_df,
                  fct = LL.3(names = c('hill', 'max', 'ed50')))
-summary(DRCpam)
-plot(DRCpam)
+summary(Ross_DRCpam)
+plot(Ross_DRCpam)
 
-DRCpamgeno = drm(FvFm ~ Temp, data = T3PAM, curveid = Geno,
+Ross_DRCpamgeno = drm(FvFm ~ Temp, data = Ross_df, curveid = Geno,
              fct = LL.3(names = c('hill', 'max', 'ed50')))
-summary(DRCpamgeno)
-compParm(DRCpamgeno, 'ed50')
-compParm(DRCpamgeno, 'ed50', "-")
-plot(DRCpamgeno)
-ED(DRCpamgeno, c(50))[,1]
+summary(Ross_DRCpamgeno)
+compParm(Ross_DRCpamgeno, 'ed50')
+compParm(Ross_DRCpamgeno, 'ed50', "-")
+plot(Ross_DRCpamgeno)
+ED(Ross_DRCpamgeno, c(50))[,1]
+
+Ross_ED <- ED(Ross_DRCpamgeno, c(50), interval = "delta")
+
+Ross_ED_df<- as.data.frame(Ross_ED) 
+
+Ross_ED50 <- setDT(Ross_ED_df, keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl("e:07", Geno) ~ "07",
+                              grepl("e:31", Geno) ~ "31",
+                              grepl("e:34", Geno) ~ "34",
+                              grepl("e:41", Geno) ~ "41",
+                              grepl("e:48", Geno) ~ "48",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl("e:62", Geno) ~ "62",
+                              grepl("e:CM", Geno) ~ "CM5"))
+
+Ross_ED50_geno <- Ross_ED50 %>%
+  select(Genotype, ED50 = Estimate)
 
 
 
