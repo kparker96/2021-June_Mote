@@ -60,7 +60,15 @@ PAST <- Allpam %>%
   filter(species == "PAST") 
 
 ACER <- Allpam %>%
-  filter(species == "ACER")
+  filter(species == "ACER") %>%
+  mutate(Geno = case_when(Geno == "07" ~ "07",
+                          Geno == "31.0" ~ "31",
+                          Geno == "34.0" ~ "34",
+                          Geno == "41.0" ~ "41",
+                          Geno == "48.0" ~ "48",
+                          Geno == "50.0" ~ "50",
+                          Geno == "62.0" ~ "62",
+                          Geno == "CM5" ~ "CM5"))
 ```
 
 # PAST ED50s PER GENO PER TIMEPOINT #
@@ -490,6 +498,8 @@ CourtPam <- readxl::read_xlsx("data/PAM/Courtney_Mote_Pam_Data.xlsx") %>%
   select(Genotype, FvFm = Y, Temp) %>%
   mutate(FacTemp = as.factor(Temp))
 
+CourtPam$FvFm<- as.numeric(CourtPam$FvFm)
+
   
 Court_df <- CourtPam %>%
   filter(Temp == 37 | Temp == 34.4 | Temp == 32.9 | Temp == 30.2) %>%
@@ -499,12 +509,15 @@ Court_df <- CourtPam %>%
                           Genotype == "AC50" ~ "50",
                           Genotype == "AC62" ~ "62")) %>%
   select(Geno, FacTemp, Temp, FvFm) %>%
+  group_by(Geno, Temp) %>%
+  mutate(Genoavg = mean(FvFm)) %>%
+  ungroup() %>%
+  select(Geno, Temp, FacTemp, FvFm = Genoavg) %>%
   filter(Geno > 0)
 
 
 Court_df$Geno<-as.factor(Court_df$Geno)
 Court_df$Temp<- as.integer(Court_df$Temp)
-Court_df$FvFm<- as.numeric(Court_df$FvFm)
 Court_df<-as.data.frame(Court_df)
 
 str(Court_df)
@@ -547,3 +560,35 @@ Court_ED50 <- setDT(Court_ED_df, keep.rownames = "Geno") %>%
 Court_ED50_geno <- Court_ED50 %>%
   select(Genotype, ED50 = Estimate)
 ```
+
+# TRYING TO PLOT ED50 CURVES #
+```{r}
+
+# https://github.com/BarshisLab/CBASS-vs-RSS-Physiology/blob/main/Figures/Figure%204/Fig4_PAM_plotting.R
+
+a <- Ross_df %>%
+  mutate(run = "Ross") %>%
+  select(Geno, Temp, FvFm, run)
+
+b <- Court_df %>%
+  mutate(run = "Courtney")%>%
+  select(Geno, Temp, FvFm, run)
+
+b <- unique(b)
+
+c <- Acer_T3 %>%
+  mutate(run = "Barshis") %>%
+  select(Geno, Temp = Temperature, FvFm, run)
+
+d <-rbind(a, b, c) %>%
+  filter(Geno != "CM5") 
+
+dose_resp <- y ~ min + ((max - min) / (1 + exp(hill_coefficient * (ec50 - x))))
+
+ggplot(d, aes(x = Temp, y = FvFm, color = run)) +
+  geom_point() +
+  facet_wrap(~Geno) 
+
+
+```
+
