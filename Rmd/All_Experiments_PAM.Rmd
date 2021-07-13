@@ -561,34 +561,430 @@ Court_ED50_geno <- Court_ED50 %>%
   select(Genotype, ED50 = Estimate)
 ```
 
-# TRYING TO PLOT ED50 CURVES #
+# COMBINE ROSS, COURTNEY, AND BARSHIS' DATA AS 4 TEMP EXPERIMENTS #
 ```{r}
-
-# https://github.com/BarshisLab/CBASS-vs-RSS-Physiology/blob/main/Figures/Figure%204/Fig4_PAM_plotting.R
-
-a <- Ross_df %>%
+Ross_run <- Ross_df %>%
   mutate(run = "Ross") %>%
   select(Geno, Temp, FvFm, run)
 
-b <- Court_df %>%
+Court_run <- Court_df %>%
   mutate(run = "Courtney")%>%
   select(Geno, Temp, FvFm, run)
 
-b <- unique(b)
+Court_run <- unique(Court_run)
 
-c <- Acer_T3 %>%
+Barshis_run <- Acer_T3 %>%
   mutate(run = "Barshis") %>%
   select(Geno, Temp = Temperature, FvFm, run)
 
-d <-rbind(a, b, c) %>%
-  filter(Geno != "CM5") 
+allruns <-rbind(a, b, c) %>%
+  filter(Geno != "CM5") %>%
+  mutate(ID = paste(Geno, run))
 
-dose_resp <- y ~ min + ((max - min) / (1 + exp(hill_coefficient * (ec50 - x))))
-
-ggplot(d, aes(x = Temp, y = FvFm, color = run)) +
+ggplot(allruns, aes(x = Temp, y = FvFm, color = run)) +
   geom_point() +
   facet_wrap(~Geno) 
 
+```
 
+# Generate curves and ED50s #
+```{r}
+DRC <- drm(FvFm ~ Temp, data = allruns, curveid = Geno, fct = LL.3(names = c('hill', 'max', 'ed50')))
+mselect(DRC, list(LL.2(), LL.4(), LL.5(), LL2.2(), LL2.3(), LL2.4(), LL2.5(), AR.2(), AR.3(), EXD.2(), EXD.3()), icfct = AIC)
+modelFit(DRC)
+summary(DRC)
+plot(DRC)
+
+#extract ED50
+geno_coeff<-DRC$coefficients[39:57]
+geno_coeffs<-data.frame(geno_coeff)
+
+#Run full model
+CBASS <- drm(FvFm ~ Temp, data = allruns, fct = LL.3())
+summary(CBASS)
+plot(CBASS)
+```
+
+#RUN MODEL FOR EACH GENOTYPE RUN # 
+```{r}
+###### GENOTYPE 07 ######
+AC07drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="07",], fct = LL.3())
+summary(AC07drc_R)
+plot(AC07drc_R)
+
+AC07drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="07",], fct = LL.3())
+summary(AC07drc_C)
+plot(AC07drc_C)
+
+AC07drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="07",], fct = LL.3())
+summary(AC07drc_B)
+plot(AC07drc_B)
+
+AC07_ED50_R <- data.frame(ED(AC07drc_R, c(50)))%>%round(digits = 2)
+AC07_ED50_C <- data.frame(ED(AC07drc_C, c(50)))%>%round(digits = 2)
+AC07_ED50_B <- data.frame(ED(AC07drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 31 ######
+AC31drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="31",], fct = LL.3())
+summary(AC31drc_R)
+plot(AC31drc_R)
+
+AC31drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="31",], fct = LL.3())
+summary(AC31drc_C)
+plot(AC31drc_C)
+
+AC31drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="31",], fct = LL.3())
+summary(AC31drc_B)
+plot(AC31drc_B)
+
+AC31_ED50_R <- data.frame(ED(AC31drc_R, c(50)))%>%round(digits = 2)
+AC31_ED50_C <- data.frame(ED(AC31drc_C, c(50)))%>%round(digits = 2)
+AC31_ED50_B <- data.frame(ED(AC31drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 34 ######
+AC34drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="34",], fct = LL.3())
+summary(AC34drc_R)
+plot(AC34drc_R)
+
+AC34drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="34",], fct = LL.3())
+summary(AC34drc_B)
+plot(AC34drc_B)
+
+AC34_ED50_R <- data.frame(ED(AC34drc_R, c(50)))%>%round(digits = 2)
+AC34_ED50_C <- data.frame(ED(AC34drc_C, c(50)))%>%round(digits = 2)
+AC34_ED50_B <- data.frame(ED(AC34drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 41 ######
+AC41drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="41",], fct = LL.3())
+summary(AC41drc_R)
+plot(AC41drc_R)
+
+AC41drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="41",], fct = LL.3())
+summary(AC41drc_C)
+plot(AC41drc_C)
+
+AC41drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="41",], fct = LL.3())
+summary(AC41drc_B)
+plot(AC41drc_B)
+
+AC41_ED50_R <- data.frame(ED(AC41drc_R, c(50)))%>%round(digits = 2)
+AC41_ED50_C <- data.frame(ED(AC41drc_C, c(50)))%>%round(digits = 2)
+AC41_ED50_B <- data.frame(ED(AC41drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 48 ######
+AC48drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="48",], fct = LL.3())
+summary(AC48drc_R)
+plot(AC48drc_R)
+
+AC48drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="48",], fct = LL.3())
+summary(AC07drc_C)
+plot(AC07drc_C)
+
+AC48drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="48",], fct = LL.3())
+summary(AC48drc_B)
+plot(AC48drc_B)
+
+AC48_ED50_R <- data.frame(ED(AC48drc_R, c(50)))%>%round(digits = 2)
+AC48_ED50_C <- data.frame(ED(AC48drc_C, c(50)))%>%round(digits = 2)
+AC48_ED50_B <- data.frame(ED(AC48drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 50 ######
+AC50drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="50",], fct = LL.3())
+summary(AC50drc_R)
+plot(AC50drc_R)
+
+AC50drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="50",], fct = LL.3())
+summary(AC50drc_C)
+plot(AC50drc_C)
+
+AC50drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="50",], fct = LL.3())
+summary(AC50drc_B)
+plot(AC50drc_B)
+
+AC50_ED50_R <- data.frame(ED(AC50drc_R, c(50)))%>%round(digits = 2)
+AC50_ED50_C <- data.frame(ED(AC50drc_C, c(50)))%>%round(digits = 2)
+AC50_ED50_B <- data.frame(ED(AC50drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 62 ######
+AC62drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="62",], fct = LL.3())
+summary(AC62drc_R)
+plot(AC62drc_R)
+
+AC62drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="62",], fct = LL.3())
+summary(AC62drc_C)
+plot(AC62drc_C)
+
+AC62drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="62",], fct = LL.3())
+summary(AC62drc_B)
+plot(AC62drc_B)
+
+AC62_ED50_R <- data.frame(ED(AC62drc_R, c(50)))%>%round(digits = 2)
+AC62_ED50_C <- data.frame(ED(AC62drc_C, c(50)))%>%round(digits = 2)
+AC62_ED50_B <- data.frame(ED(AC62drc_B, c(50)))%>%round(digits = 2)
+```
+
+#### Combine ED50 data plus predict curves from models for plotting ####
+```{r}
+# Overall DRC predictors
+CBASS_preddata = data.frame(Temp = seq(30,38, length.out = 100))
+CBASS_pred = as.data.frame(predict(CBASS, newdata = CBASS_preddata, interval = 'confidence'))
+CBASS_preddata = data.frame(CBASS_preddata, Y = CBASS_pred$Prediction, Lower = CBASS_pred$Lower, Upper = CBASS_pred$Upper)
+
+
+# Genotype predictors
+
+#### GENOTYPE 07 ####
+AC07_pred_R = as.data.frame(predict(AC07drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_R = data.frame(CBASS_preddata, Y = AC07_pred_R$Prediction, Lower = AC07_pred_R$Lower, Upper = AC07_pred_R$Upper)
+
+AC07_pred_C = as.data.frame(predict(AC07drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_C = data.frame(CBASS_preddata, Y = AC07_pred_C$Prediction, Lower = AC07_pred_C$Lower, Upper = AC07_pred_C$Upper)
+
+AC07_pred_B = as.data.frame(predict(AC07drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_B = data.frame(CBASS_preddata, Y = AC07_pred_B$Prediction, Lower = AC07_pred_B$Lower, Upper = AC07_pred_B$Upper)
+
+#### GENOTYPE 31 ####
+AC31_pred_R = as.data.frame(predict(AC31drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_R = data.frame(CBASS_preddata, Y = AC31_pred_R$Prediction, Lower = AC31_pred_R$Lower, Upper = AC31_pred_R$Upper)
+
+AC31_pred_C = as.data.frame(predict(AC31drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_C = data.frame(CBASS_preddata, Y = AC31_pred_C$Prediction, Lower = AC31_pred_C$Lower, Upper = AC31_pred_C$Upper)
+
+AC31_pred_B = as.data.frame(predict(AC31drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_B = data.frame(CBASS_preddata, Y = AC31_pred_B$Prediction, Lower = AC31_pred_B$Lower, Upper = AC31_pred_B$Upper)
+
+#### GENOTYPE 34 ####
+AC34_pred_R = as.data.frame(predict(AC34drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC34_preddata_R = data.frame(CBASS_preddata, Y = AC34_pred_R$Prediction, Lower = AC34_pred_R$Lower, Upper = AC34_pred_R$Upper)
+
+AC34_pred_B = as.data.frame(predict(AC34drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC34_preddata_B = data.frame(CBASS_preddata, Y = AC34_pred_B$Prediction, Lower = AC34_pred_B$Lower, Upper = AC34_pred_B$Upper)
+
+#### GENOTYPE 41 ####
+AC41_pred_R = as.data.frame(predict(AC07drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_R = data.frame(CBASS_preddata, Y = AC41_pred_R$Prediction, Lower = AC41_pred_R$Lower, Upper = AC41_pred_R$Upper)
+
+AC41_pred_C = as.data.frame(predict(AC41drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_C = data.frame(CBASS_preddata, Y = AC41_pred_C$Prediction, Lower = AC41_pred_C$Lower, Upper = AC41_pred_C$Upper)
+
+AC41_pred_B = as.data.frame(predict(AC41drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_B = data.frame(CBASS_preddata, Y = AC41_pred_B$Prediction, Lower = AC41_pred_B$Lower, Upper = AC41_pred_B$Upper)
+
+#### GENOTYPE 48 ####
+AC48_pred_R = as.data.frame(predict(AC48drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_R = data.frame(CBASS_preddata, Y = AC48_pred_R$Prediction, Lower = AC48_pred_R$Lower, Upper = AC48_pred_R$Upper)
+
+AC48_pred_C = as.data.frame(predict(AC48drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_C = data.frame(CBASS_preddata, Y = AC48_pred_C$Prediction, Lower = AC48_pred_C$Lower, Upper = AC48_pred_C$Upper)
+
+AC48_pred_B = as.data.frame(predict(AC48drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_B = data.frame(CBASS_preddata, Y = AC48_pred_B$Prediction, Lower = AC48_pred_B$Lower, Upper = AC48_pred_B$Upper)
+
+#### GENOTYPE 50 ####
+AC50_pred_R = as.data.frame(predict(AC50drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_R = data.frame(CBASS_preddata, Y = AC50_pred_R$Prediction, Lower = AC50_pred_R$Lower, Upper = AC50_pred_R$Upper)
+
+AC50_pred_C = as.data.frame(predict(AC50drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_C = data.frame(CBASS_preddata, Y = AC50_pred_C$Prediction, Lower = AC50_pred_C$Lower, Upper = AC50_pred_C$Upper)
+
+AC50_pred_B = as.data.frame(predict(AC50drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_B = data.frame(CBASS_preddata, Y = AC50_pred_B$Prediction, Lower = AC50_pred_B$Lower, Upper = AC50_pred_B$Upper)
+
+#### GENOTYPE 62 ####
+AC62_pred_R = as.data.frame(predict(AC62drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_R = data.frame(CBASS_preddata, Y = AC62_pred_R$Prediction, Lower = AC62_pred_R$Lower, Upper = AC62_pred_R$Upper)
+
+AC62_pred_C = as.data.frame(predict(AC62drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_C = data.frame(CBASS_preddata, Y = AC62_pred_C$Prediction, Lower = AC62_pred_C$Lower, Upper = AC62_pred_C$Upper)
+
+AC62_pred_B = as.data.frame(predict(AC62drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_B = data.frame(CBASS_preddata, Y = AC62_pred_B$Prediction, Lower = AC62_pred_B$Lower, Upper = AC62_pred_B$Upper)
+```
+
+# PLOT  DRC FOR EACH GENO FOR EACH RUN # 
+```{r}
+#################### GENOTYPE 07 ####################
+gen07 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "07"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 07") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC07_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC07_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC07_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC07_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC07_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC07_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+
+#################### GENOTYPE 31 ####################
+
+
+gen31 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "31"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 31") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC31_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC31_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC31_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC31_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC31_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC31_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+
+
+#################### GENOTYPE 34 ####################
+
+
+gen34 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "34"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 34") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC34_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC34_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC34_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC34_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC34_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC34_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) 
+
+#################### GENOTYPE 41 ####################
+gen41 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "41"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 41") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC41_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC41_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC41_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC41_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC41_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC41_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+
+#################### GENOTYPE 48 ####################
+
+
+gen48 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "48"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 48") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC48_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC48_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC48_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC48_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC48_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC48_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) 
+
+
+####################  GENOTYPE 50 #################### 
+gen50 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "50"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 50") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC50_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC50_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC50_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC50_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC50_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC50_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+
+#################### GENOTYPE 62 ####################
+
+
+gen62 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "62"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 62") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC62_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC62_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC62_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC50_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC62_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC62_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+```
+
+# Combine all Genotype Figures #
+```{r}
+library(ggpubr)
+
+ggarrange(gen07, gen31, gen34, gen41, gen48, gen50, gen62) %>%
+  annotate_figure(left = text_grob("FvFm", rot = 90), bottom = text_grob("Temp"))
+
+ggsave(filename = "plots/DRC_Genofit_per_Experiment.png", width = 200, height = 200, units = "mm")
 ```
 
