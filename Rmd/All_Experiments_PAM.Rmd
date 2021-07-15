@@ -971,7 +971,7 @@ gen62 <- ggplot() +
   
   geom_line(data = AC62_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
   geom_vline(data = AC62_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
-  geom_text(aes(label = paste("Barshis", AC50_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  geom_text(aes(label = paste("Barshis", AC62_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
   
   geom_line(data = AC62_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
   geom_vline(data = AC62_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +

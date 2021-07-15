@@ -342,8 +342,455 @@ dev.off()
 
 ```
 
-# PLOT ROSS' DATA AS 4 TEMP #
+# PLOT T3, T4, T5 SAMPLES DRC FROM T3 SAMPLING TIMEPOINT #
 ```{r}
+T_three <- T3PAM %>%
+  filter(TP_ID == "T3")
+
+T_four <- T3PAM %>%
+  filter(TP_ID == "T4")
+
+T_five <- T3PAM %>%
+  filter(TP_ID == "T5")
+
+###### GENOTYPE 07 ######
+AC07drc_T3 <- drm(FvFm ~ Temp, data = T_three[T_three$Geno=="07",], fct = LL.3())
+summary(AC07drc_T3)
+plot(AC07drc_T3)
+
+AC07drc_T4 <- drm(FvFm ~ Temp, data = T_four[T_four$Geno=="07",], fct = LL.3())
+summary(AC07drc_T4)
+plot(AC07drc_T4)
+
+AC07drc_T5 <- drm(FvFm ~ Temp, data = T_five[T_five$Geno=="07",], fct = LL.3())
+summary(AC07drc_T5)
+plot(AC07drc_T5)
+
+AC07_ED50_T3 <- data.frame(ED(AC07drc_T3, c(50)))%>%round(digits = 2)
+AC07_ED50_T4 <- data.frame(ED(AC07drc_T4, c(50)))%>%round(digits = 2)
+AC07_ED50_T5 <- data.frame(ED(AC07drc_T5, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 31 ######
+AC31drc_T3 <- drm(FvFm ~ Temp, data = T_three[T_three$Geno=="31.0",], fct = LL.3())
+summary(AC31drc_T3)
+plot(AC31drc_T3)
+
+AC31drc_T4 <- drm(FvFm ~ Temp, data = T_four[T_four$Geno=="31.0",], fct = LL.3())
+summary(AC07drc_T4)
+plot(AC07drc_T4)
+
+AC31drc_T5 <- drm(FvFm ~ Temp, data = T_five[T_five$Geno=="31.0",], fct = LL.3())
+summary(AC31drc_T5)
+plot(AC31drc_T5)
+
+AC31_ED50_T3 <- data.frame(ED(AC31drc_T3, c(50)))%>%round(digits = 2)
+AC31_ED50_T4 <- data.frame(ED(AC31drc_T4, c(50)))%>%round(digits = 2)
+AC31_ED50_T5 <- data.frame(ED(AC31drc_T5, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 34 ######
+AC34drc_T3 <- drm(FvFm ~ Temp, data = T_three[T_three$Geno=="34.0",], fct = LL.3())
+summary(AC34drc_T3)
+plot(AC34drc_T3)
+
+AC34drc_T4 <- drm(FvFm ~ Temp, data = T_four[T_four$Geno=="34.0",], fct = LL.3())
+summary(AC07drc_T4)
+plot(AC07drc_T4)
+
+AC34drc_T5 <- drm(FvFm ~ Temp, data = T_five[T_five$Geno=="34.0",], fct = LL.3())
+summary(AC31drc_T5)
+plot(AC31drc_T5)
+
+AC34_ED50_T3 <- data.frame(ED(AC34drc_T3, c(50)))%>%round(digits = 2)
+AC34_ED50_T4 <- data.frame(ED(AC34drc_T4, c(50)))%>%round(digits = 2)
+AC34_ED50_T5 <- data.frame(ED(AC34drc_T5, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 41 ######
+AC41drc_T3 <- drm(FvFm ~ Temp, data = T_three[T_three$Geno=="41.0",], fct = LL.3())
+summary(AC41drc_T3)
+plot(AC41drc_T3)
+
+AC41drc_T4 <- drm(FvFm ~ Temp, data = T_four[T_four$Geno=="41.0",], fct = LL.3())
+summary(AC41drc_T4)
+plot(AC41drc_T4)
+
+AC41drc_T5 <- drm(FvFm ~ Temp, data = T_five[T_five$Geno=="41.0",], fct = LL.3())
+summary(AC41drc_T5)
+plot(AC41drc_T5)
+
+AC41_ED50_T3 <- data.frame(ED(AC41drc_T3, c(50)))%>%round(digits = 2)
+AC41_ED50_T4 <- data.frame(ED(AC41drc_T4, c(50)))%>%round(digits = 2)
+AC41_ED50_T5 <- data.frame(ED(AC41drc_T5, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 48 ######
+AC48drc_T3 <- drm(FvFm ~ Temp, data = T_three[T_three$Geno=="48.0",], fct = LL.3())
+summary(AC48drc_T3)
+plot(AC48drc_T3)
+
+AC48drc_T4 <- drm(FvFm ~ Temp, data = T_four[T_four$Geno=="48.0",], fct = LL.3())
+summary(AC48drc_T4)
+plot(AC48drc_T4)
+
+AC48drc_T5 <- drm(FvFm ~ Temp, data = T_five[T_five$Geno=="48.0",], fct = LL.3())
+summary(AC48drc_T5)
+plot(AC48drc_T5)
+
+AC48_ED50_T3 <- data.frame(ED(AC48drc_T3, c(50)))%>%round(digits = 2)
+AC48_ED50_T4 <- data.frame(ED(AC48drc_T4, c(50)))%>%round(digits = 2)
+AC48_ED50_T5 <- data.frame(ED(AC48drc_T5, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 50 ######
+AC50drc_T3 <- drm(FvFm ~ Temp, data = T_three[T_three$Geno=="50.0",], fct = LL.3())
+summary(AC50drc_T3)
+plot(AC50drc_T3)
+
+AC50drc_T4 <- drm(FvFm ~ Temp, data = T_four[T_four$Geno=="50.0",], fct = LL.3())
+summary(AC50drc_T4)
+plot(AC50drc_T4)
+
+AC50drc_T5 <- drm(FvFm ~ Temp, data = T_five[T_five$Geno=="50.0",], fct = LL.3())
+summary(AC50drc_T5)
+plot(AC50drc_T5)
+
+AC50_ED50_T3 <- data.frame(ED(AC50drc_T3, c(50)))%>%round(digits = 2)
+AC50_ED50_T4 <- data.frame(ED(AC50drc_T4, c(50)))%>%round(digits = 2)
+AC50_ED50_T5 <- data.frame(ED(AC50drc_T5, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 62 ######
+AC62drc_T3 <- drm(FvFm ~ Temp, data = T_three[T_three$Geno=="62.0",], fct = LL.3())
+summary(AC62drc_T3)
+plot(AC62drc_T3)
+
+AC62drc_T4 <- drm(FvFm ~ Temp, data = T_four[T_four$Geno=="62.0",], fct = LL.3())
+summary(AC62drc_T4)
+plot(AC62drc_T4)
+
+AC62drc_T5 <- drm(FvFm ~ Temp, data = T_five[T_five$Geno=="62.0",], fct = LL.3())
+summary(AC62drc_T5)
+plot(AC62drc_T5)
+
+AC62_ED50_T3 <- data.frame(ED(AC62drc_T3, c(50)))%>%round(digits = 2)
+AC62_ED50_T4 <- data.frame(ED(AC62drc_T4, c(50)))%>%round(digits = 2)
+AC62_ED50_T5 <- data.frame(ED(AC62drc_T5, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE CM5 ######
+ACCM5drc_T3 <- drm(FvFm ~ Temp, data = T_three[T_three$Geno=="CM5",], fct = LL.3())
+summary(ACCM5drc_T3)
+plot(ACCM5drc_T3)
+
+ACCM5drc_T4 <- drm(FvFm ~ Temp, data = T_four[T_four$Geno=="CM5",], fct = LL.3())
+summary(ACCM5drc_T4)
+plot(ACCM5drc_T4)
+
+ACCM5drc_T5 <- drm(FvFm ~ Temp, data = T_five[T_five$Geno=="CM5",], fct = LL.3())
+summary(ACCM5drc_T5)
+plot(ACCM5drc_T5)
+
+ACCM5_ED50_T3 <- data.frame(ED(ACCM5drc_T3, c(50)))%>%round(digits = 2)
+ACCM5_ED50_T4 <- data.frame(ED(ACCM5drc_T4, c(50)))%>%round(digits = 2)
+ACCM5_ED50_T5 <- data.frame(ED(ACCM5drc_T5, c(50)))%>%round(digits = 2)
 
 ```
+
+#### Combine ED50 data plus predict curves from models for plotting ####
+```{r}
+# Overall DRC predictors
+CBASS_preddata = data.frame(Temp = seq(30,38, length.out = 100))
+CBASS_pred = as.data.frame(predict(CBASS, newdata = CBASS_preddata, interval = 'confidence'))
+CBASS_preddata = data.frame(CBASS_preddata, Y = CBASS_pred$Prediction, Lower = CBASS_pred$Lower, Upper = CBASS_pred$Upper)
+
+
+# Genotype predictors
+
+#### GENOTYPE 07 ####
+AC07_pred_T3 = as.data.frame(predict(AC07drc_T3, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_T3 = data.frame(CBASS_preddata, Y = AC07_pred_T3$Prediction, Lower = AC07_pred_T3$Lower, Upper = AC07_pred_T3$Upper)
+
+AC07_pred_T4 = as.data.frame(predict(AC07drc_T4, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_T4 = data.frame(CBASS_preddata, Y = AC07_pred_T4$Prediction, Lower = AC07_pred_T4$Lower, Upper = AC07_pred_T4$Upper)
+
+AC07_pred_T5 = as.data.frame(predict(AC07drc_T5, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_T5 = data.frame(CBASS_preddata, Y = AC07_pred_T5$Prediction, Lower = AC07_pred_T5$Lower, Upper = AC07_pred_T5$Upper)
+
+#### GENOTYPE 31 ####
+AC31_pred_T3 = as.data.frame(predict(AC31drc_T3, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_T3 = data.frame(CBASS_preddata, Y = AC31_pred_T3$Prediction, Lower = AC31_pred_T3$Lower, Upper = AC31_pred_T3$Upper)
+
+AC31_pred_T4 = as.data.frame(predict(AC31drc_T4, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_T4 = data.frame(CBASS_preddata, Y = AC31_pred_T4$Prediction, Lower = AC31_pred_T4$Lower, Upper = AC31_pred_T4$Upper)
+
+AC31_pred_T5 = as.data.frame(predict(AC31drc_T5, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_T5 = data.frame(CBASS_preddata, Y = AC31_pred_T5$Prediction, Lower = AC31_pred_T5$Lower, Upper = AC31_pred_T5$Upper)
+
+#### GENOTYPE 34 ####
+AC34_pred_T3 = as.data.frame(predict(AC34drc_T3, newdata = CBASS_preddata, interval = 'confidence'))
+AC34_preddata_T3 = data.frame(CBASS_preddata, Y = AC34_pred_T3$Prediction, Lower = AC34_pred_T3$Lower, Upper = AC34_pred_T3$Upper)
+
+AC34_pred_T4 = as.data.frame(predict(AC34drc_T4, newdata = CBASS_preddata, interval = 'confidence'))
+AC34_preddata_T4 = data.frame(CBASS_preddata, Y = AC34_pred_T4$Prediction, Lower = AC34_pred_T4$Lower, Upper = AC34_pred_T4$Upper)
+
+AC34_pred_T5 = as.data.frame(predict(AC34drc_T5, newdata = CBASS_preddata, interval = 'confidence'))
+AC34_preddata_T5 = data.frame(CBASS_preddata, Y = AC34_pred_T5$Prediction, Lower = AC34_pred_T5$Lower, Upper = AC34_pred_T5$Upper)
+
+#### GENOTYPE 41 ####
+AC41_pred_T3 = as.data.frame(predict(AC41drc_T3, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_T3 = data.frame(CBASS_preddata, Y = AC41_pred_T3$Prediction, Lower = AC41_pred_T3$Lower, Upper = AC41_pred_T3$Upper)
+
+AC41_pred_T4 = as.data.frame(predict(AC41drc_T4, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_T4 = data.frame(CBASS_preddata, Y = AC41_pred_T4$Prediction, Lower = AC41_pred_T4$Lower, Upper = AC41_pred_T4$Upper)
+
+AC41_pred_T5 = as.data.frame(predict(AC41drc_T5, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_T5 = data.frame(CBASS_preddata, Y = AC41_pred_T5$Prediction, Lower = AC41_pred_T5$Lower, Upper = AC41_pred_T5$Upper)
+
+#### GENOTYPE 48 ####
+AC48_pred_T3 = as.data.frame(predict(AC48drc_T3, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_T3 = data.frame(CBASS_preddata, Y = AC48_pred_T3$Prediction, Lower = AC48_pred_T3$Lower, Upper = AC48_pred_T3$Upper)
+
+AC48_pred_T4 = as.data.frame(predict(AC48drc_T4, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_T4 = data.frame(CBASS_preddata, Y = AC48_pred_T4$Prediction, Lower = AC48_pred_T4$Lower, Upper = AC48_pred_T4$Upper)
+
+AC48_pred_T5 = as.data.frame(predict(AC48drc_T5, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_T5 = data.frame(CBASS_preddata, Y = AC48_pred_T5$Prediction, Lower = AC48_pred_T5$Lower, Upper = AC48_pred_T5$Upper)
+
+#### GENOTYPE 50 ####
+AC50_pred_T3 = as.data.frame(predict(AC50drc_T3, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_T3 = data.frame(CBASS_preddata, Y = AC50_pred_T3$Prediction, Lower = AC50_pred_T3$Lower, Upper = AC50_pred_T3$Upper)
+
+AC50_pred_T4 = as.data.frame(predict(AC50drc_T4, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_T4 = data.frame(CBASS_preddata, Y = AC50_pred_T4$Prediction, Lower = AC50_pred_T4$Lower, Upper = AC50_pred_T4$Upper)
+
+AC50_pred_T5 = as.data.frame(predict(AC50drc_T5, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_T5 = data.frame(CBASS_preddata, Y = AC50_pred_T5$Prediction, Lower = AC50_pred_T5$Lower, Upper = AC50_pred_T5$Upper)
+
+#### GENOTYPE 62 ####
+AC62_pred_T3 = as.data.frame(predict(AC62drc_T3, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_T3 = data.frame(CBASS_preddata, Y = AC62_pred_T3$Prediction, Lower = AC62_pred_T3$Lower, Upper = AC62_pred_T3$Upper)
+
+AC62_pred_T4 = as.data.frame(predict(AC62drc_T4, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_T4 = data.frame(CBASS_preddata, Y = AC62_pred_T4$Prediction, Lower = AC62_pred_T4$Lower, Upper = AC62_pred_T4$Upper)
+
+AC62_pred_T5 = as.data.frame(predict(AC62drc_T5, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_T5 = data.frame(CBASS_preddata, Y = AC62_pred_T5$Prediction, Lower = AC62_pred_T5$Lower, Upper = AC62_pred_T5$Upper)
+
+#### GENOTYPE CM5 ####
+ACCM5_pred_T3 = as.data.frame(predict(AC62drc_T3, newdata = CBASS_preddata, interval = 'confidence'))
+ACCM5_preddata_T3 = data.frame(CBASS_preddata, Y = ACCM5_pred_T3$Prediction, Lower = ACCM5_pred_T3$Lower, Upper = ACCM5_pred_T3$Upper)
+
+ACCM5_pred_T4 = as.data.frame(predict(ACCM5drc_T4, newdata = CBASS_preddata, interval = 'confidence'))
+ACCM5_preddata_T4 = data.frame(CBASS_preddata, Y = ACCM5_pred_T4$Prediction, Lower = ACCM5_pred_T4$Lower, Upper = ACCM5_pred_T4$Upper)
+
+ACCM5_pred_T5 = as.data.frame(predict(ACCM5drc_T5, newdata = CBASS_preddata, interval = 'confidence'))
+ACCM5_preddata_T5 = data.frame(CBASS_preddata, Y = ACCM5_pred_T5$Prediction, Lower = ACCM5_pred_T5$Lower, Upper = ACCM5_pred_T5$Upper)
+```
+
+# PLOT  DRC FOR EACH GENO FOR EACH RUN # 
+```{r}
+#################### GENOTYPE 07 ####################
+gen07 <- ggplot() +
+  geom_point(data = T3PAM%>%filter(Geno == "07"), aes(x = Temp, y = FvFm, color=TP_ID), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 07") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC07_preddata_T3, aes(x = Temp, y = Y), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_T3, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("T3", AC07_ED50_T3$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC07_preddata_T4, aes(x = Temp, y = Y), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_T4, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("T4", AC07_ED50_T4$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC07_preddata_T5, aes(x = Temp, y = Y), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_T5, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("T5", AC07_ED50_T5$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+#################### GENOTYPE 31 ####################
+gen31 <- ggplot() +
+  geom_point(data = T3PAM%>%filter(Geno == "31.0"), aes(x = Temp, y = FvFm, color=TP_ID), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 31") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC31_preddata_T3, aes(x = Temp, y = Y), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_T3, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("T3", AC31_ED50_T3$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC31_preddata_T4, aes(x = Temp, y = Y), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_T4, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("T4", AC31_ED50_T4$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC31_preddata_T5, aes(x = Temp, y = Y), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_T5, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("T5", AC31_ED50_T5$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3)
+
+#################### GENOTYPE 34 ####################
+gen34 <- ggplot() +
+  geom_point(data = T3PAM%>%filter(Geno == "34.0"), aes(x = Temp, y = FvFm, color=TP_ID), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", 
+                              "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 34") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC34_preddata_T3, aes(x = Temp, y = Y), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC34_ED50_T3, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("T3", AC34_ED50_T3$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC34_preddata_T4, aes(x = Temp, y = Y), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC34_ED50_T4, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("T4", AC34_ED50_T4$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC34_preddata_T5, aes(x = Temp, y = Y), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC34_ED50_T5, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("T5", AC34_ED50_T5$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3)
+
+#################### GENOTYPE 41 ####################
+gen41 <- ggplot() +
+  geom_point(data = T3PAM%>%filter(Geno == "41.0"), aes(x = Temp, y = FvFm, color=TP_ID), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 41") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC41_preddata_T3, aes(x = Temp, y = Y), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_T3, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("T3", AC41_ED50_T3$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC41_preddata_T4, aes(x = Temp, y = Y), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_T4, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("T4", AC41_ED50_T4$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC41_preddata_T5, aes(x = Temp, y = Y), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_T5, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("T5", AC41_ED50_T5$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3)
+
+#################### GENOTYPE 48 ####################
+gen48 <- ggplot() +
+  geom_point(data = T3PAM%>%filter(Geno == "48.0"), aes(x = Temp, y = FvFm, color=TP_ID), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 48") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC48_preddata_T3, aes(x = Temp, y = Y), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC48_ED50_T3, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("T3", AC48_ED50_T3$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC48_preddata_T4, aes(x = Temp, y = Y), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC48_ED50_T4, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("T4", AC48_ED50_T4$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC48_preddata_T5, aes(x = Temp, y = Y), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC48_ED50_T5, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("T5", AC48_ED50_T5$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3)
+
+#################### GENOTYPE 50 ####################
+gen50 <- ggplot() +
+  geom_point(data = T3PAM%>%filter(Geno == "50.0"), aes(x = Temp, y = FvFm, color=TP_ID), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 50") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC50_preddata_T3, aes(x = Temp, y = Y), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_T3, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("T3", AC50_ED50_T3$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC50_preddata_T4, aes(x = Temp, y = Y), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_T4, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("T4", AC50_ED50_T4$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC50_preddata_T5, aes(x = Temp, y = Y), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_T5, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("T5", AC50_ED50_T5$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3)
+
+#################### GENOTYPE 62 ####################
+gen62 <- ggplot() +
+  geom_point(data = T3PAM%>%filter(Geno == "62.0"), aes(x = Temp, y = FvFm, color=TP_ID), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 62") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC62_preddata_T3, aes(x = Temp, y = Y), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_T3, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("T3", AC62_ED50_T3$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC62_preddata_T4, aes(x = Temp, y = Y), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_T4, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("T4", AC62_ED50_T4$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC62_preddata_T5, aes(x = Temp, y = Y), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_T5, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("T5", AC62_ED50_T5$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3)
+
+#################### GENOTYPE CM5 ####################
+genCM5 <- ggplot() +
+  geom_point(data = T3PAM%>%filter(Geno == "CM5"), aes(x = Temp, y = FvFm, color=TP_ID), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype CM5") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = ACCM5_preddata_T3, aes(x = Temp, y = Y), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = ACCM5_ED50_T3, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("T3", ACCM5_ED50_T3$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = ACCM5_preddata_T4, aes(x = Temp, y = Y), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = ACCM5_ED50_T4, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("T4", ACCM5_ED50_T4$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = ACCM5_preddata_T5, aes(x = Temp, y = Y), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = ACCM5_ED50_T5, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("T5", ACCM5_ED50_T5$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3)
+```
+
+# Combine all Genotype Figures #
+```{r}
+library(ggpubr)
+
+ggarrange(gen07, gen31, gen34, gen41, gen48, gen50, gen62, genCM5) %>%
+  annotate_figure(left = text_grob("FvFm", rot = 90), bottom = text_grob("Temp"))
+
+ggsave(filename = "plots/genofits_T3_timepoints.png", width = 200, height = 200, units = "mm")
+
+
+```
+
+
+
+
 
