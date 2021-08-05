@@ -316,6 +316,7 @@ Acer_TP <- ACER %>%
   filter(TP_ID == "T1" | TP_ID == "T2" | TP_ID == "T3" | TP_ID == "T4" & Timepoint == "T4" | TP_ID == "T5" & Timepoint == "T5") %>%
   mutate(ID = paste(Geno,TP_ID))
 
+
 Acer_TP_DRC <- drm(FvFm ~ Temperature, data = Acer_TP, curveid = ID,
              fct = LL.3(names = c('hill', 'max', 'ed50')))
 
@@ -361,6 +362,110 @@ ggsave(filename = "plots/Acer_Rank_ED50_all_TP_genofits.png", width = 174, heigh
 
 ```
 
+
+```{r}
+Acer_all_T5 <- ACER %>%
+  filter(TP_ID == "T5") %>%
+  mutate(ID = paste(Geno, Timepoint))
+
+Acer_T5_DRC <- drm(FvFm ~ Temperature, data = Acer_all_T5, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Acer_T5_DRC)
+compParm(Acer_T5_DRC, 'ed50')
+compParm(Acer_T5_DRC, 'ed50', "-")
+plot(Acer_T5_DRC)
+
+Acer_T5_ED <- ED(Acer_T5_DRC, c(50), interval = "delta")
+
+Acer_ED_T5_df <- as.data.frame(Acer_T5_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":07", Geno) ~ "07",
+                              grepl(":31", Geno) ~ "31",
+                              grepl(":34", Geno) ~ "34",
+                              grepl(":41", Geno) ~ "41",
+                              grepl(":48", Geno) ~ "48",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl(":62", Geno) ~ "62",
+                              grepl(":CM5", Geno) ~ "CM5")) %>%
+  mutate(TP_ID = case_when(grepl("T1", Geno)~ "T1",
+                           grepl("T2", Geno)~ "T2",
+                           grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+select(-Geno, ED50 = Estimate) 
+
+Acer_ED50_T5 <- Acer_ED_T5_df %>%
+  select(Genotype, TP_ID, ED50)
+
+Genotype <- Acer_ED50_T5$Genotype
+
+ggplot(Acer_ED50_T5, aes(x = TP_ID, y = ED50, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype, nudge_x = 0.05) +
+  xlab("Timepoint") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  ggtitle("A.cer ED50s: All Timepoints")
+  
+
+ggsave(filename = "plots/Acer_Rank_ED50_all_TP_genofits.png", width = 174, height = 100, units = "mm")
+```
+
+
+
+
+
+
+
+```{r}
+T3_Acer <- ACER %>%
+  filter(Timepoint == "T3")%>%
+  mutate(ID = paste(Geno,TP_ID))
+
+Acer_T3_DRC <- drm(FvFm ~ Temperature, data = T3_Acer, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Acer_T3_DRC)
+compParm(Acer_T3_DRC, 'ed50')
+compParm(Acer_T3_DRC, 'ed50', "-")
+plot(Acer_T3_DRC)
+
+Acer_T3_ED <- ED(Acer_T3_DRC, c(50), interval = "delta")
+
+Acer_T3_ED_df <- as.data.frame(Acer_T3_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":07", Geno) ~ "07",
+                              grepl(":31", Geno) ~ "31",
+                              grepl(":34", Geno) ~ "34",
+                              grepl(":41", Geno) ~ "41",
+                              grepl(":48", Geno) ~ "48",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl(":62", Geno) ~ "62",
+                              grepl(":CM5", Geno) ~ "CM5")) %>%
+  mutate(TP_ID = case_when(grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+select(-Geno, ED50 = Estimate) 
+
+Acer_ED50_T3 <- Acer_T3_ED_df %>%
+  select(Genotype, TP_ID, ED50) %>%
+  filter(ED50 < 50) # Geno 08 T4 sample is very high 
+
+Genotype_T3 <- Acer_ED50_T3$Genotype
+
+ggplot(Acer_ED50_T3, aes(x = TP_ID, y = ED50, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype_T3, nudge_x = 0.25) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  ggtitle("A.cer ED50s: T3 Sampling Timepoint")
+
+ggsave(filename = "plots/Acer_T3_ED50_rank.png", width = 75, height = 100, units = "mm")
+
+
+```
+
 # ACER PAM MEASUREMENT PLOTTING #
 ```{r}
 ACER_PAM_TP <-  ACER %>%
@@ -390,6 +495,16 @@ ggplot(ACER_PAM_TP, aes(x = TP_ID, y = FvFm, color = Genotype)) +
   theme(legend.position = "none") +
   xlab("Timepoint") +
   ggtitle("A.cer FvFm: All Timepoints per Tank")
+
+ggplot(ACER_PAM_TP%>%filter(Treatment == "High"), aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point(size = 2) +
+  facet_wrap(~Genotype) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint") +
+  ggtitle("A.cer FvFm: All Timepoints per Control Tank ")
+
+ggsave(filename = "plots/Acer_Timepoints_per_Control.png", width = 150, height = 100, units = "mm")
   
 
 # Each Genotype per Timepoint #
@@ -400,6 +515,22 @@ ggplot(ACER_PAM_TP, aes(x = TP_ID, y = FvFm, color = Treatment)) +
   theme(legend.position = c(0.75,0.25)) +
   xlab("Timepoint") +
   ggtitle("A.cer FvFm: All Timepoints per Genotype")
+
+High <- ACER_PAM_TP %>%
+  filter(Treatment == "High") %>%
+  filter(TP_ID != "T1", TP_ID != "T2") 
+
+
+Genotype_High <- High$Genotype
+
+ggplot(High, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype_High, nudge_x = 0.25) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  ggtitle("A.cer ED50s: T3 Sampling Timepoint")
+
+ggsave(filename = "plots/Acer_Timepoints_per_High.png", width = 150, height = 100, units = "mm")
 
 ```
 
@@ -417,6 +548,8 @@ ggplot(Acer_T3, aes(x = Temperature, y = FvFm, color = Geno)) +
   theme(legend.position = "none") +
   xlab("Temperature") +
   ggtitle("A.cer FvFm: Across Temperature from T3 Samples")
+
+
 ```
 
 # CALC ROSS DATA AS 4 TEMP EXPERIMENT #
@@ -434,12 +567,15 @@ Ross_df <- RossPam %>%
                               geno == "ML41" ~ "41",
                               geno == "ML48" ~ "48",
                               geno == "ML50" ~ "50",
-                              geno == "ML62" ~ "62")) %>%
+                              geno == "ML62" ~ "62",
+                              geno == "CM5" ~ "CM5")) %>%
   filter(Geno > 0) %>%
-  group_by(Geno, Temp) %>%
+  dplyr::group_by(Geno, Temp) %>%
   mutate(Genoavg = mean(FvFm)) %>%
   ungroup() %>%
   select(Geno, Temp, FacTemp, FvFm = Genoavg)
+
+
 
 Ross_df <- unique(Ross_df)
 
@@ -577,8 +713,7 @@ Barshis_run <- Acer_T3 %>%
   mutate(run = "Barshis") %>%
   select(Geno, Temp = Temperature, FvFm, run)
 
-allruns <-rbind(a, b, c) %>%
-  filter(Geno != "CM5") %>%
+allruns <-rbind(Ross_run, Court_run, Barshis_run) %>%
   mutate(ID = paste(Geno, run))
 
 ggplot(allruns, aes(x = Temp, y = FvFm, color = run)) +
@@ -721,6 +856,18 @@ plot(AC62drc_B)
 AC62_ED50_R <- data.frame(ED(AC62drc_R, c(50)))%>%round(digits = 2)
 AC62_ED50_C <- data.frame(ED(AC62drc_C, c(50)))%>%round(digits = 2)
 AC62_ED50_B <- data.frame(ED(AC62drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE CM5 ######
+ACCM5drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="CM5",], fct = LL.3())
+summary(AC62drc_R)
+plot(AC62drc_R)
+
+ACCM5drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="CM5",], fct = LL.3())
+summary(ACCM5drc_B)
+plot(ACCM5drc_B)
+
+ACCM5_ED50_R <- data.frame(ED(ACCM5drc_R, c(50)))%>%round(digits = 2)
+ACCM5_ED50_B <- data.frame(ED(ACCM5drc_B, c(50)))%>%round(digits = 2)
 ```
 
 #### Combine ED50 data plus predict curves from models for plotting ####
@@ -799,6 +946,13 @@ AC62_preddata_C = data.frame(CBASS_preddata, Y = AC62_pred_C$Prediction, Lower =
 
 AC62_pred_B = as.data.frame(predict(AC62drc_B, newdata = CBASS_preddata, interval = 'confidence'))
 AC62_preddata_B = data.frame(CBASS_preddata, Y = AC62_pred_B$Prediction, Lower = AC62_pred_B$Lower, Upper = AC62_pred_B$Upper)
+
+#### GENOTYPE CM5 ####
+ACCM5_pred_R = as.data.frame(predict(ACCM5drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+ACCM5_preddata_R = data.frame(CBASS_preddata, Y = ACCM5_pred_R$Prediction, Lower = ACCM5_pred_R$Lower, Upper = ACCM5_pred_R$Upper)
+
+ACCM5_pred_B = as.data.frame(predict(ACCM5drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+ACCM5_preddata_B = data.frame(CBASS_preddata, Y = ACCM5_pred_B$Prediction, Lower = ACCM5_pred_B$Lower, Upper = ACCM5_pred_B$Upper)
 ```
 
 # PLOT  DRC FOR EACH GENO FOR EACH RUN # 
@@ -976,15 +1130,42 @@ gen62 <- ggplot() +
   geom_line(data = AC62_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
   geom_vline(data = AC62_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
   geom_text(aes(label = paste("Courtney", AC62_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+#################### GENOTYPE CM5 ####################
+
+
+genCM5 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "CM5"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype CM5") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+  
+geom_line(data = ACCM5_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = ACCM5_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", ACCM5_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = ACCM5_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = ACCM5_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", ACCM5_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#00BFC4', size = 3) 
+  
+  
+  
+
 ```
 
 # Combine all Genotype Figures #
 ```{r}
 library(ggpubr)
 
-ggarrange(gen07, gen31, gen34, gen41, gen48, gen50, gen62) %>%
+ggarrange(gen07, gen31, gen34, gen41, gen48, gen50, gen62, genCM5, ncol = 4, nrow = 2) %>%
   annotate_figure(left = text_grob("FvFm", rot = 90), bottom = text_grob("Temp"))
 
-ggsave(filename = "plots/DRC_Genofit_per_Experiment.png", width = 200, height = 200, units = "mm")
+ggsave(filename = "plots/DRC_Genofit_per_Experiment.png", width = 300, height = 150, units = "mm")
 ```
+
 
