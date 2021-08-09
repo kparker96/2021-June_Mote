@@ -22,7 +22,16 @@ library(ggplot2)
 df <- readxl::read_xlsx("data/Nanodrop/Past_Nano_Working_Master.xlsx") 
 
 # Import Additional Sample Data #
-sd <- readxl::read_xlsx("data/Nanodrop/Past_Sample_Data.xlsx")
+sd <- readxl::read_xlsx("data/Nanodrop/Past_Sample_Data.xlsx") %>%
+  mutate(TP = case_when(grepl("TF", FrozenSampleName) ~ "TF",
+                        grepl("T0", FrozenSampleName) ~ "T0",
+                        grepl("T1", FrozenSampleName) ~ "T1",
+                        grepl("T2", FrozenSampleName) ~ "T2",
+                        grepl("T3", FrozenSampleName) ~ "T3",
+                        grepl("T4", FrozenSampleName) ~ "T4",
+                        grepl("T5", FrozenSampleName) ~ "T5"))
+
+
 sd$Sample_ID <- as.character(sd$Sample_ID)
 
 # Combine Nanodata with Sample Data #
@@ -45,7 +54,7 @@ nano$r260_230 <- round(nano$r260_230, digits = 2)
 nano$'Cursor abs.'<- round(nano$'Cursor abs.', digits = 2)
 ```
 
-# Filtering Good and Bad Samples
+#FILTERING GOOD AND BAD SAMPLES#
 ```{r}
 # RNA Samples >= 20ng/uL AND 260/280 > 1.95 #
 goodRNA <- nano %>%
@@ -55,18 +64,54 @@ goodRNA <- nano %>%
 needswork <- nano %>%
   filter(ng_ul >= 20 & r260_280 < 1.95)
 
+# RNA Samples with < 20ng/uL #
+notgoodRNA <- nano %>%
+  filter(ng_ul < 20)
+
 # RNA Samples with little to no RNA # 
 noRNA <- nano %>%
   filter(ng_ul < 5)
 
 # RNA Samples with low yields, < 20ng/uL but > 5ng/uL
 lowyield <- nano %>%
-  filter(ng_ul < 20, ng_ul > 5)
+  filter(ng_ul < 20, ng_ul > 10)
 ```
 
-
-
+#VISUALIZING DATA#
 ```{r}
+# Boxplot: all samples separated by timepoint
+ggplot(nano, aes(x = TP, y = ng_ul, fill = TP)) +
+  geom_boxplot() +
+  geom_hline(yintercept=20, color = "red", size = 0.5) 
+
+# Boxplot: samples <20ng/uL by timepoint
+ggplot(notgoodRNA, aes(x = TP, y = ng_ul, fill = TP)) +
+  geom_boxplot() +
+  geom_hline(yintercept=20, color = "red", size = 0.5)
+
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by timepoint 
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point() +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_wrap(~TP, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+
+# Scatterplot: Bad samples, Sample ng/uL of RNA for each sample, faceted by timepoint 
+ggplot(notgoodRNA, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_wrap(~TP, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+
+## Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by timepoint 
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point() +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_grid(Site~TP, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
 
 ```
 
