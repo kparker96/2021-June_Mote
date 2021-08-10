@@ -35,7 +35,9 @@ sd <- readxl::read_xlsx("data/Nanodrop/Past_Sample_Data.xlsx") %>%
 sd$Sample_ID <- as.character(sd$Sample_ID)
 
 # Combine Nanodata with Sample Data #
-nano <- right_join(df, sd, by = "Sample_ID")
+nano <- right_join(df, sd, by = "Sample_ID") %>%
+  select(-Time) %>%
+  filter(!is.na(Date))
 
 # Convert Character Columns to Numeric #
 nano$ng_ul <- as.numeric(nano$ng_ul)
@@ -105,7 +107,7 @@ ggplot(notgoodRNA, aes(x = Sample_ID, y = ng_ul, color = TP)) +
   theme_bw() +
   theme(axis.text.x = element_blank())
 
-## Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by timepoint 
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by timepoint 
 ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
   geom_point() +
   geom_hline(yintercept=20, color = "red", size = 0.5) +
@@ -113,6 +115,36 @@ ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
   theme_bw() +
   theme(axis.text.x = element_blank())
 
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by Date
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_wrap( ~ as.Date(Date), scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
 ```
 
+#vISUALIZING DATA FROM DIFFERENT HOMOGENIZATION PROTOCOL#
+```{r}
+flash_frozen <- df %>%
+  filter(Sample_ID == "4F"|Sample_ID == "5F"|Sample_ID == "6F"|Sample_ID == "7F"|Sample_ID == "8F"|
+           Sample_ID == "9F") %>%
+  mutate(Tissue = "Flash_Frozen")
+  
+
+RNALater <- df %>%
+  filter(Sample_ID == "4"|Sample_ID == "5"|Sample_ID == "6"|Sample_ID == "7"|Sample_ID == "8"|Sample_ID == "9") %>%
+  mutate(Tissue = "RNALater") 
+
+Tissue <- rbind(flash_frozen, RNALater)%>% 
+  select(-Time) 
+
+ggplot(Tissue, aes(x = Sample_ID, y = ng_ul, color = Tissue)) +
+  geom_point(size = 2)
+
+
+
+
+
+```
 
