@@ -29,7 +29,11 @@ sd <- readxl::read_xlsx("data/Nanodrop/Past_Sample_Data.xlsx") %>%
                         grepl("T2", FrozenSampleName) ~ "T2",
                         grepl("T3", FrozenSampleName) ~ "T3",
                         grepl("T4", FrozenSampleName) ~ "T4",
-                        grepl("T5", FrozenSampleName) ~ "T5"))
+                        grepl("T5", FrozenSampleName) ~ "T5")) %>%
+  mutate(Temperature = case_when(grepl("-C", FrozenSampleName) ~ "Control",
+                               grepl("-L", FrozenSampleName) ~ "Low",
+                               grepl("-M", FrozenSampleName) ~ "Medium",
+                               grepl("-H", FrozenSampleName) ~ "High"))
 
 
 sd$Sample_ID <- as.character(sd$Sample_ID)
@@ -58,25 +62,18 @@ nano$'Cursor abs.'<- round(nano$'Cursor abs.', digits = 2)
 
 #FILTERING GOOD AND BAD SAMPLES#
 ```{r}
-# RNA Samples >= 20ng/uL AND 260/280 > 1.95 #
+# RNA Samples >= 20ng/uL #
 goodRNA <- nano %>%
-  filter(ng_ul >= 20 & r260_280 >= 1.95)
+  filter(ng_ul >= 18.5)
 
-# RNA Samples >= 20ng/uL BUT 260/280 < 1.95 #
-needswork <- nano %>%
-  filter(ng_ul >= 20 & r260_280 < 1.95)
-
-# RNA Samples with < 20ng/uL #
-notgoodRNA <- nano %>%
-  filter(ng_ul < 20)
-
-# RNA Samples with little to no RNA # 
-noRNA <- nano %>%
-  filter(ng_ul < 5)
-
-# RNA Samples with low yields, < 20ng/uL but > 5ng/uL
+# RNA Samples with low yields, < 20ng/uL but > 10ng/uL #
 lowyield <- nano %>%
-  filter(ng_ul < 20, ng_ul > 10)
+  filter(ng_ul < 18.5, ng_ul > 10)
+
+# RNA Samples with little to no RNA (< 10ng/uL) # 
+noRNA <- nano %>%
+  filter(ng_ul < 10)
+
 ```
 
 #VISUALIZING DATA#
@@ -84,17 +81,17 @@ lowyield <- nano %>%
 # Boxplot: all samples separated by timepoint
 ggplot(nano, aes(x = TP, y = ng_ul, fill = TP)) +
   geom_boxplot() +
-  geom_hline(yintercept=20, color = "red", size = 0.5) 
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) 
 
 # Boxplot: samples <20ng/uL by timepoint
-ggplot(notgoodRNA, aes(x = TP, y = ng_ul, fill = TP)) +
+ggplot(lowyield, aes(x = TP, y = ng_ul, fill = TP)) +
   geom_boxplot() +
-  geom_hline(yintercept=20, color = "red", size = 0.5)
+  geom_hline(yintercept=18.5, color = "red", size = 0.5)
 
 # Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by timepoint 
 ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
   geom_point() +
-  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) +
   facet_wrap(~TP, scales = "free_x") +
   theme_bw() +
   theme(axis.text.x = element_blank())
@@ -122,7 +119,46 @@ ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
   facet_wrap( ~ as.Date(Date), scales = "free_x") +
   theme_bw() +
   theme(axis.text.x = element_blank())
+
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by Tank Temperature 
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_wrap( ~ Temperature, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+
 ```
+
+# QUANTIFYING GOOD AND BAD SAMPLES BY TIMEPOINT #
+```{r}
+x <- nano %>%
+  select(Sample_ID, ng_ul, r260_280, r260_230, TP) %>%
+  mutate(status = case_when(ng_ul >= 18.5 ~ "good",
+                            ng_ul > 10 & ng_ul < 18.5 ~ "lowyield",
+                            ng_ul < 10 ~ "noRNA")) %>%
+  filter(Sample_ID != 321) %>%
+  group_by(status, TP) %>%d
+  summarise(n = n()) %>%
+  mutate(ncol = sum(n), label = paste0("N =", n))
+
+
+ggplot(x, aes(x = status, y = n, fill = status)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_fill_manual(values = c("Green3", "Yellow2", "Red2")) +
+  geom_text(aes(label = label, y = 1)) +
+  scale_y_discrete(expand = c(0,0)) +
+  facet_wrap(~TP) +
+  theme_bw()
+
+```
+
+
+
+
+
+
+
 
 #vISUALIZING DATA FROM DIFFERENT HOMOGENIZATION PROTOCOL#
 ```{r}
@@ -130,6 +166,8 @@ flash_frozen <- df %>%
   filter(Sample_ID == "4F"|Sample_ID == "5F"|Sample_ID == "6F"|Sample_ID == "7F"|Sample_ID == "8F"|
            Sample_ID == "9F") %>%
   mutate(Tissue = "Flash_Frozen")
+
+ggplot(flash_)
   
 
 RNALater <- df %>%

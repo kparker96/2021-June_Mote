@@ -35,7 +35,7 @@ OPa <- readxl::read_xlsx("data/PAM/2021-06-10_Past-4temps-Offshore.xlsx") %>%
 NAc <- readxl::read_xlsx("data/PAM/2021-06-11_Acer-4temps-MoteLooeNursery_Run2.xlsx") %>%
   mutate(TagNumber = Genotype,
          Comments = Comment) %>%
-  select(-Comment)
+ select(-Comment)
 
 # Combine all Datasets 
 Allpam <- rbind(IPa, OPa, NAc) %>%
@@ -1152,9 +1152,6 @@ geom_line(data = ACCM5_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", sh
   geom_line(data = ACCM5_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
   geom_vline(data = ACCM5_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
   geom_text(aes(label = paste("Ross", ACCM5_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#00BFC4', size = 3) 
-  
-  
-  
 
 ```
 
@@ -1168,4 +1165,8 @@ ggarrange(gen07, gen31, gen34, gen41, gen48, gen50, gen62, genCM5, ncol = 4, nro
 ggsave(filename = "plots/DRC_Genofit_per_Experiment.png", width = 300, height = 150, units = "mm")
 ```
 
+#Correlation Testing#
+```{r}
+
+```
 
