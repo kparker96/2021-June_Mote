@@ -140,16 +140,15 @@ ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
 
 # QUANTIFYING GOOD AND BAD SAMPLES BY TIMEPOINT #
 ```{r}
-x <- nano %>%
+x <- ogextract %>%
   select(Sample_ID, ng_ul, r260_280, r260_230, TP) %>%
   mutate(status = case_when(ng_ul >= 18.5 ~ "good",
                             ng_ul > 10 & ng_ul < 18.5 ~ "lowyield",
                             ng_ul < 10 ~ "noRNA")) %>%
   filter(Sample_ID != 321) %>%
-  group_by(status, TP) %>%d
+  group_by(status, TP) %>%
   summarise(n = n()) %>%
   mutate(ncol = sum(n), label = paste0("N =", n))
-
 
 ggplot(x, aes(x = status, y = n, fill = status)) +
   geom_bar(stat="identity", position=position_dodge()) +
@@ -158,15 +157,49 @@ ggplot(x, aes(x = status, y = n, fill = status)) +
   scale_y_discrete(expand = c(0,0)) +
   facet_wrap(~TP) +
   theme_bw()
-
 ```
 
+# COMPARE YIELDS FROM RE-EXTRACTION TO ORIGINAL EXTRACTION #
+```{r}
+duplicate <- nano %>%
+  dplyr::count(Sample_ID) %>%
+  filter(n > 1)
 
+reextract <- nano %>%
+  filter(Sample_ID %in% duplicate$Sample_ID) %>%
+  arrange(Sample_ID)
 
+# RNALater Rextracts #
+RNALater <- reextract %>%
+  filter(origin == "RNALater" | origin == "Re-extraction") %>%
+  dplyr::count(Sample_ID) %>%
+  filter(n > 1)
 
+re_RNALater <- reextract %>%
+  filter(Sample_ID %in% RNALater$Sample_ID) %>%
+  arrange(Sample_ID)
 
+ggplot(re_RNALater, aes(x = Sample_ID, y = ng_ul, color = origin)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) +
+  ylim(0,20) +
+  theme_bw()
 
+# Flash Frozen Rextracts #
+FlashFrozen <- reextract %>%
+  filter(origin == "RNALater" | origin == "Flash Frozen") %>%
+  dplyr::count(Sample_ID) %>%
+  filter(n > 1)
 
+FF_extract <- reextract %>%
+  filter(Sample_ID %in% FlashFrozen$Sample_ID) %>%
+  arrange(Sample_ID)
+
+ggplot(FF_extract, aes(x = Sample_ID, y = ng_ul, color = origin)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) +
+  theme_bw()
+```
 
 #vISUALIZING DATA FROM DIFFERENT HOMOGENIZATION PROTOCOL#
 ```{r}
@@ -187,10 +220,5 @@ Tissue <- rbind(flash_frozen, RNALater)%>%
 
 ggplot(Tissue, aes(x = Sample_ID, y = ng_ul, color = Tissue)) +
   geom_point(size = 2)
-
-
-
-
-
 ```
 
