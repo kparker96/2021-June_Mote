@@ -18,8 +18,19 @@ library(ggplot2)
 
 #IMPORT DATA#
 ```{r}
-# Import Raw Nanodrop Data #
-df <- readxl::read_xlsx("data/Nanodrop/Past_Nano_Working_Master.xlsx") 
+# Import Raw Nanodrop Data and Designate Extraction Origin#
+df <- readxl::read_xlsx("data/Nanodrop/Past_Nano_Working_Master.xlsx") %>%
+  mutate(origin = ifelse(grepl("F", Sample_ID), "Flash Frozen", "RNALater")) %>%
+  mutate(origin = ifelse(grepl("r", Sample_ID), "Re-extraction", origin))
+
+# no letter = original sample extracted from RNALater
+# F = number coincides with the RNALater sample #, but came from the Flash Frozen tissue
+# r = re-extraction of original sample from RNALater 
+
+#remove lettering system for easier sample analysis downstream, sample origin is denoted in "origin" column #
+df$Sample_ID<-gsub("F","",as.character(df$Sample_ID))
+df$Sample_ID<-gsub("r","",as.character(df$Sample_ID))
+
 
 # Import Additional Sample Data #
 sd <- readxl::read_xlsx("data/Nanodrop/Past_Sample_Data.xlsx") %>%
@@ -40,38 +51,35 @@ sd$Sample_ID <- as.character(sd$Sample_ID)
 
 # Combine Nanodata with Sample Data #
 nano <- right_join(df, sd, by = "Sample_ID") %>%
-  select(-Time) %>%
-  filter(!is.na(Date))
+  select(FrozenSampleName, Sample_ID, origin,  Site, Date, ng_ul, r260_280, r260_230,  TP, Temperature) %>%
+  filter(!is.na(Date)) 
 
 # Convert Character Columns to Numeric #
 nano$ng_ul <- as.numeric(nano$ng_ul)
-nano$A260 <- as.numeric(nano$A260)
-nano$A280 <- as.numeric(nano$A280)
 nano$r260_280 <- as.numeric(nano$r260_280)
 nano$r260_230 <- as.numeric(nano$r260_230)
-nano$'Cursor abs.' <- as.numeric(nano$'Cursor abs.')
 
 # Round values to 2 decimal places #
 nano$ng_ul <- round(nano$ng_ul, digits = 2)
-nano$A260 <- round(nano$A260, digits = 2)
-nano$A280 <- round(nano$A280, digits = 2)
 nano$r260_280  <- round(nano$r260_280 , digits = 2)
 nano$r260_230 <- round(nano$r260_230, digits = 2)
-nano$'Cursor abs.'<- round(nano$'Cursor abs.', digits = 2)
 ```
 
-#FILTERING GOOD AND BAD SAMPLES#
+#FILTERING GOOD AND BAD SAMPLES FROM ORIGINAL EXTRACTIONS#
 ```{r}
+ogextract <- nano %>%
+  filter(origin == "RNALater")
+
 # RNA Samples >= 20ng/uL #
-goodRNA <- nano %>%
+goodRNA <- ogextract %>%
   filter(ng_ul >= 18.5)
 
 # RNA Samples with low yields, < 20ng/uL but > 10ng/uL #
-lowyield <- nano %>%
+lowyield <- ogextract %>%
   filter(ng_ul < 18.5, ng_ul > 10)
 
 # RNA Samples with little to no RNA (< 10ng/uL) # 
-noRNA <- nano %>%
+noRNA <- ogextract %>%
   filter(ng_ul < 10)
 
 ```
