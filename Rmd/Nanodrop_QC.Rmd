@@ -197,9 +197,70 @@ FF_extract <- reextract %>%
 
 ggplot(FF_extract, aes(x = Sample_ID, y = ng_ul, color = origin)) +
   geom_point(size = 2) +
-  geom_hline(yintercept=18.5, color = "red", size = 0.5) +
-  theme_bw()
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) + 
+  facet_grid(~TP, scales = "free") +
+  theme_bw() 
 ```
+
+# UPDATING THE "GOODRNA" LIST WITH RE-EXTRACTED SAMPLES #
+```{r}
+need_reextract <- lowyield %>%
+  filter(!Sample_ID %in% reextract$Sample_ID) %>%
+  arrange(Sample_ID)
+
+need_reextract$Sample_ID <- as.numeric(need_reextract$Sample_ID)
+
+usable_re_x <- reextract %>%
+  filter(ng_ul > 18.5) 
+
+dupe_check <- usable_re_x %>%
+  dplyr::count(Sample_ID) %>%
+  filter(n > 1)
+
+remove_dupe <- usable_re_x %>%
+  filter(Sample_ID %in% dupe_check$Sample_ID) %>%
+  arrange(Sample_ID) %>%
+  filter(origin != "RNALater")
+
+usable_re_x %>%
+  filter(Sample_ID != Sample_ID %in% remove_dupe$Sample_ID)
+
+
+good_re_x <- 
+  
+  # Usable re_x, but with duplicates removed 
+  # criteria 
+  #     (1) Is above 18.5 ng/uL 
+  #     (2) Is from RNALater if possible 
+
+send_out <- rbind(goodRNA, good_re_x)
+
+
+
+still_extract <- lowyield %>%
+  filter(!Sample_ID %in% reextract$Sample_ID)
+
+setdiff(lowyield$Sample_ID, reextract$Sample_ID)
+  
+  
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #vISUALIZING DATA FROM DIFFERENT HOMOGENIZATION PROTOCOL#
 ```{r}
