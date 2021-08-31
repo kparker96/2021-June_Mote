@@ -63,6 +63,9 @@ nano$r260_230 <- as.numeric(nano$r260_230)
 nano$ng_ul <- round(nano$ng_ul, digits = 2)
 nano$r260_280  <- round(nano$r260_280 , digits = 2)
 nano$r260_230 <- round(nano$r260_230, digits = 2)
+
+library("writexl")
+write_xlsx(nano,"extractions/extractions_master.xlsx")
 ```
 
 #FILTERING GOOD AND BAD SAMPLES FROM ORIGINAL EXTRACTIONS#
@@ -104,14 +107,6 @@ ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
   theme_bw() +
   theme(axis.text.x = element_blank())
 
-# Scatterplot: Bad samples, Sample ng/uL of RNA for each sample, faceted by timepoint 
-ggplot(notgoodRNA, aes(x = Sample_ID, y = ng_ul, color = TP)) +
-  geom_point(size = 2) +
-  geom_hline(yintercept=20, color = "red", size = 0.5) +
-  facet_wrap(~TP, scales = "free_x") +
-  theme_bw() +
-  theme(axis.text.x = element_blank())
-
 # Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by timepoint 
 ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
   geom_point() +
@@ -140,7 +135,7 @@ ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
 
 # QUANTIFYING GOOD AND BAD SAMPLES BY TIMEPOINT #
 ```{r}
-x <- ogextract %>%
+extract_status <- ogextract %>%
   select(Sample_ID, ng_ul, r260_280, r260_230, TP) %>%
   mutate(status = case_when(ng_ul >= 18.5 ~ "good",
                             ng_ul > 10 & ng_ul < 18.5 ~ "lowyield",
@@ -150,7 +145,7 @@ x <- ogextract %>%
   summarise(n = n()) %>%
   mutate(ncol = sum(n), label = paste0("N =", n))
 
-ggplot(x, aes(x = status, y = n, fill = status)) +
+ggplot(extract_status, aes(x = status, y = n, fill = status)) +
   geom_bar(stat="identity", position=position_dodge()) +
   scale_fill_manual(values = c("Green3", "Yellow2", "Red2")) +
   geom_text(aes(label = label, y = 1)) +
@@ -240,22 +235,20 @@ send_out <- usableRNA %>%
   filter(!Sample_ID %in% dupe_ID$Sample_ID) %>%
   distinct(Sample_ID, origin, .keep_all = TRUE)
 
-send_out$Sample_ID <- as.numeric(send_out$Sample_ID)
+send_out$Sample_ID <- as.numeric(send_out$Sample_ID) 
 
-library("writexl")
-
-write_xlsx(send_out,"send_out.xlsx")
-
+# Double Checking no Duplicated Samples #
 send_out %>%
-  dplyr::count(TP)
-
-send_out_dupe_check <- send_out %>%
  dplyr::count(Sample_ID) %>%
   filter(n > 1)
+ 
+# Export Sequencer Sample List to Excel File #
+write_xlsx(send_out,"extractions/samples_for_sequencing.xlsx")
 ```
 
+# BREAKDOWN OF SAMPLES FOR SEQUENCING (I.E. TIMEPOINTS, GENOTYPES, TEMPERATURES)
 ```{r}
-
+# Adding genotype columnn #
 send_out_breakdown <- send_out %>%
   mutate(geno = case_when(grepl("01", FrozenSampleName) ~ "01",
                           grepl("02", FrozenSampleName) ~ "02",
@@ -268,98 +261,40 @@ send_out_breakdown <- send_out %>%
                           grepl("09", FrozenSampleName) ~ "09",
                           grepl("10", FrozenSampleName) ~ "10"))
 
-TP_geno <- send_out_breakdown %>%
- dplyr::count(TP, geno) 
-write_xlsx(TP_geno,"TP_Geno.xlsx")
-
+# Number of Samples per Timepoint #
 TP <- send_out_breakdown %>%
  dplyr::count(TP)
 
-write_xlsx(TP,"TP.xlsx")
+write_xlsx(TP,"extractions/TP.xlsx")
 
+
+# Number of Samples per Genotype #
 geno <- send_out_breakdown %>%
   dplyr::count(geno)
-write_xlsx(geno,"geno.xlsx")
 
+write_xlsx(geno,"extractions/geno.xlsx")
+
+
+# Number of Samples per Temperature Treatment #
 Temp <- send_out_breakdown %>%
   dplyr::count(Temperature)
 
-write_xlsx(Temp,"Temp.xlsx")
+write_xlsx(Temp,"extractions/Temp.xlsx")
 
+
+# Number of Samples per Genotype per Timepoint
+TP_geno <- send_out_breakdown %>%
+ dplyr::count(TP, geno) 
+
+write_xlsx(TP_geno,"extractions/TP_Geno.xlsx")
+
+
+# Number of Samples per Timepoint per Temperature Treatment #
 TP_Temp <- send_out_breakdown %>%
   dplyr::count(TP, Temperature)
 
-write_xlsx(TP_Temp,"TP_Temp.xlsx")
-
-
-
+write_xlsx(TP_Temp,"extractions/TP_Temp.xlsx")
 ```
-
-
-
-
-
-
-
-```{r}
-x <- send_out %>%
-  filter(origin == "Flash Frozen")
-
-y <- nano %>%
-  filter(origin == "RNALater")
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-x <- nano %>%
-  mutate(Reextract = case_when(origin == "Re-extraction" ~ 1),
-         RNALater = case_when(origin == "RNALater" ~ 1),
-         FlashFrozen = case_when(origin == "Flash Frozen" ~ 1))
-
-y <- x %>%
-  select(Sample_ID, Reextract, RNALater, FlashFrozen) %>%
-  group_by(Sample_ID) %>%
-  gather(key = origin, value = value, -Sample_ID) %>%
-  filter(value == 1)
-
-y_dupe <- y %>%
-  filter(origin != "Flash Frozen") %>%
- dplyr::count(Sample_ID) %>%
-  filter(n > 1)
-
-y_dupe_ID <- y %>% 
-  filter(Sample_ID %in% y_dupe$Sample_ID) 
-
-        
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # COMPARING RNALATER RE-EXTRACTION TO FLASH FROZEN TISSUE #
 ```{r}
@@ -370,20 +305,6 @@ ggplot(re_extracted,aes(x = Sample_ID, y = ng_ul, color = origin)) +
   geom_point()
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #vISUALIZING DATA FROM DIFFERENT HOMOGENIZATION PROTOCOL#
 ```{r}
