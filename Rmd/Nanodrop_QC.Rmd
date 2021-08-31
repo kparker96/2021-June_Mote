@@ -49,10 +49,20 @@ sd <- readxl::read_xlsx("data/Nanodrop/Past_Sample_Data.xlsx") %>%
 
 sd$Sample_ID <- as.character(sd$Sample_ID)
 
-# Combine Nanodata with Sample Data #
+# Combine Nanodata with Sample Data and Add Genotype Column #
 nano <- right_join(df, sd, by = "Sample_ID") %>%
   select(FrozenSampleName, Sample_ID, origin,  Site, Date, ng_ul, r260_280, r260_230,  TP, Temperature) %>%
-  filter(!is.na(Date)) 
+  filter(!is.na(Date))%>%
+  mutate(geno = case_when(grepl("01", FrozenSampleName) ~ "01",
+                          grepl("02", FrozenSampleName) ~ "02",
+                          grepl("03", FrozenSampleName) ~ "03",
+                          grepl("04", FrozenSampleName) ~ "04",
+                          grepl("05", FrozenSampleName) ~ "05",
+                          grepl("06", FrozenSampleName) ~ "06",
+                          grepl("07", FrozenSampleName) ~ "07",
+                          grepl("08", FrozenSampleName) ~ "08",
+                          grepl("09", FrozenSampleName) ~ "09",
+                          grepl("10", FrozenSampleName) ~ "10"))
 
 # Convert Character Columns to Numeric #
 nano$ng_ul <- as.numeric(nano$ng_ul)
@@ -248,49 +258,36 @@ write_xlsx(send_out,"extractions/samples_for_sequencing.xlsx")
 
 # BREAKDOWN OF SAMPLES FOR SEQUENCING (I.E. TIMEPOINTS, GENOTYPES, TEMPERATURES)
 ```{r}
-# Adding genotype columnn #
-send_out_breakdown <- send_out %>%
-  mutate(geno = case_when(grepl("01", FrozenSampleName) ~ "01",
-                          grepl("02", FrozenSampleName) ~ "02",
-                          grepl("03", FrozenSampleName) ~ "03",
-                          grepl("04", FrozenSampleName) ~ "04",
-                          grepl("05", FrozenSampleName) ~ "05",
-                          grepl("06", FrozenSampleName) ~ "06",
-                          grepl("07", FrozenSampleName) ~ "07",
-                          grepl("08", FrozenSampleName) ~ "08",
-                          grepl("09", FrozenSampleName) ~ "09",
-                          grepl("10", FrozenSampleName) ~ "10"))
-
 # Number of Samples per Timepoint #
-TP <- send_out_breakdown %>%
+TP <- send_out %>%
  dplyr::count(TP)
 
 write_xlsx(TP,"extractions/TP.xlsx")
 
 
 # Number of Samples per Genotype #
-geno <- send_out_breakdown %>%
+geno <- send_out %>%
   dplyr::count(geno)
 
 write_xlsx(geno,"extractions/geno.xlsx")
 
 
 # Number of Samples per Temperature Treatment #
-Temp <- send_out_breakdown %>%
+Temp <- send_out %>%
   dplyr::count(Temperature)
 
 write_xlsx(Temp,"extractions/Temp.xlsx")
 
 
 # Number of Samples per Genotype per Timepoint
-TP_geno <- send_out_breakdown %>%
+TP_geno <- send_out %>%
  dplyr::count(TP, geno) 
 
 write_xlsx(TP_geno,"extractions/TP_Geno.xlsx")
 
 
 # Number of Samples per Timepoint per Temperature Treatment #
-TP_Temp <- send_out_breakdown %>%
+TP_Temp <- send_out %>%
   dplyr::count(TP, Temperature)
 
 write_xlsx(TP_Temp,"extractions/TP_Temp.xlsx")
