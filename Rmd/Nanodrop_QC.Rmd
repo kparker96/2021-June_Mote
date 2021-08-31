@@ -161,6 +161,7 @@ ggplot(x, aes(x = status, y = n, fill = status)) +
 
 # COMPARE YIELDS FROM RE-EXTRACTION TO ORIGINAL EXTRACTION #
 ```{r}
+# Samples that have been re-extracted #
 duplicate <- nano %>%
   dplyr::count(Sample_ID) %>%
   filter(n > 1)
@@ -183,6 +184,7 @@ ggplot(re_RNALater, aes(x = Sample_ID, y = ng_ul, color = origin)) +
   geom_point(size = 2) +
   geom_hline(yintercept=18.5, color = "red", size = 0.5) +
   ylim(0,20) +
+  facet_wrap(~TP, scales = "free_x") +
   theme_bw()
 
 # Flash Frozen Rextracts #
@@ -204,49 +206,170 @@ ggplot(FF_extract, aes(x = Sample_ID, y = ng_ul, color = origin)) +
 
 # UPDATING THE "GOODRNA" LIST WITH RE-EXTRACTED SAMPLES #
 ```{r}
+# Samples that are worth trying re-extraction #
+# Using lowyields because it's probaly not worth re-extracting samples with no RNA originally #
+
 need_reextract <- lowyield %>%
   filter(!Sample_ID %in% reextract$Sample_ID) %>%
   arrange(Sample_ID)
 
 need_reextract$Sample_ID <- as.numeric(need_reextract$Sample_ID)
 
+# Re-Extractions that meet ng/uL yield)
 usable_re_x <- reextract %>%
   filter(ng_ul > 18.5) 
 
-dupe_check <- usable_re_x %>%
-  dplyr::count(Sample_ID) %>%
+# Combining usable re-extractions with Good RNA from the first extraction #
+# Re-Extractions came from "lowyields" so goodRNA does not contain the same samples #
+usableRNA <- rbind(goodRNA, usable_re_x) 
+
+# Checking for duplicated Samples #
+dupe_check <- usableRNA%>%
+ dplyr::count(Sample_ID) %>%
   filter(n > 1)
 
-remove_dupe <- usable_re_x %>%
+# Filtering Duplicates #
+dupe_ID <- usableRNA %>%
   filter(Sample_ID %in% dupe_check$Sample_ID) %>%
   arrange(Sample_ID) %>%
-  filter(origin != "RNALater")
+  distinct(Sample_ID, origin, .keep_all = TRUE) %>%
+  filter(origin == "Flash Frozen")
 
-usable_re_x %>%
-  filter(Sample_ID != Sample_ID %in% remove_dupe$Sample_ID)
+# Specific Samples to be Sent Out for Sequencing #
+send_out <- usableRNA %>%
+  filter(!Sample_ID %in% dupe_ID$Sample_ID) %>%
+  distinct(Sample_ID, origin, .keep_all = TRUE)
+
+send_out$Sample_ID <- as.numeric(send_out$Sample_ID)
+
+library("writexl")
+
+write_xlsx(send_out,"send_out.xlsx")
+
+send_out %>%
+  dplyr::count(TP)
+
+send_out_dupe_check <- send_out %>%
+ dplyr::count(Sample_ID) %>%
+  filter(n > 1)
+```
+
+```{r}
+
+send_out_breakdown <- send_out %>%
+  mutate(geno = case_when(grepl("01", FrozenSampleName) ~ "01",
+                          grepl("02", FrozenSampleName) ~ "02",
+                          grepl("03", FrozenSampleName) ~ "03",
+                          grepl("04", FrozenSampleName) ~ "04",
+                          grepl("05", FrozenSampleName) ~ "05",
+                          grepl("06", FrozenSampleName) ~ "06",
+                          grepl("07", FrozenSampleName) ~ "07",
+                          grepl("08", FrozenSampleName) ~ "08",
+                          grepl("09", FrozenSampleName) ~ "09",
+                          grepl("10", FrozenSampleName) ~ "10"))
+
+TP_geno <- send_out_breakdown %>%
+ dplyr::count(TP, geno) 
+write_xlsx(TP_geno,"TP_Geno.xlsx")
+
+TP <- send_out_breakdown %>%
+ dplyr::count(TP)
+
+write_xlsx(TP,"TP.xlsx")
+
+geno <- send_out_breakdown %>%
+  dplyr::count(geno)
+write_xlsx(geno,"geno.xlsx")
+
+Temp <- send_out_breakdown %>%
+  dplyr::count(Temperature)
+
+write_xlsx(Temp,"Temp.xlsx")
+
+TP_Temp <- send_out_breakdown %>%
+  dplyr::count(TP, Temperature)
+
+write_xlsx(TP_Temp,"TP_Temp.xlsx")
 
 
-good_re_x <- 
-  
-  # Usable re_x, but with duplicates removed 
-  # criteria 
-  #     (1) Is above 18.5 ng/uL 
-  #     (2) Is from RNALater if possible 
-
-send_out <- rbind(goodRNA, good_re_x)
-
-
-
-still_extract <- lowyield %>%
-  filter(!Sample_ID %in% reextract$Sample_ID)
-
-setdiff(lowyield$Sample_ID, reextract$Sample_ID)
-  
-  
 
 ```
 
 
+
+
+
+
+
+```{r}
+x <- send_out %>%
+  filter(origin == "Flash Frozen")
+
+y <- nano %>%
+  filter(origin == "RNALater")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+x <- nano %>%
+  mutate(Reextract = case_when(origin == "Re-extraction" ~ 1),
+         RNALater = case_when(origin == "RNALater" ~ 1),
+         FlashFrozen = case_when(origin == "Flash Frozen" ~ 1))
+
+y <- x %>%
+  select(Sample_ID, Reextract, RNALater, FlashFrozen) %>%
+  group_by(Sample_ID) %>%
+  gather(key = origin, value = value, -Sample_ID) %>%
+  filter(value == 1)
+
+y_dupe <- y %>%
+  filter(origin != "Flash Frozen") %>%
+ dplyr::count(Sample_ID) %>%
+  filter(n > 1)
+
+y_dupe_ID <- y %>% 
+  filter(Sample_ID %in% y_dupe$Sample_ID) 
+
+        
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# COMPARING RNALATER RE-EXTRACTION TO FLASH FROZEN TISSUE #
+```{r}
+re_extracted <- nano %>% 
+  filter(origin == "Re-extraction" | origin == "Flash Frozen")
+
+ggplot(re_extracted,aes(x = Sample_ID, y = ng_ul, color = origin)) +
+  geom_point()
+
+```
 
 
 
