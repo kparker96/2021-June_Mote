@@ -104,7 +104,7 @@ ggplot(nano, aes(x = TP, y = ng_ul, fill = TP)) +
   geom_boxplot() +
   geom_hline(yintercept=18.5, color = "red", size = 0.5) 
 
-# Boxplot: samples <20ng/uL by timepoint
+# Boxplot: samples <18.5 ng/uL by timepoint
 ggplot(lowyield, aes(x = TP, y = ng_ul, fill = TP)) +
   geom_boxplot() +
   geom_hline(yintercept=18.5, color = "red", size = 0.5)
@@ -141,11 +141,19 @@ ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
   theme_bw() +
   theme(axis.text.x = element_blank())
 
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by Genotype
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_wrap( ~ geno, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
 ```
 
-# QUANTIFYING GOOD AND BAD SAMPLES BY TIMEPOINT #
+# QUANTIFYING GOOD AND BAD SAMPLES BY TIMEPOINT AND GENOTYPE #
 ```{r}
-extract_status <- ogextract %>%
+# Timepoint #
+extract_status_TP <- ogextract %>%
   select(Sample_ID, ng_ul, r260_280, r260_230, TP) %>%
   mutate(status = case_when(ng_ul >= 18.5 ~ "good",
                             ng_ul > 10 & ng_ul < 18.5 ~ "lowyield",
@@ -155,12 +163,31 @@ extract_status <- ogextract %>%
   summarise(n = n()) %>%
   mutate(ncol = sum(n), label = paste0("N =", n))
 
-ggplot(extract_status, aes(x = status, y = n, fill = status)) +
+ggplot(extract_status_TP, aes(x = status, y = n, fill = status)) +
   geom_bar(stat="identity", position=position_dodge()) +
   scale_fill_manual(values = c("Green3", "Yellow2", "Red2")) +
   geom_text(aes(label = label, y = 1)) +
   scale_y_discrete(expand = c(0,0)) +
   facet_wrap(~TP) +
+  theme_bw()
+
+# Genotype #
+extract_status_geno <- ogextract %>%
+  select(Sample_ID, ng_ul, r260_280, r260_230, geno) %>%
+  mutate(status = case_when(ng_ul >= 18.5 ~ "good",
+                            ng_ul > 10 & ng_ul < 18.5 ~ "lowyield",
+                            ng_ul < 10 ~ "noRNA")) %>%
+  filter(Sample_ID != 321) %>%
+  group_by(status, geno) %>%
+  summarise(n = n()) %>%
+  mutate(ncol = sum(n), label = paste0("N =", n))
+
+ggplot(extract_status_geno, aes(x = status, y = n, fill = status)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_fill_manual(values = c("Green3", "Yellow2", "Red2")) +
+  geom_text(aes(label = label, y = 1)) +
+  scale_y_discrete(expand = c(0,0)) +
+  facet_wrap(~geno) +
   theme_bw()
 ```
 
