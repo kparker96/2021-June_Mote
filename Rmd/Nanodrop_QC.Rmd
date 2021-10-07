@@ -191,6 +191,37 @@ ggplot(extract_status_geno, aes(x = status, y = n, fill = status)) +
   theme_bw()
 ```
 
+# SUMMARISING SAMPLE QUALITY #
+```{r}
+ yield_breakdown <- nano %>%
+  select(Sample_ID, ng_ul, r260_280, r260_230) %>%
+  mutate(status = case_when(ng_ul >= 18 ~ "good",
+                            ng_ul > 10 & ng_ul < 18 ~ "lowyield",
+                            ng_ul <= 10 ~ "noRNA"))%>%
+  select(Sample_ID, status, ng_ul, r260_280, r260_230)
+
+yield_breakdown %>%
+  group_by(status) %>%
+  summarise(n = n())
+
+goodextract <- yield_breakdown %>%
+  filter(status == "good")
+
+lowyieldextract <- yield_breakdown %>%
+  filter(status == "lowyield")
+
+badextract <- yield_breakdown %>%
+  filter(status == "bad")
+
+write_xlsx(yield_breakdown,"extractions/yield_breakdown.xlsx")
+
+```
+
+
+
+
+
+
 # COMPARE YIELDS FROM RE-EXTRACTION TO ORIGINAL EXTRACTION #
 ```{r}
 # Samples that have been re-extracted #
