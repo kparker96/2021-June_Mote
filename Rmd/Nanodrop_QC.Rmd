@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #LOAD LIBRARIES #
 ```{r}
 library(tidyr)
+library(tidyverse)
 library(dplyr)
 library(ggplot2)
 ```
@@ -51,7 +52,7 @@ sd$Sample_ID <- as.character(sd$Sample_ID)
 
 # Combine Nanodata with Sample Data and Add Genotype Column #
 nano <- right_join(df, sd, by = "Sample_ID") %>%
-  select(FrozenSampleName, Sample_ID, origin,  Site, Date, ng_ul, r260_280, r260_230,  TP, Temperature) %>%
+  dplyr::select(FrozenSampleName, Sample_ID, origin,  Site, Date, ng_ul, r260_280, r260_230,  TP, Temperature) %>%
   filter(!is.na(Date))%>%
   mutate(geno = case_when(grepl("01", FrozenSampleName) ~ "01",
                           grepl("02", FrozenSampleName) ~ "02",
@@ -380,5 +381,12 @@ Tissue <- rbind(flash_frozen, RNALater)%>%
 
 ggplot(Tissue, aes(x = Sample_ID, y = ng_ul, color = Tissue)) +
   geom_point(size = 2)
+```
+
+
+
+```{r}
+setdiff(nano$Sample_ID, re_extracted$Sample_ID)
+
 ```
 
