@@ -1,3 +1,4 @@
+fastq
 R100_2.fq.gz
 R101_2.fq.gz
 R102_2.fq.gz
