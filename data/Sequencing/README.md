@@ -147,7 +147,7 @@ A renamer script was made in my scripts folder.
 	$pwd 
 	/cm/shared/courses/dbarshis/barshislab/KatieP/scripts
 
-	$ nano renamer_KEP.py
+	$nano renamer_KEP.py
 	#!/usr/bin/env python
 	####usage renamer.py renamingtable
 	#### this script take the entries in the first column of table and renames (mv's) them to files with the $import sys
@@ -225,4 +225,131 @@ After the job finished most of the files were renamed.
 
 ~10 samples did not get renamed because the tables used did not have headers and the lowercase r was missing in the table for re-extracted samples that were sequenced. New sample name tables were made for the missed samples with headers and the sbatch script was run again. 
 
-## 2022-02-01
+## 2022-02-01: Restarting the Pipeline, Renamer.py
+
+All previous work was moved to the new directory "old". The raw zip file of raw data was re-copied into my directory. 
+	
+	$pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1
+	
+	$ mkdir old
+
+	$mv raw_data_fastqs/ X204SC21081158-Z01-F002/ old
+
+	$ls
+	old  X204SC21081158-Z01-F002.zip
+
+	$salloc
+	salloc: Pending job allocation 9693669
+	salloc: job 9693669 queued and waiting for resources
+	salloc: job 9693669 has been allocated resources
+	salloc: Granted job allocation 9693669
+	This session will be terminated in 7 days. If your application requires
+	a longer excution time, please use command "salloc -t N-0" where N is the
+	number of days that you need.
+
+	$pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1
+
+	$nano unzip_raw.sh
+	#!/bin/bash -l
+
+	#SBATCH -o KPunzip.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=KPunzip
+
+	unzip X204SC21081158-Z01-F002.zip
+
+	$sbatch unzip_raw.sh
+	Submitted batch job 9693670
+
+A new "raw\_data\_fastqs"directory was made. 
+
+	$pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1
+	
+	$mkdir raw_data_fastqs
+	
+	$ls 
+	KPunzip.txt  __MACOSX  old  raw_data_fastqs  unzip_raw.sh  X204SC21081158-Z01-F002  X204SC21081158-Z01-F002.zip
+
+All raw data files from X204SC21081158-Z01-F002/ were moved into the raw\_data\_fastqs directory. 
+
+	$pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/
+
+	$mv /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/*.fq.gz ./
+
+All files were renamed to informative sample ID naming. 
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
+
+	$ salloc
+	salloc: Pending job allocation 9693775
+	salloc: job 9693775 queued and waiting for resources
+	salloc: job 9693775 has been allocated resources
+	salloc: Granted job allocation 9693775
+	This session will be terminated in 7 days. If your application requires
+	a longer excution time, please use command "salloc -t N-0" where N is the
+	number of days that you need.
+
+	$ cat KparkerRenamer_R_1.sh
+	#!/bin/bash -l
+
+	#SBATCH -o raw_fastq_rename_R1.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=KPrenameFastq
+
+	/cm/shared/courses/dbarshis/barshislab/KatieP/scripts/renamer_KEP.py R_1_fastq_rename.txt
+
+	$ head R_1_fastq_rename.txt
+	OldName NewName
+	R100_1.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R1.fq.gz
+	R101_1.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R1.fq.gz
+	R10_1.fq.gz     20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R1.fq.gz
+	R102_1.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R1.fq.gz
+	R103_1.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_R1.fq.gz
+	R104_1.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_9_37_1140_RNASeq_R1.fq.gz
+	R105_1.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R1.fq.gz
+	R106_1.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_6_39_1140_RNASeq_R1.fq.gz
+	R107_1.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_7_39_1140_RNASeq_R1.fq.gz
+
+	$ sbatch KparkerRenamer_R_1.sh
+	Submitted batch job 9693776
+
+	$ cat KparkerRenamer_R_2.sh
+	#!/bin/bash -l
+
+	#SBATCH -o raw_fastq_rename_R1.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=KPrenameFastq
+
+	/cm/shared/courses/dbarshis/barshislab/KatieP/scripts/renamer_KEP.py R_2_fastq_rename.txt
+
+	$ head R_2_fastq_rename.txt
+	OldName NewName
+	R100_2.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R2.fq.gz
+	R101_2.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R2.fq.gz
+	R10_2.fq.gz     20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R2.fq.gz
+	R102_2.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R2.fq.gz
+	R103_2.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_R2.fq.gz
+	R104_2.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_9_37_1140_RNASeq_R2.fq.gz
+	R105_2.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R2.fq.gz
+	R106_2.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_6_39_1140_RNASeq_R2.fq.gz
+	R107_2.fq.gz    20210608T1400_CBASS_US_MoteIn_Past_7_39_1140_RNASeq_R2.fq.gz
+	
+	$ sbatch KparkerRenamer_R_2.sh
+	Submitted batch job 9693777
+
+	
+
+
+
+
