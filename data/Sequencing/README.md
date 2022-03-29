@@ -348,8 +348,117 @@ All files were renamed to informative sample ID naming.
 	$ sbatch KparkerRenamer_R_2.sh
 	Submitted batch job 9693777
 
+## 2022-03-28: Running TrimGalore
+
+Create a list of all of the updated sample names.  
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
+
+	$ls *R1.fq.gz > filenames.txt
+
+Copy the filenames.txt list locally
+
+	$ pwd 
+	/c/Users/kpark/OneDrive/Documents/Barshis_Lab/2021-June_Mote/data/Sequencing/Porites_astreoides_fastq
+
+	$  scp kpark049@turing.hpc.odu.edu:/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/filenames.txt ./
+	kpark049@turing.hpc.odu.edu's password:
+	filenames.txt                                                                                      100%   13KB 441.9KB/s   00:00
+
+	$ head filenames.txt
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_750_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_34_180_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_34_360_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_34_420_RNASeq_R1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_34_750_RNASeq_R1.fq.gz
+
+Open the filenames.txt in Notepad ++ and use regex to change it to the required format to run TrimGalore
+
+	*Locally In Notepad ++*
 	
+	Find: (^\d.+\_)(\w)(\d)(.+)(\r)
+	Replace: crun trim_galore --fastqc --paired \1\2\3\4 \1\22\4
 
+File now looks like this:  
 
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R2.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R2.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R2.fq.gz
+	...
 
+Use copy paste to separate it into 3 files with 73 samples (219 total samples/3 separate scripts) then add sbatch script header and additional lines to enable TrimGalore. 
 
+	$ pwd  
+	/cm/shared/courses/dbarshis/barshislab/KatieP/scripts/
+
+	$ nano 2022-03-28_TrimGalore01.sh
+	$ nano 2022-03-28_TrimGalore02.sh
+	$ nano 2022-03-28_TrimGalore03.sh
+
+Each 2022-03-28_TrimGalore0*.sh file looks like this with it's designated 73 lines of sample names:
+
+	$ cat 2022-03-28_TrimGalore01.sh
+
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-03-28_TrimGalore01.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=TrimGalore01
+
+	enable_lmod
+
+	module load container_env trim_galore
+
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R2.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R2.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R2.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R2.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_750_RNASeq_R2.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R2.fq.gz
+	...
+
+	$ ls
+	2022-03-28_TrimGalore01.sh  2022-03-28_TrimGalore02.sh  2022-03-28_TrimGalore03.sh  gunzip_test.py  KparkerRename.sh  renamer_advbioinf.py  renamer_KEP.py
+
+Run each individual scrip to trim each sample's forward and reverse reads. 
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
+
+	$ salloc
+	salloc: Pending job allocation 9734126
+	salloc: job 9734126 queued and waiting for resources
+	salloc: job 9734126 has been allocated resources
+	salloc: Granted job allocation 9734126
+	salloc: Waiting for resource configuration
+	salloc: Nodes coreV2-25-054 are ready for job
+	This session will be terminated in 7 days. If your application requires a longer excution time, please use command "salloc -t N-0" where N is the number of days that you need.
+
+	$ sbatch /cm/shared/courses/dbarshis/barshislab/KatieP/scripts/2022-03-28_TrimGalore01.sh
+	Submitted batch job	 9734127
+
+	$ sbatch /cm/shared/courses/dbarshis/barshislab/KatieP/scripts/2022-03-28_TrimGalore02.sh
+	
+	$ sbatch /cm/shared/courses/dbarshis/barshislab/KatieP/scripts/2022-03-28_TrimGalore03.sh
+
+	$ sbatch /cm/shared/courses/dbarshis/barshislab/KatieP/scripts/2022-03-28_TrimGalore02.sh
+	Submitted batch job 9734128
+
+	$ sbatch /cm/shared/courses/dbarshis/barshislab/KatieP/scripts/2022-03-28_TrimGalore03.sh
+	Submitted batch job 9734129
+
+	$ squeue -u kpark049
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           9734129      main TrimGalo kpark049  R       1:14      1 coreV4-21-001
+           9734128      main TrimGalo kpark049  R       1:24      1 coreV2-25-054
+           9734127      main TrimGalo kpark049  R       3:57      1 coreV2-25-054
+           9734126      main interact kpark049  R       7:08      1 coreV2-25-054
+	
