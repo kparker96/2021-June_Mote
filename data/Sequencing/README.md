@@ -462,3 +462,100 @@ Run each individual scrip to trim each sample's forward and reverse reads.
            9734127      main TrimGalo kpark049  R       3:57      1 coreV2-25-054
            9734126      main interact kpark049  R       7:08      1 coreV2-25-054
 	
+Jobs finished 2022-03-31, took a little under 3 days to complete.
+
+
+## Notes on TrimGalore! 
+
+--fastqc: Run FastQC in the default mode on the FastQ file once trimming is complete. 
+
+--paired: performs length trimming of quality/adapter/RRBS trimmed reads for paired-end files  
+* To pass the validation test, both sequences of a sequence pair are required to have a certain minimum length which is governed by the option --length. If only one read passes this length threshold the other read can be rescued
+* Using this option lets you discard too short read pairs without disturbing the sequence-by-sequence order of FastQ files which is required by many aligners. Trim Galore! expects paired-end files to be supplied in a pairwise fashion, e.g. file1_1.fq file1_2.fq SRR2_1.fq.gz SRR2_2.fq.gz
+
+## 2022-04-12 Formatting Porites transriptomes for STAR 
+
+Create a new directory to move any Acropora cervicornis files. 
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons
+
+	$ mkdir Acropora_cervicornis
+	
+	$ ls
+	Acropora_cervicornis  Porites_astreoides
+
+Move any A. cervicornis files in raw\_data\_fasqs to the new directory.
+
+	**CAN'T FIND ACER FILES IN PAST DIRECTORY? SOMEWHERE BETWEEN RENAMING AND TRIMMING THEY DISSAPEARED??**
+
+Create a "mapping" directory in raw\_data\_fasqs and "kenkelPast" directory 
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/
+
+	$ mkdir mapping 
+
+	$ cd mapping/
+
+	$ mkdir kenkelPast
+
+	$ cd kenkelPast
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast
+
+
+Copy Kenkel Genome to new directory and run MakeGenome script for Kenkel Past genome
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast
+	
+	$ scp /cm/shared/courses/dbarshis/barshislab/danb/taxons/Porites_astreoides/2021-12_MotePilotV1/Fastqs/mapping/kenkelPast/Porites_astreoides_LongestIsoform_suffixed.fasta ./
+
+	$ ls  
+	Porites_astreoides_LongestIsoform_suffixed.fasta
+
+	$ nano MakeGenomeKenk.sh
+	
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-02-07_KenkelgenomeGenerate.txt
+	#SBATCH -n 4
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=Kenkgenomegenerate
+
+	enable_lmod
+
+	module load container_env star
+
+	STAR --runMode genomeGenerate --runThreadN 4 --genomeDir ./ --genomeFastaFiles Porites_astreoides_LongestIsoform_suffixed.fasta --genomeChrBinNbits 16
+
+	$ salloc 
+	salloc: Pending job allocation 9750125
+	salloc: job 9750125 queued and waiting for resources
+	salloc: job 9750125 has been allocated resources
+	salloc: Granted job allocation 9750125
+
+	$ sbatch MakeGenomeKenk.sh
+	Submitted batch job 9750126
+
+	$ squeue -u kpark049
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           9750126      main Kenkgeno kpark049  R       0:05      1 coreV1-22-012
+           9750125      main interact kpark049  R       0:14      1 coreV1-22-018
+	
+## Notes on STAR
+
+--runMode genomeGenerate: option directs STAR to run genome indices generation job
+
+--runThreadN 4:option defines the number of threads to be used for genome generation, it has to be set to the number of available cores on the server node
+
+--genomeDir: specifies path to the directory (henceforth called ”genome directory” where the genome indices are stored
+
+--genomeFastaFiles: specifies one or more FASTA files with the genome reference sequences
+
+--genomeChrBinNbits 16: default is 18, int: =log2(chrBin), where chrBin is the size of the bins for genome storage: each chromosome will occupy an integer number of bins. For a genome with large number of contigs, it is recommended to scale this parameter as min(18, log2[max(GenomeLength/NumberOfReferences,ReadLength)])  
+* can be used to reduce RAM consumption 
+

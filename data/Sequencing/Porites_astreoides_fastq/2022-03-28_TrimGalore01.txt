@@ -1,0 +1,85 @@
+#!/bin/bash -l
+
+#SBATCH -o 2022-03-28_TrimGalore01.txt
+#SBATCH -n 1
+#SBATCH --mail-user=kpark049@odu.edu
+#SBATCH --mail-type=END
+#SBATCH --job-name=TrimGalore01
+
+enable_lmod
+
+module load container_env trim_galore
+
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_30_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_34_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_34_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_34_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_34_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_37_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_37_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_37_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_37_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_39_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_39_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_39_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_39_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_39_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_only_seq_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_only_seq_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_30_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_30_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_30_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_30_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_30_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_30_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_30_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_30_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_30_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_30_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_34_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_34_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_34_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_34_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_34_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_34_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_34_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_34_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_34_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_34_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_37_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_37_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_37_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_37_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_37_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_37_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_37_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_37_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_39_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_39_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_39_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_39_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_39_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_39_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_39_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_39_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_39_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_39_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_only_seq_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_only_seq_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_T0_0_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_T0_0_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_30_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_30_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_30_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_30_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_30_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_30_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_30_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_30_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_30_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_30_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_34_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_34_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_34_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_34_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_34_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_34_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_34_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_34_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_34_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_34_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_37_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_37_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_37_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_37_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_37_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_37_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_37_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_37_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_39_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_39_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_39_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_39_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_39_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_39_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_39_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_39_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_39_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_39_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_only_seq_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_only_seq_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_T0_0_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_T0_0_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_30_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_30_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_30_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_30_180_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_30_360_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_30_360_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_30_420_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_30_420_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_30_750_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_30_750_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_34_1140_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_34_1140_RNASeq_R2.fq.gz
+crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_34_180_RNASeq_R1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_34_180_RNASeq_R2.fq.gz
