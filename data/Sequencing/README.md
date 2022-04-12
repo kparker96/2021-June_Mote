@@ -546,6 +546,16 @@ Copy Kenkel Genome to new directory and run MakeGenome script for Kenkel Past ge
            9750126      main Kenkgeno kpark049  R       0:05      1 coreV1-22-012
            9750125      main interact kpark049  R       0:14      1 coreV1-22-018
 	
+After job finished 
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast
+	$ ls
+	2022-02-07_KenkelgenomeGenerate.txt  chrStart.txt          MakeGenomeKenk.sh                                      SAindex
+	chrLength.txt                        Genome                Porites_astreoides_LongestIsoform_suffixed.fasta
+	chrNameLength.txt                    genomeParameters.txt  Porites_astreoides_LongestIsoform_suffixed.fasta.save
+	chrName.txt                          Log.out               SA
+		
 ## Notes on STAR
 
 --runMode genomeGenerate: option directs STAR to run genome indices generation job
