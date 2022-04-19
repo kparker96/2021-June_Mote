@@ -638,12 +638,12 @@ Run STAR scripts per genotype, testing on genotype 10 to start
 	Submitted batch job 9751644
 
 ## Notes on STAR
---genomeDir: specifies path to the directory (henceforth called ”genome directory” where the genome indices are stored
+**--genomeDir:** specifies path to the directory (henceforth called ”genome directory” where the genome indices are stored
 
---runThreadN 16:option defines the number of threads to be used for genome generation, it has to be set to the number of available cores on the server node
+**--runThreadN 16:** option defines the number of threads to be used for genome generation, it has to be set to the number of available cores on the server node
 
---outSAMattributes:  a string of desired SAM attributes, in the order desired for the output SAM. Tags can be listed in any combination/order  
-* All  
+**--outSAMattributes:** a string of desired SAM attributes, in the order desired for the output SAM. Tags can be listed in any combination/order  
+* **All** (argument includes the following)  
 	* NH: number of loci the reads maps to: = 1 for unique mappers, > 1 for multimappers. Standard SAM tag.  
 	* HI: multiple alignment index, starts with –outSAMattrIHstart (= 1 by default). Standard SAM tag.
 	* AS: local alignment score, +1/ − 1 for matches/mismateches, score* penalties for indels and gaps. For PE reads, total score for two mates. Standard SAM tag.
@@ -654,39 +654,38 @@ Run STAR scripts per genotype, testing on genotype 10 to start
 	* jI:B:I,Start1,End1,Start2,End2,... : Start and End of introns for all junctions (1-based).
 	* jM jI : attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflinks.
 
---genomeLoad: mode of shared memory usage for the genome files. Only used with –runMode alignReads.
-* LoadAndRemove:load genome into shared but remove it after run 
+**--genomeLoad:** mode of shared memory usage for the genome files. Only used with –runMode alignReads  
+	* **LoadAndRemove** = load genome into shared but remove it after run 
 
---outFilterType: type of filtering 
-* Normal: standard filtering using only current alignment
+**--outFilterType:** type of filtering 
+	* **Normal** = standard filtering using only current alignment
  
---outFilterMismatchNoverLmax: alignment will be output only if its ratio of mismatches to *mapped*length is less than or equal to this value
-* default 0.3
+**--outFilterMismatchNoverLmax:** alignment will be output only if its ratio of mismatches to *mapped*length is less than or equal to this value
+	* default 0.3
 
---outSAMstrandField: for unstranded RNA-seq data, generates required spliced alignments with XS strand attribute for Cufflinks/Cuffdiff
-* XS strand attribute will be generated for all alignments that contain splice junctions. The spliced alignments that have undefined strand (i.e. containing only non-canonical unannotated junctions) will be suppressed
-* intronMotif: This option changes the output alignments: reads with inconsistent and/or non-canonical introns are filtered out
+**--outSAMstrandField:** for unstranded RNA-seq data, generates required spliced alignments with XS strand attribute for Cufflinks/Cuffdiff
+	* XS strand attribute will be generated for all alignments that contain splice junctions. The spliced alignments that have undefined strand (i.e. containing only non-canonical unannotated junctions) will be suppressed
+	* **intronMotif** = This option changes the output alignments: reads with inconsistent and/or non-canonical introns are filtered out
 
---outFilterIntronMotifs: filter alignment using their motifs, recommended to remove non-canonical junctions for Cufflinks runs  
-* RemoveNoncanonical: filter out alignments that contain non-canonical junctions
+**--outFilterIntronMotifs:** filter alignment using their motifs, recommended to remove non-canonical junctions for Cufflinks runs    
+	* **RemoveNoncanonical** = filter out alignments that contain non-canonical junctions
 
---outSAMtype BAM Unsorted: output unsorted BAM file as Aligned.out.bam file  
-* The paired ends of an alignment are always adjacent,
-and multiple alignments of a read are adjacent as well. This ”unsorted” file can be directly used with downstream software such as HTseq, without the need of name sorting. The order of the reads will match that of the input FASTQ(A)files only if one thread is used --runThread 1, and --outFilterType --BySJout is not used.
+**--outSAMtype BAM Unsorted:** output unsorted BAM file as Aligned.out.bam file  
+	* The paired ends of an alignment are always adjacent, and multiple alignments of a read are adjacent as well. This ”unsorted” file can be directly used with downstream software such as HTseq, without the need of name sorting. The order of the reads will match that of the input FASTQ(A)files only if one thread is used --runThread 1, and --outFilterType --BySJout is not used.
  
---limitBAMsortRAM 5784458574: int>=0: maximum available RAM (bytes) for sorting BAM. If =0, it will be set to the genome index size. 0 value can only be used with –genomeLoad NoSharedMemory option.
+**--limitBAMsortRAM 5784458574:** int>=0: maximum available RAM (bytes) for sorting BAM. If =0, it will be set to the genome index size. 0 value can only be used with –genomeLoad NoSharedMemory option.
 
---readFilesCommand: command line to execute for each of the input file
-* zcat: to uncompress .gz files 
+**--readFilesCommand:** command line to execute for each of the input file  
+	* **zcat** = to uncompress .gz files 
 
---outReadsUnmapped: output of unmapped and partially mapped (i.e. mapped only one mate of a paired end read) reads in separate file(s)
-* Fastx: output in separate fasta/fastq files, Unmapped.out.mate1/2
+**--outReadsUnmapped:** output of unmapped and partially mapped (i.e. mapped only one mate of a paired end read) reads in separate file(s)
+	* **Fastx** = output in separate fasta/fastq files, Unmapped.out.mate1/2
 
---outFilterMatchNminOverLread: sam as outFilterMatchNmin, but normalized to the read length (sum of mates’ lengths for paired-end reads)
-* default: 0.66
+**--outFilterMatchNminOverLread:** sam as outFilterMatchNmin, but normalized to the read length (sum of mates’ lengths for paired-end reads)  
+	* default: 0.66
 
---outFilterScoreMinOverLread: alignment will be output only if its score is higher than or equal to this value but normalized to read length (sum of mates’ lengths for paired-end reads)  
-* default 0.66
+**--outFilterScoreMinOverLread:** alignment will be output only if its score is higher than or equal to this value but normalized to read length (sum of mates’ lengths for paired-end reads)  
+	* default 0.66
 
---readFilesIn: name(s) (with path) of the files containing the sequences to be mapped (e.g. RNA-seq FASTQ files)
-* For paired-end reads, use comma separated list for read1, followed by space, followed by comma separated list for read2
+**--readFilesIn:** name(s) (with path) of the files containing the sequences to be mapped (e.g. RNA-seq FASTQ files)  
+	* For paired-end reads, use comma separated list for read1, followed by space, followed by comma separated list for read2
