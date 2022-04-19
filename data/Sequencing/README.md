@@ -473,7 +473,15 @@ Jobs finished 2022-03-31, took a little under 3 days to complete.
 * To pass the validation test, both sequences of a sequence pair are required to have a certain minimum length which is governed by the option --length. If only one read passes this length threshold the other read can be rescued
 * Using this option lets you discard too short read pairs without disturbing the sequence-by-sequence order of FastQ files which is required by many aligners. Trim Galore! expects paired-end files to be supplied in a pairwise fashion, e.g. file1_1.fq file1_2.fq SRR2_1.fq.gz SRR2_2.fq.gz
 
-## 2022-04-12 Formatting Porites transriptomes for STAR 
+## 2022-04-12 Formatting Kenkel Porites transriptomes for STAR 
+
+Moved trim reports into it's own directory
+
+	$ /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/
+
+	$ mkdir trim_reports 
+
+	$ mv *_trimming_report.txt ./trim_reports
 
 Create a new directory to move any Acropora cervicornis files. 
 
@@ -546,7 +554,7 @@ Copy Kenkel Genome to new directory and run MakeGenome script for Kenkel Past ge
            9750126      main Kenkgeno kpark049  R       0:05      1 coreV1-22-012
            9750125      main interact kpark049  R       0:14      1 coreV1-22-018
 	
-After job finished 
+After job finished (took ~ 3 hours)
 
 	$ pwd
 	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast
@@ -555,17 +563,130 @@ After job finished
 	chrLength.txt                        Genome                Porites_astreoides_LongestIsoform_suffixed.fasta
 	chrNameLength.txt                    genomeParameters.txt  Porites_astreoides_LongestIsoform_suffixed.fasta.save
 	chrName.txt                          Log.out               SA
-		
+
+## 2022-04-14 Running MultiQC 
+
+Run MultiQC 
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
+
+	$ salloc 
+	salloc: Pending job allocation 9750557
+	salloc: job 9750557 queued and waiting for resources
+	salloc: job 9750557 has been allocated resources
+	salloc: Granted job allocation 9750557
+	
+	$ module load container_env multiqc
+	$ crun multiqc ./
+	[WARNING]         multiqc : MultiQC Version v1.12 now available!
+	[INFO   ]         multiqc : This is MultiQC v1.9
+	[INFO   ]         multiqc : Template    : default
+	[INFO   ]         multiqc : Searching   : /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
+	Searching 2223 files..  [####################################]  100%
+	[INFO   ]        cutadapt : Found 438 reports
+	[INFO   ]          fastqc : Found 438 reports
+	[INFO   ]         multiqc : Compressing plot data
+	[INFO   ]         multiqc : Report      : multiqc_report.html
+	[INFO   ]         multiqc : Data        : multiqc_data
+	[INFO   ]         multiqc : MultiQC complete
+
+
+Run STAR scripts per genotype, testing on genotype 10 to start 
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
+
+	$ nano STARMapKenkel_10.sh
+
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-04-14_STARMapKenkel_10.txt
+	#SBATCH -n 4
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=STARKenkel_10
+	
+	enable_lmod
+	
+	module load container_env star
+	
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_30_750_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_750_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_34_180_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_180_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_34_360_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_360_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_34_420_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_420_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_34_750_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_750_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_37_180_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_180_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_37_360_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_360_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_37_420_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_420_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_37_750_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_750_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_39_1140_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_1140_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_39_180_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_180_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_39_360_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_360_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_39_420_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_420_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_39_750_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_750_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_only_seq_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_only_seq_RNASeq_R2_val_2.fq.gz
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R2_val_2.fq.gz
+
+	$ sbatch STARMapKenkel_10.sh
+	Submitted batch job 9751644
+
 ## Notes on STAR
-
---runMode genomeGenerate: option directs STAR to run genome indices generation job
-
---runThreadN 4:option defines the number of threads to be used for genome generation, it has to be set to the number of available cores on the server node
-
 --genomeDir: specifies path to the directory (henceforth called ”genome directory” where the genome indices are stored
 
---genomeFastaFiles: specifies one or more FASTA files with the genome reference sequences
+--runThreadN 16:option defines the number of threads to be used for genome generation, it has to be set to the number of available cores on the server node
 
---genomeChrBinNbits 16: default is 18, int: =log2(chrBin), where chrBin is the size of the bins for genome storage: each chromosome will occupy an integer number of bins. For a genome with large number of contigs, it is recommended to scale this parameter as min(18, log2[max(GenomeLength/NumberOfReferences,ReadLength)])  
-* can be used to reduce RAM consumption 
+--outSAMattributes:  a string of desired SAM attributes, in the order desired for the output SAM. Tags can be listed in any combination/order  
+* All  
+	* NH: number of loci the reads maps to: = 1 for unique mappers, > 1 for multimappers. Standard SAM tag.  
+	* HI: multiple alignment index, starts with –outSAMattrIHstart (= 1 by default). Standard SAM tag.
+	* AS: local alignment score, +1/ − 1 for matches/mismateches, score* penalties for indels and gaps. For PE reads, total score for two mates. Standard SAM tag.
+	* NM: edit distance to the reference (number of mismatched + inserted + deleted bases) for each mate. Standard SAM tag.
+	* nM: number of mismatches per (paired) alignment, not to be confused with NM, which is the number of mismatches+indels in each mate.
+	* jM:B:c,M1,M2,... : intron motifs for all junctions (i.e. N in CIGAR): 0: non-canonical; 1: GT/AG, 2: CT/AC, 3: GC/AG, 4: CT/GC, 5: AT/AC, 6: GT/AT. If splice junctions database is used, and a junction is annotated, 20 is added to its motif value.
+	* MD: string encoding mismatched and deleted reference bases (see standard SAM specifications).Standard SAM tag.
+	* jI:B:I,Start1,End1,Start2,End2,... : Start and End of introns for all junctions (1-based).
+	* jM jI : attributes require samtools 0.1.18 or later, and were reported to be incompatible with some downstream tools such as Cufflinks.
 
+--genomeLoad: mode of shared memory usage for the genome files. Only used with –runMode alignReads.
+* LoadAndRemove:load genome into shared but remove it after run 
+
+--outFilterType: type of filtering 
+* Normal: standard filtering using only current alignment
+ 
+--outFilterMismatchNoverLmax: alignment will be output only if its ratio of mismatches to *mapped*length is less than or equal to this value
+* default 0.3
+
+--outSAMstrandField: for unstranded RNA-seq data, generates required spliced alignments with XS strand attribute for Cufflinks/Cuffdiff
+* XS strand attribute will be generated for all alignments that contain splice junctions. The spliced alignments that have undefined strand (i.e. containing only non-canonical unannotated junctions) will be suppressed
+* intronMotif: This option changes the output alignments: reads with inconsistent and/or non-canonical introns are filtered out
+
+--outFilterIntronMotifs: filter alignment using their motifs, recommended to remove non-canonical junctions for Cufflinks runs  
+* RemoveNoncanonical: filter out alignments that contain non-canonical junctions
+
+--outSAMtype BAM Unsorted: output unsorted BAM file as Aligned.out.bam file  
+* The paired ends of an alignment are always adjacent,
+and multiple alignments of a read are adjacent as well. This ”unsorted” file can be directly used with downstream software such as HTseq, without the need of name sorting. The order of the reads will match that of the input FASTQ(A)files only if one thread is used --runThread 1, and --outFilterType --BySJout is not used.
+ 
+--limitBAMsortRAM 5784458574: int>=0: maximum available RAM (bytes) for sorting BAM. If =0, it will be set to the genome index size. 0 value can only be used with –genomeLoad NoSharedMemory option.
+
+--readFilesCommand: command line to execute for each of the input file
+* zcat: to uncompress .gz files 
+
+--outReadsUnmapped: output of unmapped and partially mapped (i.e. mapped only one mate of a paired end read) reads in separate file(s)
+* Fastx: output in separate fasta/fastq files, Unmapped.out.mate1/2
+
+--outFilterMatchNminOverLread: sam as outFilterMatchNmin, but normalized to the read length (sum of mates’ lengths for paired-end reads)
+* default: 0.66
+
+--outFilterScoreMinOverLread: alignment will be output only if its score is higher than or equal to this value but normalized to read length (sum of mates’ lengths for paired-end reads)  
+* default 0.66
+
+--readFilesIn: name(s) (with path) of the files containing the sequences to be mapped (e.g. RNA-seq FASTQ files)
+* For paired-end reads, use comma separated list for read1, followed by space, followed by comma separated list for read2
