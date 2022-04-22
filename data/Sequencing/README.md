@@ -591,8 +591,12 @@ Run MultiQC
 	[INFO   ]         multiqc : Data        : multiqc_data
 	[INFO   ]         multiqc : MultiQC complete
 
-
+## 2022-04-19 Running STAR 
 Run STAR scripts per genotype, testing on genotype 10 to start 
+
+**THIS DID NOT WORK**  
+
+I forgot to add in an ----outFileNamePrefix so all of the genotype 10 data was saved into one log file. All output from it was removed. 
 
 	$ pwd 
 	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
@@ -689,3 +693,145 @@ Run STAR scripts per genotype, testing on genotype 10 to start
 
 **--readFilesIn:** name(s) (with path) of the files containing the sequences to be mapped (e.g. RNA-seq FASTQ files)  
 * For paired-end reads, use comma separated list for read1, followed by space, followed by comma separated list for read2
+
+**--outFileNamePrefix:** string, output files name prefix (including full or relative path). Can only be defined on the command line
+
+## 2022-04-20 Retesting running STAR on one sample  
+Retrying STAR using one sample "20210608T1400\_CBASS\_US\_MoteIn\_Past\_10\_30\_1140" with the outputfile command 
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastq  
+
+	$ nano STARMapKenkel_test.sh
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-04-20_STARMapKenkel_test.txt
+	#SBATCH -n 4
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=STARKenkel_test
+	
+	enable_lmod
+	
+	module load container_env star
+	
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R1_val_1.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R2_val_2.fq.gz --outFileNamePrefix ${i%_R1_val_1.fq.gz}_2kenkel
+
+	$ salloc 
+	salloc: Pending job allocation 9752138
+	salloc: job 9752138 queued and waiting for resources
+	salloc: job 9752138 has been allocated resources
+	salloc: Granted job allocation 9752138
+	This session will be terminated in 7 days. If your application requires
+	a longer excution time, please use command "salloc -t N-0" where N is the
+	number of days that you need.  
+
+	$ sbatch STARMapKenkel_test.sh
+	Submitted batch job 9752139
+
+	$ squeue -u kpark049
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           9752139      main STARKenk kpark049  R       0:12      1 coreV4-21-001
+           9752138      main interact kpark049  R       0:26      1 coreV1-22-001
+
+This worked as needed, but need to put R1 and R2 on the same line to have the mapping in one file output. 
+
+## 2022-04-21 Finally Running STAR!
+
+Started off with list of sample names from TrimGalore
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fast
+
+	$ ls *R1_val_1.fq.gz > trimgalore_filenames.txt
+
+	$ head trimgalore_filnames.txt
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_1140_RNASeq_R1_val_1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_180_RNASeq_R1_val_1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R1_val_1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R1_val_1.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_750_RNASeq_R1_val_1.fq.gz
+
+Safe copied trimgalore_filenames.txt to local and edited in Notpad ++
+
+	find: ^(\d+.+RNASeq\_)(R)(1)(_val_)(1)(.fq.gz)
+	replace: STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn \1\2\3\4\5\6 \1\22\42\6 --outFileNamePrefix \12kenkel_
+
+Then moved genotypes in groups of two to separate files to make scripts and copied to cluster
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fast
+
+	$ nano STARMapKenkel_01_02.sh
+
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-04-21_STARMapKenkel_01_02.txt
+	#SBATCH -n 4
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=STARKenkel_01_02
+	
+	enable_lmod
+	
+	module load container_env star
+	
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210610T1400_CBASS_US_MoteOff_Past_1_30_1140_RNASeq_R1_val_1.fq.gz 20210610T1400_CBASS_US_MoteOff_Past_1_30_1140_RNASeq_R2_val_2.fq.gz --outFileNamePrefix 20210610T1400_CBASS_US_MoteOff_Past_1_30_1140_RNASeq_2kenkel_
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210610T1400_CBASS_US_MoteOff_Past_1_30_180_RNASeq_R1_val_1.fq.gz 20210610T1400_CBASS_US_MoteOff_Past_1_30_180_RNASeq_R2_val_2.fq.gz --outFileNamePrefix 20210610T1400_CBASS_US_MoteOff_Past_1_30_180_RNASeq_2kenkel_
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210610T1400_CBASS_US_MoteOff_Past_1_30_360_RNASeq_R1_val_1.fq.gz 20210610T1400_CBASS_US_MoteOff_Past_1_30_360_RNASeq_R2_val_2.fq.gz --outFileNamePrefix 20210610T1400_CBASS_US_MoteOff_Past_1_30_360_RNASeq_2kenkel_
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210610T1400_CBASS_US_MoteOff_Past_1_30_420_RNASeq_R1_val_1.fq.gz 20210610T1400_CBASS_US_MoteOff_Past_1_30_420_RNASeq_R2_val_2.fq.gz --outFileNamePrefix 20210610T1400_CBASS_US_MoteOff_Past_1_30_420_RNASeq_2kenkel_
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210610T1400_CBASS_US_MoteOff_Past_1_30_750_RNASeq_R1_val_1.fq.gz 20210610T1400_CBASS_US_MoteOff_Past_1_30_750_RNASeq_R2_val_2.fq.gz --outFileNamePrefix 20210610T1400_CBASS_US_MoteOff_Past_1_30_750_RNASeq_2kenkel_
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210610T1400_CBASS_US_MoteOff_Past_1_34_1140_RNASeq_R1_val_1.fq.gz 20210610T1400_CBASS_US_MoteOff_Past_1_34_1140_RNASeq_R2_val_2.fq.gz --outFileNamePrefix 20210610T1400_CBASS_US_MoteOff_Past_1_34_1140_RNASeq_2kenkel_
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210610T1400_CBASS_US_MoteOff_Past_1_34_180_RNASeq_R1_val_1.fq.gz 20210610T1400_CBASS_US_MoteOff_Past_1_34_180_RNASeq_R2_val_2.fq.gz --outFileNamePrefix 20210610T1400_CBASS_US_MoteOff_Past_1_34_180_RNASeq_2kenkel_
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210610T1400_CBASS_US_MoteOff_Past_1_34_360_RNASeq_R1_val_1.fq.gz 20210610T1400_CBASS_US_MoteOff_Past_1_34_360_RNASeq_R2_val_2.fq.gz --outFileNamePrefix 20210610T1400_CBASS_US_MoteOff_Past_1_34_360_RNASeq_2kenkel_
+	...
+
+Did the same for geonotype 3 and 4, 5 and 6, 7 and 8, and 9 and 10. Ran all on turing. 
+
+	$ salloc 
+	salloc: Pending job allocation 9753159
+	salloc: job 9753159 queued and waiting for resources
+	salloc: job 9753159 has been allocated resources
+	salloc: Granted job allocation 9753159
+	This session will be terminated in 7 days. If your application requires
+	a longer excution time, please use command "salloc -t N-0" where N is the
+	number of days that you need.
+
+	$ sbatch STARMapKenkel_01_02.sh
+	Submitted batch job 9753160  
+
+	$ sbatch STARMapKenel_03_04.sh
+	Submitted batch job 9753162
+
+	$ sbatch STARMapKenkel_05_06.sh
+	Submitted batch job 9753163  
+
+	$ sbatch STARMapKenkel_07_08.sh
+	Submitted batch job 9753166
+
+	$ sbatch STARMapKenkel_09_10.sh
+	Submitted batch job 9753165
+
+	$ squeue -u kpark049
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           9753166      main STARKenk kpark049  R       0:10      1 coreV2-25-007
+           9753165      main STARKenk kpark049  R       1:53      1 coreV1-22-012
+           9753163      main STARKenk kpark049  R       2:14      1 coreV2-22-024
+           9753162      main STARKenk kpark049  R       2:47      1 coreV2-22-010
+           9753160      main STARKenk kpark049  R       3:42      1 coreV2-25-knc-010
+           9753161      main interact kpark049  R       3:17      1 coreV1-22-018
+           9753159      main interact kpark049  R       4:39      1 coreV1-22-018
+	
+	
+Started jobs at 3:05 PM
+Last job ended at 7:30 AM next day (04/22/2022)
+
+	Slurm Job_id=9753166 Name=STARKenkel_07_08 Ended, Run time 14:02:38, COMPLETED, ExitCode 0  
+	Slurm Job_id=9753160 Name=STARKenkel_01_02 Ended, Run time 14:25:19, COMPLETED, ExitCode 0   
+	3 of 1,578
+	Slurm Job_id=9753162 Name=STARKenkel_03_04 Ended, Run time 14:33:21, COMPLETED, ExitCode 0 
+	Slurm Job_id=9753163 Name=STARKenkel_05_06 Ended, Run time 15:49:59, COMPLETED, ExitCode 0
+	Slurm Job_id=9753165 Name=STARKenkel_09_10 Ended, Run time 16:23:17, COMPLETED, ExitCode 0
+
+Next Step: Running multiqc on trimgalore and STAR output
+
