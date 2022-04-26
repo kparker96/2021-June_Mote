@@ -833,5 +833,34 @@ Last job ended at 7:30 AM next day (04/22/2022)
 	Slurm Job_id=9753163 Name=STARKenkel_05_06 Ended, Run time 15:49:59, COMPLETED, ExitCode 0
 	Slurm Job_id=9753165 Name=STARKenkel_09_10 Ended, Run time 16:23:17, COMPLETED, ExitCode 0
 
-Next Step: Running multiqc on trimgalore and STAR output
+## Running multiqc on trimgalore and STAR output
 
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
+
+	$ salloc 
+	salloc: Pending job allocation 9754717
+	salloc: job 9754717 queued and waiting for resources
+	salloc: job 9754717 has been allocated resources
+	salloc: Granted job allocation 9754717  
+
+	$ enable_lmod	
+	
+	$ module load container_env multiqc
+	
+	$ crun multiqc ./
+
+	[WARNING]         multiqc : MultiQC Version v1.12 now available!
+	[INFO   ]         multiqc : This is MultiQC v1.9
+	[INFO   ]         multiqc : Template    : default
+	[INFO   ]         multiqc : Searching   : /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs
+	Searching 3908 files..  [####################################]  100%
+	[INFO   ]            star : Found 215 reports
+	[INFO   ]        cutadapt : Found 438 reports
+	[INFO   ]          fastqc : Found 438 reports
+	[INFO   ]         multiqc : Compressing plot data
+	[WARNING]         multiqc : Previous MultiQC output found! Adjusting filenames..
+	[WARNING]         multiqc : Use -f or --force to overwrite existing reports instead
+	[INFO   ]         multiqc : Report      : multiqc_report_1.html
+	[INFO   ]         multiqc : Data        : multiqc_data_1
+	[INFO   ]         multiqc : MultiQC complete
