@@ -863,4 +863,198 @@ Last job ended at 7:30 AM next day (04/22/2022)
 	[WARNING]         multiqc : Use -f or --force to overwrite existing reports instead
 	[INFO   ]         multiqc : Report      : multiqc_report_1.html
 	[INFO   ]         multiqc : Data        : multiqc_data_1
-	[INFO   ]         multiqc : MultiQC complete
+	[INFO   ]         multiqc : MultiQC complete  
+
+## 2022-05-06 Copying re-sequenced files into a new directory
+
+Making new directory to analyze re-sequenced files  
+  
+	$ pwd 
+	/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/
+
+	$ mkdir reseq_raw_data_fastqs 
+
+	$ ls 
+	KPunzip.txt  old              reseq_raw_data_fastqs  X204SC21081158-Z01-F002
+	__MACOSX     raw_data_fastqs  unzip_raw.sh           X204SC21081158-Z01-F002.zip
+
+Copying files to new directory 
+
+	* immediately after cluster login * 
+	$ cp /RC/group/rc_barshis_lab/taxonarchive/Porites_astreoides/2022-04-27_MotePilotResequencing/*.zip /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs 
+
+Check file copy 
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+
+	$ ls 
+	X204SC21081158-Z01-F012_01.zip	X204SC21081158-Z01-F012_02.zip
+
+## 2022-05-08 Running md5cheksum  
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs  
+
+	$ salloc 
+	salloc: Pending job allocation 9756952
+	salloc: job 9756952 queued and waiting for resources
+	salloc: job 9756952 has been allocated resources
+	salloc: Granted job allocation 9756952
+
+	
+	$ nano ChekSum.sh 
+	
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-05-08_md5.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=md5
+	
+	md5sum X204SC21081158-Z01-F012_01.zip  
+	md5sum X204SC21081158-Z01-F012_02.zip  
+
+	$ sbatch ChekSum.sh
+	Submitted batch job 9756953
+
+	$ squeue -u kpark049
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           9756953      main      md5 kpark049  R       0:09      1 coreV2-22-005
+           9756952      main interact kpark049  R       0:41      1 coreV2-22-005 
+
+	$ cat 2022-05-08_md5.txt
+	12ab39a924ded5216df7deabcf255a79  X204SC21081158-Z01-F012_01.zip
+	7a45743a0891fcaa2c4e383439e03308  X204SC21081158-Z01-F012_02.zip
+
+Running unzip script 
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+	
+	$ nano reseq_unzip_raw.sh
+	#!/bin/bash -l
+
+	#SBATCH -o KPunzip.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=KPunzip
+	
+	unzip X204SC21081158-Z01-F012_01.zip  
+	unzip X204SC21081158-Z01-F012_02.zip
+	
+	$ salloc
+	salloc: Pending job allocation 9756958
+	salloc: job 9756958 queued and waiting for resources
+	salloc: job 9756958 has been allocated resources
+	salloc: Granted job allocation 9756958
+	This session will be terminated in 7 days. If your application requires
+	a longer excution time, please use command "salloc -t N-0" where N is the
+	number of days that you need.
+
+	$ sbatch reseq_unzip_raw.sh
+	Submitted batch job 9756959
+
+	$ squeue -u kpark049
+             JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+           9756959      main reseq_un kpark049  R       0:07      1 coreV2-22-005
+           9756958      main interact kpark049  R       0:39      1 coreV2-22-005  
+
+## 2022-05-09: Copying unzipped files into main directory, running renamer 
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs/X204SC21081158-Z01-F012_01/raw_data
+
+	
+	$ ls
+	R456  R46   R48  R52  R56  R61  R66  R70  R74  R8   R83  R91                 RE152  RE157  RE186  RE192  RR147  RR158
+	R457  R460  R49  R53  R57  R63  R67  R71  R75  R80  R85  R96                 RE153  RE158  RE187  RE195  RR153  RR161
+	R458  R461  R50  R54  R58  R64  R69  R72  R76  R81  R89  Rawdata_Readme.pdf  RE154  RE183  RE188  RE200  RR155  RR163
+	R459  R47   R51  R55  R59  R65  R7   R73  R79  R82  R90  RE151               RE156  RE185  RE189  RR143  RR157  RR164
+
+
+	$ cp ./R*/*.fq.gz /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs/
+
+Did the same thing for X204SC21081158-Z01-F012_02
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+
+	$ ls 
+	2022-05-08_md5.txt  R283r_1.fq.gz  R318_1.fq.gz   R35_1.fq.gz    R4_1.fq.gz    R57_1.fq.gz  RE151_1.fq.gz
+	ChekSum.sh          R283r_2.fq.gz  R318_2.fq.gz   R351r_1.fq.gz  R42_1.fq.gz   R57_2.fq.gz  RE151_2.fq.gz
+	R100_1.fq.gz        R284_1.fq.gz   R319_1.fq.gz   R351r_2.fq.gz  R42_2.fq.gz   R58_1.fq.gz  RE152_1.fq.gz
+	R100_2.fq.gz        R284_2.fq.gz   R319_2.fq.gz   R352_1.fq.gz   R423_1.fq.gz  R58_2.fq.gz  RE152_2.fq.gz
+	R101_1.fq.gz        R285_1.fq.gz   R3_1.fq.gz     R352_2.fq.gz   R423_2.fq.gz  R59_1.fq.gz  RE153_1.fq.gz
+	R101_2.fq.gz        R285_2.fq.gz   R320_1.fq.gz   R35_2.fq.gz    R429_1.fq.gz  R59_2.fq.gz  RE153_2.fq.gz
+	R102_1.fq.gz        R286r_1.fq.gz  R320_2.fq.gz   R355_1.fq.gz   R429_2.fq.gz  R61_1.fq.gz  RE154_1.fq.gz
+	R102_2.fq.gz        R286r_2.fq.gz  R32_1.fq.gz    R355_2.fq.gz   R4_2.fq.gz    R61_2.fq.gz  RE154_2.fq.gz
+	R103_1.fq.gz        R287_1.fq.gz   R32_2.fq.gz    R356_1.fq.gz   R43_1.fq.gz   R63_1.fq.gz  RE156_1.fq.gz
+	R103_2.fq.gz        R287_2.fq.gz   R322r_1.fq.gz  R356_2.fq.gz   R43_2.fq.gz   R63_2.fq.gz  RE156_2.fq.gz
+	R104_1.fq.gz        R288_1.fq.gz   R322r_2.fq.gz  R36_1.fq.gz    R437_1.fq.gz  R64_1.fq.gz  RE157_1.fq.gz
+	R104_2.fq.gz        R288_2.fq.gz   R323_1.fq.gz   R36_2.fq.gz    R437_2.fq.gz  R64_2.fq.gz  RE157_2.fq.gz
+	R105_1.fq.gz        R289_1.fq.gz   R323_2.fq.gz   R364_1.fq.gz   R438_1.fq.gz  R65_1.fq.gz  RE158_1.fq.gz
+	R105_2.fq.gz        R289_2.fq.gz   R324_1.fq.gz   R364_2.fq.gz   R438_2.fq.gz  R65_2.fq.gz  RE158_2.fq.gz
+	...
+
+Running Renamer: used original "R\_1\_fastq\_rename.txt" file and used find and replace to add in "reseq" to new file name. 
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+
+	$ nano R_1_fastq_reseq_rename.txt
+	OldName	NewName
+	R100_1.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R1_reseq.fq.gz
+	R101_1.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R1_reseq.fq.gz
+	R10_1.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R1_reseq.fq.gz
+	R102_1.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R1_reseq.fq.gz
+	R103_1.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_R1_reseq.fq.gz
+	...
+
+	$ nano R_2_fastq_reseq_rename.txt
+	OldName	NewName
+	R100_2.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R2_reseq.fq.gz
+	R101_2.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R2_reseq.fq.gz
+	R10_2.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R2_reseq.fq.gz
+	R102_2.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R2_reseq.fq.gz
+	R103_2.fq.gz	20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_R2_reseq.fq.gz
+	...
+
+	$ nano  R_1_fastq_reseq_rename.sh
+	#!/bin/bash -l
+
+	#SBATCH -o reseq_fastq_rename_R1.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=reseqFastqR1
+	
+	/cm/shared/courses/dbarshis/barshislab/KatieP/scripts/renamer_KEP.py R_1_fastq_reseq_rename.txt
+
+	$ nano  R_2_fastq_reseq_rename.sh
+	#!/bin/bash -l
+
+	#SBATCH -o reseq_fastq_rename_R2.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=reseqFastqR2
+	
+	/cm/shared/courses/dbarshis/barshislab/KatieP/scripts/renamer_KEP.py R_2_fastq_reseq_rename.txt
+
+	$ salloc 
+	
+	$ sbatch R_1_fastq_reseq_rename.sh
+	
+	$ sbatch R_2_fastq_reseq_rename.sh
+
+	$ ls
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R1_reseq.fq.gz    20210610T1400_CBASS_US_MoteOff_Past_2_37_420_RNASeq_R2_reseq.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_360_RNASeq_R2_reseq.fq.gz    20210610T1400_CBASS_US_MoteOff_Past_2_39_1140_RNASeq_R1_reseq.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R1_reseq.fq.gz    20210610T1400_CBASS_US_MoteOff_Past_2_39_1140_RNASeq_R2_reseq.fq.gz
+	20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R2_reseq.fq.gz    20210610T1400_CBASS_US_MoteOff_Past_2_39_360_RNASeq_R1_reseq.fq.gz
+	...
+
+    
