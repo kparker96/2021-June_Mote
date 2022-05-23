@@ -1057,4 +1057,140 @@ Running Renamer: used original "R\_1\_fastq\_rename.txt" file and used find and 
 	20210608T1400_CBASS_US_MoteIn_Past_10_30_420_RNASeq_R2_reseq.fq.gz    20210610T1400_CBASS_US_MoteOff_Past_2_39_360_RNASeq_R1_reseq.fq.gz
 	...
 
-    
+## 2022-05-19: Running TrimGalore on reseq samples  
+
+	$ pwd /cm/shared/courses/dbarshis/barshislab/KatieP/scripts/
+
+	$ nano 2022-05-19_trimgalore_reseq01.sh
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-05-19_trimgalore_reseq01.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=TrimGalore01
+	
+	enable_lmod
+	
+	module load container_env trim_galore
+	
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_9_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_9_37_1140_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_39_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_39_1140_RNASeq_R2_reseq.fq.gz
+	...
+
+	$ nano 2022-05-19_trimgalore_reseq02.sh
+	#!/bin/bash -l
+	
+	#SBATCH -o 2022-05-19_trimgalore_reseq02.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=TrimGalore02
+	
+	enable_lmod
+	
+	module load container_env trim_galore
+	
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_9_37_420_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_9_37_420_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_37_420_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_420_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_39_420_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_39_420_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_7_39_420_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_39_420_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_8_39_420_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_39_420_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_9_39_420_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_9_39_420_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_10_39_420_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_39_420_RNASeq_R2_reseq.fq.gz
+	crun trim_galore --fastqc --paired 20210608T1400_CBASS_US_MoteIn_Past_6_30_750_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_30_750_RNASeq_R2_reseq.fq.gz
+	...
+
+Running reseq TrimGalore scripts 
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs  
+	
+	$ salloc
+
+	$ sbatch 2022-05-19_trimgalore_reseq01.sh
+
+	$ sbatch 2022-05-19_trimgalore_reseq02.sh
+
+
+## 2022-05-23: MultiQC and STAR 
+
+Running MultiQC
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+
+	$ $ salloc
+	salloc: Pending job allocation 9761166
+	salloc: job 9761166 queued and waiting for resources
+	salloc: job 9761166 has been allocated resources
+	salloc: Granted job allocation 9761166
+	This session will be terminated in 7 days. If your application requires
+	a longer excution time, please use command "salloc -t N-0" where N is the
+	number of days that you need.
+	
+	$ module load container_env multiqc
+
+	$ crun multiqc ./
+
+	$ [WARNING]         multiqc : MultiQC Version v1.12 now available!
+	[INFO   ]         multiqc : This is MultiQC v1.9
+	[INFO   ]         multiqc : Template    : default
+	[INFO   ]         multiqc : Searching   : /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+	Searching 2178 files..  [####################################]  100%
+	[INFO   ]        cutadapt : Found 312 reports
+	[INFO   ]          fastqc : Found 312 reports
+	[INFO   ]         multiqc : Compressing plot data
+	[INFO   ]         multiqc : Report      : multiqc_report.html
+	[INFO   ]         multiqc : Data        : multiqc_data
+	[INFO   ]         multiqc : MultiQC complete
+
+Running STAR -upgraded 22-05-19_trimgalore_reseq0*.sh files with text editor to STAR format, using same genome location from previous STAR run 
+
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+
+	$ salloc
+	salloc: Pending job allocation 9761167
+	salloc: job 9761167 queued and waiting for resources
+	salloc: job 9761167 has been allocated resources
+	salloc: Granted job allocation 9761167
+	This session will be terminated in 7 days. If your application requires
+	a longer excution time, please use command "salloc -t N-0" where N is the
+	number of days that you need.  
+
+	$ nano STARKenkel_reseq01.sh
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-05-23-STARKenkel_reseq01.txt
+	#SBATCH -n 4
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=STARKenkel_reseq01
+	
+	enable_lmod
+	
+	module load container_env star
+	
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_R2_reseq.fq.gz --outFileNamePrefix 20210608T1400_CBASS_US_MoteIn_Past_10_34_1140_RNASeq_reseq_2kenkel
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_R2_reseq.fq.gz --outFileNamePrefix 20210608T1400_CBASS_US_MoteIn_Past_6_37_1140_RNASeq_reseq_2kenkel
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_R2_reseq.fq.gz --outFileNamePrefix 20210608T1400_CBASS_US_MoteIn_Past_10_T0_0_RNASeq_reseq_2kenkel
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_R2_reseq.fq.gz --outFileNamePrefix 20210608T1400_CBASS_US_MoteIn_Past_7_37_1140_RNASeq_reseq_2kenkel
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_R2_reseq.fq.gz --outFileNamePrefix 20210608T1400_CBASS_US_MoteIn_Past_8_37_1140_RNASeq_reseq_2kenkel
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_9_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_9_37_1140_RNASeq_R2_reseq.fq.gz --outFileNamePrefix 20210608T1400_CBASS_US_MoteIn_Past_9_37_1140_RNASeq_reseq_2kenkel
+	STAR --genomeDir /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/ --runThreadN 16 --outSAMattributes All --genomeLoad LoadAndRemove --outFilterType Normal --outFilterMismatchNoverLmax 0.03 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --outSAMtype BAM Unsorted --limitBAMsortRAM 5784458574 --readFilesCommand zcat --outReadsUnmapped Fastx --outFilterMatchNminOverLread 0.2 --outFilterScoreMinOverLread 0.2 --readFilesIn 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R1_reseq.fq.gz 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_R2_reseq.fq.gz --outFileNamePrefix 20210608T1400_CBASS_US_MoteIn_Past_10_37_1140_RNASeq_reseq_2kenkel
+	...
+
+Did the same for 2022-05-23-STARKenkel\_reseq02.txt
+
+	$ sbatch STARKenkel_reseq01.sh
+	Submitted batch job 9761168
+
+	$ sbatch STARKenkel_reseq02.sh
+	Submitted batch job 9761169
