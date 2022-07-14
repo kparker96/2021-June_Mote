@@ -1194,3 +1194,135 @@ Did the same for 2022-05-23-STARKenkel\_reseq02.txt
 
 	$ sbatch STARKenkel_reseq02.sh
 	Submitted batch job 9761169
+
+## 2022-05-25: Running MultiQC on TrimGalore and STAR output 
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+	
+	$ salloc
+	salloc: Pending job allocation 9761397
+	salloc: job 9761397 queued and waiting for resources
+	salloc: job 9761397 has been allocated resources
+	salloc: Granted job allocation 9761397
+	This session will be terminated in 7 days. If your application requires
+	a longer excution time, please use command "salloc -t N-0" where N is the
+	number of days that you need.
+	
+	$ enable_lmod
+	
+	$ module load container_env multiqc
+
+	$ crun multiqc ./
+
+	Searching 4955 files..  [####################################]  100%
+	[INFO   ]            star : Found 396 reports
+	[INFO   ]        cutadapt : Found 312 reports
+	[INFO   ]          fastqc : Found 312 reports
+	[INFO   ]         multiqc : Compressing plot data
+	[WARNING]         multiqc : Previous MultiQC output found! Adjusting filenames..
+	[WARNING]         multiqc : Use -f or --force to overwrite existing reports instead
+	[INFO   ]         multiqc : Report      : multiqc_report_1.html
+	[INFO   ]         multiqc : Data        : multiqc_data_1
+	[INFO   ]         multiqc : MultiQC complete  
+
+Copying output files locally. 
+
+	$ pwd 
+	/c/Users/kpark/OneDrive/Documents/Barshis_Lab/2021-June_Mote/data/Sequencing
+
+	$ scp kpark049@turing.hpc.odu.edu:/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs/multiqc_report*.html ./
+	kpark049@turing.hpc.odu.edu's password:
+	multiqc_report.html                                        100% 6853KB   6.5MB/s   00:01
+	multiqc_report_1.html                                      100% 8321KB   5.3MB/s   00:01  
+
+Renamed locally as: 
+
+multiqc\_report.html ---> 2022-05-23\_reseq\_multiqc\_report\_TG.html  
+multiqc\_report_1.html  ----> 2022-05-25\_reseq\_multiqc\_report\_TG\_STAR.html
+
+## 2022-07-12 Salmon Test 01
+
+Move STAR BAM files from reseq'd files to directory with other BAM files   
+	
+	$ pwd  
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/reseq_raw_data_fastqs
+
+	$ mv *_reseq_2kenkelAligned.out.bam /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/bam_files 
+	
+	$ pwd 
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/bam_files 
+	
+	$ ls
+	20210610T1400_CBASS_US_MoteOff_Past_3_34_360_RNASeq_reseq_2kenkelAligned.out.bam
+	20210610T1400_CBASS_US_MoteOff_Past_3_34_420_RNASeq_2kenkel_Aligned.out.bam
+	20210610T1400_CBASS_US_MoteOff_Past_3_34_420_RNASeq_reseq_2kenkelAligned.out.bam
+	20210610T1400_CBASS_US_MoteOff_Past_3_34_750_RNASeq_2kenkel_Aligned.out.bam
+	20210610T1400_CBASS_US_MoteOff_Past_3_34_750_RNASeq_reseq_2kenkelAligned.out.bam
+	20210610T1400_CBASS_US_MoteOff_Past_3_37_1140_RNASeq_2kenkel_Aligned.out.bam
+	...  
+
+	$ nano 2022-07-12_SalmonTest01.sh
+
+	#!/bin/bash -l
+
+	#SBATCH -o 2022-07-12_SalmonTest01.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=SalmonTest01
+	
+	enable_lmod
+	
+	module load container_env salmon/1.9.0
+	
+	crun salmon quant -t /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/Porites_astreoides_LongestIsoform_suffixed.fasta <LIBTYPE> -a ./20210610T1400_CBASS_US_MoteOff_Past_3_30_750_RNASeq_2kenkel_Aligned.out.bam -o salmon_quant
+
+This did not work, because I did not specify the LIBTYPE parameter. 
+
+	$ head 2022-07-12_SalmonTest01.txt
+	/home/kpark049/.bash_profile: line 5: /home/kpark049/.turing_bash_profile: No such file or directory 
+	/var/spool/slurmd/job9781846/slurm_script: line 13: LIBTYPE: No such file or directory
+
+##2022-07-14 Salmon Test 02
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/bam_files
+
+	$ nano 2022-07-14_SalmonTest02.sh
+
+	#!/bin/bash -l
+	
+	#SBATCH -o 2022-07-14_SalmonTest02.txt
+	#SBATCH -n 1
+	#SBATCH --mail-user=kpark049@odu.edu
+	#SBATCH --mail-type=END
+	#SBATCH --job-name=SalmonTest02
+	
+	enable_lmod
+	
+	module load container_env salmon/1.9.0
+	
+	crun salmon quant -t /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/Porites_astreoides_LongestIsoform_suffixed.fasta --libType A -a 20210610T1400_CBASS_US_MoteOff_Past_3_30_750_RNASeq_2kenkel_Aligned.out.bam -o salmon_quant
+
+
+It worked!! 
+
+	$ pwd
+	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/bam_files/salmon_quant
+
+	$ ls
+	aux_info  cmd_info.json  libParams  logs  quant.sf
+
+	$ head quant.sf
+	Name    Length  EffectiveLength TPM     NumReads
+	GCKDGN101CF7JK_Past     223     68.354  -nan    0.000
+	GCKDGN101CAZ1A_Past     363     148.513 -nan    0.000
+	GCKDGN101ANI4S_Past     214     70.510  -nan    0.000
+	GCKDGN101BV6U3_Past     277     80.600  -nan    0.000
+	GCKDGN101BQG8Q_Past     412     196.116 -nan    0.000
+	GCKDGN101CG9W2_Past     255     71.884  -nan    0.980
+	GCKDGN101A7H4U_Past     352     138.399 -nan    0.000
+	GCKDGN101ATRIP_Past     304     97.932  -nan    0.000
+	GCKDGN101CINM3_Past     337     125.002 -nan    0.000
+
+	
