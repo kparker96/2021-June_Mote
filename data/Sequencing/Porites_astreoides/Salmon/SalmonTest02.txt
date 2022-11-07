@@ -1,0 +1,14 @@
+#!/bin/bash -l
+
+#SBATCH -o 2022-07-14_SalmonTest02.txt
+#SBATCH -n 1
+#SBATCH --mail-user=kpark049@odu.edu
+#SBATCH --mail-type=END
+#SBATCH --job-name=SalmonTest02
+
+enable_lmod
+
+module load container_env salmon/1.9.0
+
+crun salmon quant -t /cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/mapping/kenkelPast/Porites_astreoides_LongestIsoform_suffixed.fasta --libType A -a 20210610T1400_CBASS_US_MoteOff_Past_3_30_750_RNASeq_2kenkel_Aligned.out.bam -o salmon_quant
+

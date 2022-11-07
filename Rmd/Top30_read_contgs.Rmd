@@ -1,0 +1,585 @@
+---
+title: "Post-Sequencing"
+output: html_document
+date: '2022-07-19'
+editor_options: 
+  chunk_output_type: console
+---
+
+# LOAD LIBRARIES # 
+```{r}
+library(ggplot2)
+library(ggpubr)
+library(tidyverse)
+```
+
+# IMPORT CONTIG COUNTS FILE #
+```{r}
+raw_contig_counts <- read.delim("Mote_Past_Counts_sf_merged.txt")
+```
+
+# cONTIG SUM AND MEAN #
+```{r}
+top_contig_sum <- raw_contig_counts %>% 
+  select(ContigName, read_sum) %>%
+  filter(read_sum > 1380000)
+
+top_contig_mean <- raw_contig_counts %>%
+  select(ContigName, read_mean) %>%
+  filter(read_mean > 9000) %>%
+  select(ContigName)
+
+setdiff(top_contig_sum$ContigName, top_contig_mean$ContigName)
+
+
+top30 <- top_contig_mean$tContigName
+
+```
+
+# DEG COUNTS #
+```{r}
+df_DEG_counts <- read.delim("AllDESeqResults/2021-June-Mote_Past_DEcalc.txt") 
+
+DEG_counts <- df_DEG_counts %>% 
+  gather(key = "Value", value = "counts", -Contrast, -SitevSite, -TP1, -TP2, -Temp)
+
+ggplot(DEG_counts, aes(x = Contrast, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~SitevSite, scales = "free")
+
+
+a <- DEG_counts %>%
+  filter(Value == "TotalNumDEGs") %>%
+  filter(Temp > 30) %>%
+  filter(Temp != "TF") %>%
+  filter(Temp != "T0")
+
+ggplot(a, aes(x = Contrast, y = counts, fill = Value)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  facet_grid(TP1~Temp, scales = "free")
+
+DEG_counts <- DEG_counts %>%
+  filter(Value == "TotalNumDEGs")
+
+### INSHORE ###
+Inshore_T1 <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(TP1 == "T1") %>%
+  filter(Temp > 30)
+
+T1_in <- ggplot(Inshore_T1, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme_light() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+Inshore_T2 <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(TP1 == "T2") %>%
+  filter(Temp > 30)
+
+T2_in <- ggplot(Inshore_T2, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme_light() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+Inshore_T3 <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(TP1 == "T3") %>%
+  filter(Temp > 30)
+
+T3_in <- ggplot(Inshore_T3, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme_light() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+Inshore_T4 <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(TP1 == "T4") %>%
+  filter(Temp > 30)
+
+T4_in <- ggplot(Inshore_T4, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme_light() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+Inshore_T5 <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(TP1 == "T5") %>%
+  filter(Temp > 30)
+
+T5_in <- ggplot(Inshore_T5, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylim(c(0,11500)) +
+  theme_light() +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+inT1thruT5 <- plot_grid(T1_in, T2_in, T3_in, T4_in, T5_in, nrow = 5, ncol = 1, align = c("hv")) 
+
+annotate_figure(inT1thruT5, top = "Inshore Control vs Heatstress")
+
+ggsave(filename = "test.png", height = 200, width = 150, units = "mm")
+
+###### OFFSHORE ######
+
+Offshore_T1 <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(TP1 == "T1") %>%
+  filter(Temp > 30)
+
+T1_off <- ggplot(Offshore_T1, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+Offshore_T2 <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(TP1 == "T2") %>%
+  filter(Temp > 30)
+
+T2_off <- ggplot(Offshore_T2, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+Offshore_T3 <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(TP1 == "T3") %>%
+  filter(Temp > 30)
+
+T3_off <- ggplot(Offshore_T3, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+Offshore_T4 <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(TP1 == "T4") %>%
+  filter(Temp > 30)
+
+T4_off <- ggplot(Offshore_T4, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+Offshore_T5 <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(TP1 == "T5") %>%
+  filter(Temp > 30)
+
+T5_off <- ggplot(Offshore_T5, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp, scales = "free_x") +
+  ylab("# of Differentially Expressed Genes") +
+  ylim(c(0,11500)) +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+offT1thruT5 <- plot_grid(T1_off, T2_off, T3_off, T4_off, T5_off, nrow = 5, ncol = 1, align = c("hv")) 
+
+annotate_figure(offT1thruT5, top = "Offshore Control vs Heat Stress")
+
+ggsave(filename = "off_test.png", height = 200, width = 150, units = "mm")
+
+
+combo <- plot_grid(offT1thruT5, inT1thruT5, ncol = 2, align = c("hv")) 
+
+
+
+
+### By Timepoint ###
+# All In Controls vs In Controls
+InCvsInC <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp == "30") 
+  
+
+ggplot(InCvsInC, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~TP1, scales = "free_x", nrow = 1) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank()) +
+  ggtitle("Inshore Controls") 
+
+# In Control T0 vs In Control TPs
+InCvsInCTPs <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp == "30") %>%
+  filter(TP1 == "T0")
+
+ggplot(InCvsInCTPs, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~TP1, scales = "free_x", nrow = 1) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank()) +
+  ggtitle("Inshore T0 vs Timepoint Controls")
+
+# In Control T1 vs Non-Control T1s
+InCT1vsInT1s <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T1")
+
+inT1 <- ggplot(InCT1vsInT1s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+
+# In Control T2 vs Non-Control T2s
+InCT2vsInT2s <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T2")
+
+inT2 <- ggplot(InCT2vsInT2s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "T2", breaks = NULL, labels = NULL)) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank()) 
+
+# In Control T3 vs Non-Control T3s
+InCT3vsInT3s <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T3")
+
+inT3 <- ggplot(InCT3vsInT3s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "T3", breaks = NULL, labels = NULL)) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank()) 
+
+# In Control T4 vs Non-Control T4s
+InCT4vsInT4s <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T4")
+
+inT4 <- ggplot(InCT4vsInT4s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "T4", breaks = NULL, labels = NULL)) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank()) 
+
+# In Control T5 vs Non-Control T5s
+InCT5vsInT5s <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T5")
+
+inT5 <- ggplot(InCT5vsInT5s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp)+ 
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "T5", breaks = NULL, labels = NULL)) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "bottom",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+
+inT1thruT5 <- plot_grid(inT1, inT2, inT3, inT4, inT5, nrow = 5, ncol = 1, align = c("hv")) 
+
+annotate_figure(inT1thruT5, top = "Inshore Control vs Heatstress")
+
+ggsave(filename = "test.png", height = 200, width = 150, units = "mm")
+
+### By Temperature ###
+
+# In Control vs In 34 for all TPs
+In34 <- DEG_counts %>%
+  filter(SitevSite == "InvIn")%>%
+  filter(Temp == "34")
+
+ggplot(In34, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~TP1, scales = "free") +
+  ggtitle("Control vs 34 for each TP")
+
+# In Control vs In 37 for all TPs
+In37 <- DEG_counts %>%
+  filter(SitevSite == "InvIn")%>%
+  filter(Temp == "37")
+
+ggplot(In37, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~TP1) +
+  ggtitle("Control vs 37 for each TP")
+
+# In Control vs In 39 for all TPs
+In39 <- DEG_counts %>%
+  filter(SitevSite == "InvIn")%>%
+  filter(Temp == "39")
+
+ggplot(In39, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~TP1, scales = "free") +
+  ggtitle("Control vs 39 for each TP")
+
+DEG_counts %>%
+  filter(SitevSite == "InvIn")%>%
+  filter(TP2 == "T1")
+
+#############################################################################
+
+### OFFSHORE ###
+# Off Controls vs Off Controls
+OffCvsOffC <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(Temp == "30") %>%
+  filter(TP1 != "T0")
+
+ggplot(OffCvsOffC, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~TP1, scales = "free_x", nrow = 1) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank()) +
+  ggtitle("Offshore Controls") 
+
+# Off Control T0 vs Off Control TPs
+OffCvsOffCTPs <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(Temp == "30") %>%
+  filter(TP1 == "T0")
+
+ggplot(OffCvsOffCTPs, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~TP1, scales = "free_x", nrow = 1) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank()) +
+  ggtitle("Offshore T0 vs Timepoint Controls")
+
+# Off Control T1 vs Non-Control T1s
+OffCT1vsOffT1s <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T1")
+
+offT1 <- ggplot(OffCT1vsOffT1s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+# Off Control T2 vs Non-Control T2s
+OffCT2vsOffT2s <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T2")
+
+offT2 <- ggplot(OffCT2vsOffT2s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+# Off Control T vs Non-Control T3s
+OffCT3vsOffT3s <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T3")
+
+offT3 <- ggplot(OffCT3vsOffT3s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+# Off Control T4 vs Non-Control T4s
+OffCT4vsOffT4s <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T4")
+
+offT4 <- ggplot(OffCT4vsOffT4s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank())
+
+# Off Control T vs Non-Control Ts
+OffCT5vsOffT5s <- DEG_counts %>%
+  filter(SitevSite == "OffvOff") %>%
+  filter(Temp > 30) %>%
+  filter(TP1 == "T5")
+
+offT5 <- ggplot(OffCT5vsOffT5s, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_grid(TP1~Temp) +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank()) 
+
+library(cowplot)
+
+offT1thruT5 <- plot_grid(offT1, offT2, offT3, offT4, offT5, nrow = 5, ncol = 1, align = c("hv")) 
+
+annotate_figure(offT1thruT5, top = "Offshore Control vs Heatstress")
+
+ggsave(filename = "Offshore_CvsHS.png", height = 200, width = 150, units = "mm")
+
+```
+
+```{r}
+### OFFSHORE VS INSHORE ###
+
+OffCvInC <- DEG_counts %>%
+  filter(SitevSite == "OffvIn")
+
+ggplot(OffCvInC,aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~TP1, scales = "free_x", nrow = 1) +
+  ggtitle("Offshore 30 vs Inshore 30") +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.x = element_blank())
+  
+```
+
+# TFs 
+```{r}
+TFs <- DEG_counts %>%
+  filter(TP2 == "TF") 
+
+ggplot(TFs, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity") +
+  facet_wrap(~SitevSite) +
+  ggtitle("T0 vs TF") +
+  ylab("# of Differentially Expressed Genes") +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.x = element_blank())
+  
+
+```
+
+# NEW PLOTS # 
+```{r}
+x <- DEG_counts %>%
+  filter(Value == "TotalNumDEGs") %>%
+  filter(Temp > 30) %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(TP1 != "T0")
+
+ggplot(x, aes(fct_reorder(Temp), x = Contrast, y = counts, fill = Temp)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  facet_wrap(~TP1, scales = "free")
+
+
+
+```
+
+
+
+
+
+
+
+# SINGLE FIGS #
+```{r}
+# In Control T1 vs In Control T2-T5 
+In_30_T1_vs_TPs <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp == "30") %>%
+  filter(TP1 == "T1") 
+  
+ggplot(In_30_T1_vs_TPs, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity")
+
+# In Control T2 vs In Control T3-T5
+In_30_T2_vs_TPs <- DEG_counts %>%
+  filter(SitevSite == "InvIn") %>%
+  filter(Temp == "30") %>%
+  filter(TP1 == "T2")
+
+ggplot(In_30_T2_vs_TPs, aes(x = TP2, y = counts, fill = Value)) +
+  geom_bar(position="dodge", stat= "identity")
+```
+
