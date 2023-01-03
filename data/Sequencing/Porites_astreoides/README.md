@@ -1325,7 +1325,7 @@ It worked!!
 	GCKDGN101ATRIP_Past     304     97.932  -nan    0.000
 	GCKDGN101CINM3_Past     337     125.002 -nan    0.000
 
-2022-08 (Some info lost due to markdown save error)
+## 2022-08 (Some info lost due to markdownpad save error)
 
 Combined quant.sf files from salmon output for reseq files using following python script. Input was a .txt file list with the original and reseq file names separated by tabs
 
@@ -1373,7 +1373,91 @@ Combined quant.sf files from salmon output for reseq files using following pytho
 		Outfile.close()
 		print('Merged %s and %s into %s' %(Files[0], Files[1],'%s_merged.txt'%(Files[0][:-3])))
 
-Read counts for files separated into read counts for individual contigs. DEGs calculated with sig value of 0.10 
+Read counts for files separated into read counts for individual contigs. 
+
+	#!/usr/bin/env python
+	
+	import sys
+	#sys.argv[1] Input file name #list of your "gene" names
+	#sys.argv[2] Output file name
+	#sys.argv[3] Text to add when no match
+	#sys.argv[4:] Any number of files to add columns from
+	
+	nohittext=sys.argv[3]
+	columntoextract = 4
+	#columntoextract = 2
+	
+	#this is for setting how the script sorts your contigs into order
+	#change the word to 'text' for a text-based sorting or 'coral' for a
+	#palumbi-lab coral-specific numerical sorting
+	
+	def make_dict1(file):
+		fin = open(file, 'r')
+		dict={}
+		headers=[]
+		count=0
+		for line in fin:
+			count+=1
+			line=line.rstrip()
+			cols=line.split('\t') #for tab-delimited text files
+			if count==1:
+				headers=cols[0:]
+				#count+=1
+			if count > 1:
+				dict[cols[0]]=cols[1:]
+		
+		return dict, headers
+			
+	dictbase, dictheaders=make_dict1(sys.argv[1]) #Input data table
+	xpressionfiles=sys.argv[4:] #Any number of expression files
+		
+	xpressfiles=[]
+	xtrahits=[]
+	for file in xpressionfiles:
+		Xvalues, Xheaders=make_dict1(file)
+		xpressfiles.append(file+'_'+str(Xheaders[columntoextract-1])) # used to denote the column that you're extracting
+		xtracount=0
+		matched = list(set(dictbase) & set(Xvalues))
+		nomatch = list(set(dictbase) ^ set(Xvalues))
+		in1not2 = list(set(nomatch) & set(dictbase))
+		in2not1 = list(set(nomatch) & set(Xvalues))
+	#	For adding info when Xvalues is missing values that are in your dictbase
+		if len(in1not2) >=1: 	
+			for item in dictbase.keys():
+				if Xvalues.has_key(item):
+	#				dictbase[item]+=Xvalues[item][1:3] #appends a list of strings
+					dictbase[item].append(Xvalues[item][columntoextract-2])
+				else:
+					xtracount+=1
+					dictbase[item].append(nohittext)
+	# 	For adding info when Xvalues has all the values in your dictbase or more
+		if len(in1not2)==0 and in2not1>=1:
+			for item in Xvalues.keys():
+				if dictbase.has_key(item):
+	#				dictbase[item]+=Xvalues[item] #appends a list of strings
+					dictbase[item].append(Xvalues[item][columntoextract-2]) #appends a single column of data as a string appends quality, single counts
+		 		else:
+					xtracount+=1
+	 	xtrahits.append(file+'='+str(xtracount))
+	
+	o=open(str(sys.argv[2]), 'w') # New data table file name
+	
+	o.write('\t'.join(dictheaders)+'\t'+'\t'.join(xpressfiles)+'\n') #used if you want a specific header and filename for each file
+	
+	print 'Hits not matched' + '\t'.join(xtrahits)
+	
+	############this if for sorting your contigs based on text order#############
+	l=[]
+	for key,value in dictbase.items():
+		l.append((key,value))
+	l.sort()
+	for item in l:
+		o.write('%s\t%s\n' % (item[0], '\t'.join(item[1]))) #writes each line of the tuple as separate tab delimited text
+			
+	o.close()
+
+
+DEGs calculated with sig value of 0.10 
 
 	#!/usr/bin/env python
 	
@@ -1395,7 +1479,7 @@ Read counts for files separated into read counts for individual contigs. DEGs ca
 	else:
 		FileList = sys.argv[1:]
 		FileNumber = 0
-		CombinedOutFileName = "2022-11-01_dedup_test.tab"
+		CombinedOutFileName = "2021_June_Mote.tab"
 		CombinedOutFile = open(CombinedOutFileName, 'w')
 		for InFileName in FileList:
 			InFile = open(InFileName, 'r') # open the infile
@@ -1434,13 +1518,13 @@ Read counts for files separated into read counts for individual contigs. DEGs ca
 			CombinedOutFile.write('%s\t%d\t%d\t%d\n' %(Contrast,NumDEGsUp,NumDEGsDown,TotalNumDEGs))
 			InFile.close()
 			FileNumber+= 1
-			print("finished processing file: %s"%(InFileName))
+			print("finished processing file: %s"%(InFileName)) 
 
- 
-		 
 
-2022-11-01
-Testing de-duplication through STAR
+Ran Contrasts through DESeq pipeline on R to make PCA plots. 
+[Mote_DESeq2Script.R](ttps://github.com/kparker96/2021-June_Mote/blob/main/Rmd/Mote_DESeq2Script.R)
+
+## 2022-11-01 Testing de-duplication methods through STAR
 
 	$ pwd
 	/cm/shared/courses/dbarshis/barshislab/KatieP/taxons/Porites_astreoides/2021-12_MotePilotV1/raw_data_fastqs/bam_files  
