@@ -1,0 +1,1409 @@
+---
+title: "Untitled"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# LOAD LIBRARIES # 
+```{r}
+library(lmerTest) # install.packages ("lmerTest")
+library(emmeans)  # install.packages ("emmeans")
+library(sjPlot)   # install.packages ("sjPlot")
+library(drc)      # install.packages ("drc")
+library(car)      # install.packages ("car")
+library(Rmisc)    # install.packages ("Rmisc")
+library(ggplot2)  # install.packages ("ggplot2")
+library(tidyr)    # install.packages ("")
+library(dplyr)    # install.packages ("")
+library(plyr)
+library(reshape2) # install.packages ("")
+library(data.table) # install.packages ("")
+library(writexl)
+```
+
+# IMPORT DATA #
+```{r}
+IPa <- readxl::read_xlsx("data/PAM/2021-06-08_Past-4temps-Inshore.xlsx")
+
+OPa <- readxl::read_xlsx("data/PAM/2021-06-10_Past-4temps-Offshore.xlsx") %>%
+  select(-Temp)
+
+NAc <- readxl::read_xlsx("data/PAM/2021-06-11_Acer-4temps-MoteLooeNursery_Run2.xlsx") %>%
+  mutate(TagNumber = Genotype,
+         Comments = Comment) %>%
+ select(-Comment)
+
+# Combine all Datasets 
+Allpam <- rbind(IPa, OPa, NAc) %>%
+  mutate(Species = case_when(Species == "Acropora cervicornis" ~ "ACER",
+                             Species == "Porites astreoides" ~ "PAST")) %>%
+  select(TubeNumber, sample_ID = SampleName, species = Species, Geno = Genotype, Treatment, Temperature = Temp_Setpoint, Timepoint, FvFm = PAM) %>%
+  mutate(TP_ID = case_when(grepl("T1", sample_ID) ~ "T1",
+                           grepl("T2", sample_ID) ~ "T2",
+                           grepl("T3", sample_ID) ~ "T3",
+                           grepl("T4", sample_ID) ~ "T4",
+                           grepl("T5", sample_ID) ~ "T5",
+                           grepl("T0", sample_ID) ~ "T0",
+                           grepl("TF", sample_ID) ~ "TF"))
+
+
+Allpam$FacTemp<-as.factor(Allpam$Temperature)
+Allpam$Geno<-as.factor(Allpam$Geno)
+Allpam$Temperature<- as.integer(Allpam$Temperature)
+Allpam<-as.data.frame(Allpam)
+
+PAST <- Allpam %>%
+  filter(species == "PAST") 
+
+ACER <- Allpam %>%
+  filter(species == "ACER") %>%
+  mutate(Geno = case_when(Geno == "07" ~ "07",
+                          Geno == "31.0" ~ "31",
+                          Geno == "34.0" ~ "34",
+                          Geno == "41.0" ~ "41",
+                          Geno == "48.0" ~ "48",
+                          Geno == "50.0" ~ "50",
+                          Geno == "62.0" ~ "62",
+                          Geno == "CM5" ~ "CM5"))
+```
+
+# PAST ED50s PER GENO PER TIMEPOINT #
+```{r}
+Past_TP <- PAST %>%
+  filter(TP_ID == "T1" | TP_ID == "T2" | TP_ID == "T3" | TP_ID == "T4" & Timepoint == "T4" | TP_ID == "T5" & Timepoint == "T5") %>%
+  mutate(ID = paste(Geno,TP_ID))
+
+Past_TP_DRC <- drm(FvFm ~ Temperature, data = Past_TP, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Past_TP_DRC)
+compParm(Past_TP_DRC, 'ed50')
+compParm(Past_TP_DRC, 'ed50', "-")
+plot(Past_TP_DRC)
+
+Past_TP_ED <- ED(Past_TP_DRC, c(50), interval = "delta")
+
+Past_ED_df <- as.data.frame(Past_TP_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05",
+                              grepl(":06", Geno) ~ "06",
+                              grepl(":07", Geno) ~ "07",
+                              grepl(":08", Geno) ~ "08",
+                              grepl(":09", Geno) ~ "09",
+                              grepl(":10", Geno) ~ "10")) %>%
+  mutate(TP_ID = case_when(grepl("T1", Geno)~ "T1",
+                           grepl("T2", Geno)~ "T2",
+                           grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+  dplyr::rename(ED50 = Estimate) %>%
+  mutate(site = case_when(Genotype == "01" | Genotype == "02" | Genotype == "03" | 
+                            Genotype == "04" | Genotype == "05" ~ "offshore",
+                          Genotype == "06" | Genotype == "07" | Genotype == "08" | 
+                            Genotype == "09" | Genotype == "10" ~ "inshore"))
+
+Past_ED50_TP <- Past_ED_df %>%
+  dplyr::select(Genotype, TP_ID, site, ED50)
+
+Genotype <- Past_ED50_TP$Genotype
+  
+geno_ED50s_TP <- Past_ED50_TP %>%
+  spread(key = TP_ID, value = ED50) %>%
+  group_by(Genotype) %>%
+  mutate(avgfit = mean(c(T1, T2, T3, T4, T5)),
+         min = min(c(T1, T2, T3, T4, T5)),
+         max = max(c(T1, T2, T3, T4, T5)),
+         diff = max - min) 
+
+library("writexl")
+geno_ED50s_TP %>%
+  write_xlsx("ED50/Past_all_TPs_Genets_ED50.xlsx")
+
+```
+
+# PAST ED50S PER GENO PER T3 SAMPLING TIMEPOINT (T3, T4, & T5 SAMPLES FROM T3) #
+```{r}
+T3_Past <- PAST %>%
+  filter(Timepoint == "T3")%>%
+  mutate(ID = paste(Geno,TP_ID))
+
+Past_T3_DRC <- drm(FvFm ~ Temperature, data = T3_Past, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Past_T3_DRC)
+compParm(Past_T3_DRC, 'ed50')
+compParm(Past_T3_DRC, 'ed50', "-")
+plot(Past_T3_DRC)
+
+Past_T3_ED <- ED(Past_T3_DRC, c(50), interval = "delta")
+
+Past_T3_ED_df <- as.data.frame(Past_T3_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05",
+                              grepl(":06", Geno) ~ "06",
+                              grepl(":07", Geno) ~ "07",
+                              grepl(":08", Geno) ~ "08",
+                              grepl(":09", Geno) ~ "09",
+                              grepl(":10", Geno) ~ "10")) %>%
+  mutate(TP_ID = case_when(grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+  dplyr::select(-Geno, ED50 = Estimate) %>%
+  mutate(site = case_when(Genotype == "01" | Genotype == "02" | Genotype == "03" | 
+                            Genotype == "04" | Genotype == "05" ~ "offshore",
+                          Genotype == "06" | Genotype == "07" | Genotype == "08" | 
+                            Genotype == "09" | Genotype == "10" ~ "inshore"))
+
+Past_ED50_T3 <- Past_T3_ED_df %>%
+  dplyr::select(Genotype, TP_ID, site, ED50) %>%
+  filter(ED50 < 50) # Geno 08 T4 sample is very high 
+
+Genotype_T3 <- Past_ED50_T3$Genotype
+  
+geno_ED50s_T3 <- Past_ED50_T3 %>%
+  spread(key = TP_ID, value = ED50) %>%
+  group_by(Genotype) %>%
+  mutate(avgfit = mean(c(T3, T4, T5)),
+         min = min(c(T3, T4, T5)),
+         max = max(c(T3, T4, T5)),
+         diff = max - min) 
+
+library("writexl")
+geno_ED50s_T3 %>%
+  write_xlsx("ED50/Past_T3_Genets_ED50.xlsx")
+
+```
+
+# PAST PAM MEASUREMENT PLOTTING #
+```{r}
+Past_PAM_TP <-  PAST %>%
+  filter(TubeNumber != "NA") %>%
+  dplyr::select(Genotype = Geno, Treatment, Temperature, TP_ID, FvFm) %>%
+  filter(Treatment != "Field", 
+         Treatment != "Initial") %>%
+  mutate(site = case_when(Genotype == "01" | Genotype == "02" | Genotype == "03" | 
+                            Genotype == "04" | Genotype == "05" ~ "offshore",
+                          Genotype == "06" | Genotype == "07" | Genotype == "08" | 
+                            Genotype == "09" | Genotype == "10.0" ~ "inshore"))
+
+# Inshore Genotypes #
+inshore <- Past_PAM_TP %>%
+  filter(site == "inshore")
+
+inshore_geno <- inshore$Genotype
+
+inshore$Treatment_f = factor(inshore$Treatment, levels=c('Control','Low','Medium','High'))
+
+
+# Offshore Genotypes #
+offshore <- Past_PAM_TP %>%
+  filter(site == "offshore")
+
+offshore_geno <- offshore$Genotype
+
+offshore$Treatment_f = factor(offshore$Treatment, levels=c('Control','Low','Medium','High'))
+
+
+# Each Genotype PAM Individually Plotted per Tank #
+ggplot(inshore, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point(size = 2) +
+  facet_wrap(~Treatment_f, nrow = 1) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint") +
+  ggtitle("P.ast Inshore FvFm: All Timepoints per Tank")
+
+ggplot(offshore, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point() +
+  facet_grid(Genotype~Treatment_f) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint") +
+  ggtitle("P.ast Offshore FvFm: All Timepoints per Tank")
+
+
+# Each Genotype per Timepoint #
+ggplot(inshore, aes(x = TP_ID, y = FvFm, color = Treatment)) +
+  geom_point(size = 2) +
+  facet_wrap(~Genotype) +
+  theme_bw() +
+  theme(legend.position = c(0.75,0.25)) +
+  xlab("Timepoint") +
+  ggtitle("P.ast Inshore FvFm: All Timepoints per Genotype")
+
+ggplot(offshore, aes(x = TP_ID, y = FvFm, color = Treatment)) +
+  geom_point(size = 2) +
+  facet_wrap(~Genotype) +
+  theme_bw() +
+  theme(legend.position = c(0.75,0.25)) +
+  xlab("Timepoint") +
+  ggtitle("P.ast Offshore FvFm: All Timepoints per Genotype")
+
+
+inshore %>%
+  spread(key = Genotype, value = FvFm) %>%
+  write_xlsx("data/ED50/in_fvfm.xlsx")
+
+offshore %>%
+  spread(key = Genotype, value = FvFm) %>%
+  write_xlsx("data/ED50/off_fvfm.xlsx")
+
+in_fvfm_avg <- readxl::read_xlsx("data/ED50/in_fvfm_avg.xlsx") %>%
+  dplyr::select(Treatment, Temperature, site, TP_ID, avg = In_avg)
+
+off_fvfm_avg <- readxl::read_xlsx("data/ED50/off_fvfm_avg.xlsx") %>%
+  dplyr::select(Treatment, Temperature, site, TP_ID, avg = Off_avg)
+
+fvfm_avgs <- rbind(in_fvfm_avg, off_fvfm_avg)
+
+ggplot(fvfm_avgs, aes(x = TP_ID, y = avg, color = site)) +
+  geom_point(size = 2.7, alpha = 0.8, aes(fill = site)) +
+  scale_color_manual(values=c('#8ADCE3', '#003A9D')) +
+  facet_wrap(~Temperature, ncol = 4) +
+  coord_fixed(15) +
+  ggtitle("Population Fv/Fm by Timepoint") +
+  xlab("Timepoint") +
+  ylab("Average Fv/Fm") +
+  theme_bw() +
+  theme(legend.position = c(0.812,1.16),
+        legend.direction = "horizontal",
+        legend.background = element_rect(fill = "transparent"),
+        legend.text = element_text(size = 12), 
+        legend.title = element_blank(),
+        axis.title = element_text(size = 14),
+        axis.text = element_text(size = 13),
+        plot.title = element_text(size = 15)) 
+
+```
+
+# Past Temperature vs FvFm at T3 Sampling Time  #
+```{r}
+Past_T3 <- PAST %>%
+  filter(TubeNumber != "NA") %>%
+  filter(TP_ID == "T3") %>%
+  dplyr::select(sample_ID, Geno, Treatment, Temperature, Timepoint, FvFm)
+
+ggplot(Past_T3, aes(x = Temperature, y = FvFm, color = Geno)) +
+  geom_point(size = 2) +
+  facet_wrap(~Geno) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Temperature") +
+  ggtitle("P.ast FvFm across Temperature from T3 Samples")
+```
+
+
+# Past ED50 Plotting
+```{r}
+DRC <- drm(FvFm ~ Temperature, data = inshore, curveid = Genotype, fct = LL.3(names = c('hill', 'max', 'ed50')))
+mselect(DRC, list(LL.2(), LL.4(), LL.5(), LL2.2(), LL2.3(), LL2.4(), LL2.5(), AR.2(), AR.3(), EXD.2(), EXD.3()), icfct = AIC)
+modelFit(DRC)
+summary(DRC)
+plot(DRC)
+
+#extract ED50
+geno_coeff<-DRC$coefficients[39:57]
+geno_coeffs<-data.frame(geno_coeff)
+
+#Run full model
+CBASS <- drm(FvFm ~ Temperature, data = inshore, fct = LL.3())
+summary(CBASS)
+plot(CBASS)
+
+
+```
+
+#PAST ED50 from T4 
+```{r}
+in_T4 <- inshore %>%
+  filter(TP_ID == "T4")
+```
+
+# DRC for Inshore and Offshore #
+```{r}
+PAST_T3_ED50 <- Allpam %>%
+  select(sample_ID, Geno, Temperature, Timepoint, FvFm) %>%
+  mutate(site = case_when(grepl("IPa", sample_ID) ~ "Inshore",
+                          grepl("OPa", sample_ID) ~ "Offshore")) %>% 
+  filter(Timepoint == "T3") %>%
+  filter(site == "Inshore" | site == "Offshore")
+
+IN_PAST_T3_ED50 <- PAST_T3_ED50 %>%
+  filter(site == "Inshore")
+
+IN_DRC <- drm(FvFm ~ Temperature, data = IN_PAST_T3_ED50, curveid = site, fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+modelFit(IN_DRC)
+summary(IN_DRC)
+plot(IN_DRC)
+
+# Population Average 
+temp_x<- seq(30, 40.5, length = 100)
+
+
+pdf("Plots/test_both_pops.pdf",10,7)
+line_width=2
+IN="#003A9D"
+Syms=16
+Denscity <- 45
+matplot(temp_x, predict(IN_DRC, data.frame(Temperature = temp_x), interval="confidence"),
+        type="n",col=Offshore,lty=c(1,3,3),lwd=line_width,ylab="Fv/Fm",xlab="Temperature °C", xlim=c(29.5,41),ylim=c(0,0.65), cex.axis=1.5, cex.lab=1.5)
+polygon(c(temp_x, rev(temp_x)),c(predict(IN_DRC, data.frame(Temperature = temp_x), interval="confidence")[,2],rev(predict(IN_DRC, data.frame(Temperature = temp_x), interval="confidence")[,3])), col=Offshore, density = Denscity)
+matpoints(temp_x, predict(IN_DRC, data.frame(Temperature = temp_x), interval="confidence"),
+          type="l",col=Colorz,lty=c(1,3,3),lwd=line_width)
+with(PAST_T3_ED50,matpoints(Temperature,FvFm,pch=Syms, col=Colorz, cex=1.5))
+
+title(main="Offshore Porites astreoides")
+abline(v=mean(ED(IN_DRC, c(50))[,1]), col=IN)
+text(mean(ED(IN_DRC, c(50))[,1])+0.6, 0.65,labels=as.character(round(mean(ED(IN_DRC, c(50))[,1]), digits=2)),col=Colorz, cex=1.5)
+
+dev.off()
+
+```
+
+#####################
+##############
+#####################
+
+```{r}
+#### INSHORE ####
+inshore <- drm(FvFm ~ Temperature, data = PAST_T3_ED50[PAST_T3_ED50$site=="Inshore", ], curveid=Geno, fct = LL.3())
+inshore_pop <- drm(FvFm ~ Temperature, data = PAST_T3_ED50[PAST_T3_ED50$site=="Inshore", ], fct = LL.3())
+
+summary(inshore_pop)
+
+summary(inshore)
+plot(inshore)
+
+#extract coeffs by geno, then compute 95% CIs
+inshore_genocoeffs_50<-data.frame(ED(inshore, c(50)))
+inshore_coeff_mean<-mean(inshore_genocoeffs_50$Estimate)
+inshore_coeff_mean
+
+inshore_coeff_sd<-sd(inshore_genocoeffs_50$Estimate)
+inshore_coeff_sd
+
+inshore_summary<-data.frame(CI(inshore_genocoeffs_50$Estimate, ci=0.95))
+inshore_coeff_lower<-inshore_summary[3,]
+inshore_coeff_upper<-inshore_summary[1,]
+
+#### OFFSHORE ####
+offshore <- drm(FvFm ~ Temperature, data = PAST_T3_ED50[PAST_T3_ED50$site=="Offshore", ], curveid=Geno, fct = LL.3())
+offshore_pop <- drm(FvFm ~ Temperature, data = PAST_T3_ED50[PAST_T3_ED50$site=="Offshore", ], fct = LL.3())
+
+summary(offshore_pop)
+
+summary(offshore)
+plot(offshore)
+
+#extract coeffs by geno, then compute 95% CIs
+offshore_genocoeffs_50<-data.frame(ED(offshore, c(50)))
+offshore_coeff_mean<-mean(offshore_genocoeffs_50$Estimate)
+offshore_coeff_mean
+
+offshore_coeff_sd<-sd(offshore_genocoeffs_50$Estimate)
+offshore_coeff_sd
+
+offshore_summary<-data.frame(CI(offshore_genocoeffs_50$Estimate, ci=0.95))
+offshore_coeff_lower<-offshore_summary[3,]
+offshore_coeff_upper<-offshore_summary[1,]
+
+## COMBINE ##
+inshore_ED50s<-data.frame(inshore_genocoeffs_50[,1])
+offshore_ED50s<-data.frame(offshore_genocoeffs_50[,1])
+
+Geno_ED50s<-list(inshore_ED50s, offshore_ED50s) %>% 
+  map(~ .x %>% 
+        as.data.frame %>%
+        rownames_to_column('rn')) %>% 
+  reduce(full_join, by = 'rn') %>%
+  column_to_rownames('rn')
+
+Geno_ED50s<-Geno_ED50s %>% 
+  dplyr::rename(inshore=inshore_genocoeffs_50...1.,
+                offshore=offshore_genocoeffs_50...1.)
+
+Geno_ED50s$Geno<-as.factor(1:nrow(Geno_ED50s))
+str(Geno_ED50s)
+
+Geno_ED50s_long<-melt(Geno_ED50s, id="Geno")
+
+Geno_ED50s_long<-Geno_ED50s_long %>% 
+  dplyr::rename(Site_Genus= variable,
+                ED50=value)
+
+Geno_ED50s_long<-na.omit(Geno_ED50s_long)
+
+#Compare groups statistically
+ED50_mod<-aov(ED50 ~ Site_Genus, Geno_ED50s_long)
+summary(ED50_mod)
+TukeyHSD(ED50_mod)
+
+#### Create Rank table ####
+Rank_table<-Geno_ED50s_long %>%
+  arrange(Geno, Site_Genus) %>%
+  group_by(Site_Genus) %>% 
+  mutate(rank_order = rank(desc(ED50))) %>%
+  arrange(rank_order)
+
+Top_performers<-Rank_table %>%
+  group_by(Site_Genus) %>%
+  slice_min(rank_order, n=5)
+
+Bottom_performers<-Rank_table %>%
+  group_by(Site_Genus) %>%
+  slice_max(rank_order, n=5)
+
+Top_bottom_performers<-rbind(Top_performers,Bottom_performers)
+
+#### Combine ED50 data plus predict curves from models for population-level plotting ####
+Coeff_means<-data.frame(inshore_coeff_mean,offshore_coeff_mean)
+
+Coeff_lowers<-data.frame(inshore_coeff_lower,offshore_coeff_lower)
+
+Coeff_uppers<-data.frame(inshore_coeff_upper,offshore_coeff_upper)
+
+inshore_preddata = data.frame(temp = seq(29,40, length.out = 100))
+inshore_pred = as.data.frame(predict(inshore_pop, newdata = inshore_preddata, interval = 'confidence'))
+inshore_preddata = data.frame(inshore_preddata, fvfm = inshore_pred$Prediction, Lower = inshore_pred$Lower, Upper = inshore_pred$Upper)
+
+offshore_preddata = data.frame(temp = seq(29,40, length.out = 100))
+offshore_pred = as.data.frame(predict(offshore_pop, newdata = offshore_preddata, interval = 'confidence'))
+offshore_preddata = data.frame(offshore_preddata, fvfm = offshore_pred$Prediction, Lower = offshore_pred$Lower, Upper = offshore_pred$Upper)
+
+ 
+ggplot() +
+  geom_jitter(data = PAST_T3_ED50, aes(x = Temperature, y = FvFm, color = site), size = 1.2, width = 0.25) +
+  scale_x_continuous(limits=c(28.5,40), breaks=c(28,30,32,34,36,38)) +
+  
+  geom_line(data = inshore_preddata, aes(x = temp, y = fvfm), color = '#8ADCE3', show.legend = FALSE, size = 1.2) +
+  geom_ribbon(data = inshore_preddata, aes(x = temp, ymin=Lower, ymax=Upper), color = '#8ADCE3', linetype=2, alpha = 0.2, size = 0.7) +
+  geom_vline(data = Coeff_means, aes(xintercept = inshore_coeff_mean), color = '#8ADCE3', show.legend = FALSE, size = 1.2) +
+  annotate("rect", xmin=Coeff_lowers$inshore_coeff_lower, xmax=Coeff_uppers$inshore_coeff_upper, ymin=-Inf, ymax=Inf, fill= '#8ADCE3',  alpha = 0.1) +
+  geom_text(data = Coeff_means, aes(label=round(inshore_coeff_mean, digits = 2)), x = 31, y = 0.30, show.legend = FALSE, color = '#8ADCE3') +
+  
+  geom_line(data = offshore_preddata, aes(x = temp, y = fvfm), color = '#003A9D', show.legend = FALSE, size = 1.2) +
+  geom_ribbon(data = offshore_preddata, aes(x = temp, ymin=Lower, ymax=Upper), color = '#003A9D', linetype=2, alpha = 0.2, size = 0.7) +
+  geom_vline(data = Coeff_means, aes(xintercept = offshore_coeff_mean), color = '#003A9D', show.legend = FALSE, size = 1.2) +
+  annotate("rect", xmin=Coeff_lowers$offshore_coeff_lower, xmax=Coeff_uppers$offshore_coeff_upper, ymin=-Inf, ymax=Inf, fill= '#003A9D',  alpha = 0.1) +
+  geom_text(data = Coeff_means, aes(label=round(offshore_coeff_mean, digits = 2)), x = 31, y = 0.15, show.legend = FALSE, color = '#003A9D') +
+
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5, size = 20), 
+        legend.position = "none",
+        axis.title = element_text(size = 15),
+        axis.text = element_text(size = 13),
+        plot.margin = margin(0, 0, 0, 0, "cm"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  scale_color_manual(values=c('#8ADCE3','#003A9D')) +
+  ylab(bquote(F[v]/F[m]))+ 
+  xlab("Temperature (°C)")
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##########################################################################
+##### ACROPORA CERVICORNIS #####
+##########################################################################
+
+# ACER ED50s PER GENO PER TIMEPOINT #
+```{r}
+Acer_TP <- ACER %>%
+  filter(TP_ID == "T1" | TP_ID == "T2" | TP_ID == "T3" | TP_ID == "T4" & Timepoint == "T4" | TP_ID == "T5" & Timepoint == "T5") %>%
+  mutate(ID = paste(Geno,TP_ID))
+
+
+Acer_TP_DRC <- drm(FvFm ~ Temperature, data = Acer_TP, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Acer_TP_DRC)
+compParm(Acer_TP_DRC, 'ed50')
+compParm(Acer_TP_DRC, 'ed50', "-")
+plot(Acer_TP_DRC)
+
+Acer_TP_ED <- ED(Acer_TP_DRC, c(50), interval = "delta")
+
+Acer_ED_df <- as.data.frame(Acer_TP_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":07", Geno) ~ "07",
+                              grepl(":31", Geno) ~ "31",
+                              grepl(":34", Geno) ~ "34",
+                              grepl(":41", Geno) ~ "41",
+                              grepl(":48", Geno) ~ "48",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl(":62", Geno) ~ "62",
+                              grepl(":CM5", Geno) ~ "CM5")) %>%
+  mutate(TP_ID = case_when(grepl("T1", Geno)~ "T1",
+                           grepl("T2", Geno)~ "T2",
+                           grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+select(-Geno, ED50 = Estimate) 
+
+Acer_ED50_TP <- Acer_ED_df %>%
+  select(Genotype, TP_ID, ED50)
+
+Genotype <- Acer_ED50_TP$Genotype
+
+ggplot(Acer_ED50_TP, aes(x = TP_ID, y = ED50, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype, nudge_x = 0.05) +
+  xlab("Timepoint") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  ggtitle("A.cer ED50s: All Timepoints")
+  
+
+ggsave(filename = "plots/Acer_Rank_ED50_all_TP_genofits.png", width = 174, height = 100, units = "mm")
+
+```
+
+
+```{r}
+Acer_all_T5 <- ACER %>%
+  filter(TP_ID == "T5") %>%
+  mutate(ID = paste(Geno, Timepoint))
+
+Acer_T5_DRC <- drm(FvFm ~ Temperature, data = Acer_all_T5, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Acer_T5_DRC)
+compParm(Acer_T5_DRC, 'ed50')
+compParm(Acer_T5_DRC, 'ed50', "-")
+plot(Acer_T5_DRC)
+
+Acer_T5_ED <- ED(Acer_T5_DRC, c(50), interval = "delta")
+
+Acer_ED_T5_df <- as.data.frame(Acer_T5_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":07", Geno) ~ "07",
+                              grepl(":31", Geno) ~ "31",
+                              grepl(":34", Geno) ~ "34",
+                              grepl(":41", Geno) ~ "41",
+                              grepl(":48", Geno) ~ "48",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl(":62", Geno) ~ "62",
+                              grepl(":CM5", Geno) ~ "CM5")) %>%
+  mutate(TP_ID = case_when(grepl("T1", Geno)~ "T1",
+                           grepl("T2", Geno)~ "T2",
+                           grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+select(-Geno, ED50 = Estimate) 
+
+Acer_ED50_T5 <- Acer_ED_T5_df %>%
+  select(Genotype, TP_ID, ED50)
+
+Genotype <- Acer_ED50_T5$Genotype
+
+ggplot(Acer_ED50_T5, aes(x = TP_ID, y = ED50, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype, nudge_x = 0.05) +
+  xlab("Timepoint") +
+  theme_bw() +
+  theme(legend.position = "none") +
+  ggtitle("A.cer ED50s: All Timepoints")
+  
+
+ggsave(filename = "plots/Acer_Rank_ED50_all_TP_genofits.png", width = 174, height = 100, units = "mm")
+```
+
+
+
+
+
+
+
+```{r}
+T3_Acer <- ACER %>%
+  filter(Timepoint == "T3")%>%
+  mutate(ID = paste(Geno,TP_ID))
+
+Acer_T3_DRC <- drm(FvFm ~ Temperature, data = T3_Acer, curveid = ID,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+
+summary(Acer_T3_DRC)
+compParm(Acer_T3_DRC, 'ed50')
+compParm(Acer_T3_DRC, 'ed50', "-")
+plot(Acer_T3_DRC)
+
+Acer_T3_ED <- ED(Acer_T3_DRC, c(50), interval = "delta")
+
+Acer_T3_ED_df <- as.data.frame(Acer_T3_ED) %>%
+  setDT(keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl(":07", Geno) ~ "07",
+                              grepl(":31", Geno) ~ "31",
+                              grepl(":34", Geno) ~ "34",
+                              grepl(":41", Geno) ~ "41",
+                              grepl(":48", Geno) ~ "48",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl(":62", Geno) ~ "62",
+                              grepl(":CM5", Geno) ~ "CM5")) %>%
+  mutate(TP_ID = case_when(grepl("T3", Geno)~ "T3",
+                           grepl("T4", Geno)~ "T4",
+                           grepl("T5", Geno)~ "T5")) %>%
+select(-Geno, ED50 = Estimate) 
+
+Acer_ED50_T3 <- Acer_T3_ED_df %>%
+  select(Genotype, TP_ID, ED50) %>%
+  filter(ED50 < 50) # Geno 08 T4 sample is very high 
+
+Genotype_T3 <- Acer_ED50_T3$Genotype
+
+ggplot(Acer_ED50_T3, aes(x = TP_ID, y = ED50, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype_T3, nudge_x = 0.25) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  ggtitle("A.cer ED50s: T3 Sampling Timepoint")
+
+ggsave(filename = "plots/Acer_T3_ED50_rank.png", width = 75, height = 100, units = "mm")
+
+
+```
+
+# ACER PAM MEASUREMENT PLOTTING #
+```{r}
+ACER_PAM_TP <-  ACER %>%
+  filter(TubeNumber != "NA") %>%
+  select(Genotype = Geno, Treatment, Temperature, TP_ID, FvFm) %>%
+  filter(Treatment != "Field", 
+         Treatment != "Initial")
+
+Genotype <- ACER_PAM_TP$Genotype 
+
+ACER_PAM_TP$Treatment_f = factor(ACER_PAM_TP$Treatment, levels=c('Control','Low','Medium','High'))
+
+
+ggplot(ACER_PAM_TP, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype, nudge_x = 0.25) +
+  facet_grid(~Treatment_f) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  ggtitle("A.cer FvFm: All Timepoints per Tank")
+
+# Each Genotype PAM Individually Plotted per Tank #
+ggplot(ACER_PAM_TP, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point(size = 2) +
+  facet_grid(Genotype~Treatment_f) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint") +
+  ggtitle("A.cer FvFm: All Timepoints per Tank")
+
+ggplot(ACER_PAM_TP%>%filter(Treatment == "High"), aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point(size = 2) +
+  facet_wrap(~Genotype) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Timepoint") +
+  ggtitle("A.cer FvFm: All Timepoints per Control Tank ")
+
+ggsave(filename = "plots/Acer_Timepoints_per_Control.png", width = 150, height = 100, units = "mm")
+  
+
+# Each Genotype per Timepoint #
+ggplot(ACER_PAM_TP, aes(x = TP_ID, y = FvFm, color = Treatment)) +
+  geom_point(size = 2) +
+  facet_wrap(~Genotype) +
+  theme_bw() +
+  theme(legend.position = c(0.75,0.25)) +
+  xlab("Timepoint") +
+  ggtitle("A.cer FvFm: All Timepoints per Genotype")
+
+High <- ACER_PAM_TP %>%
+  filter(Treatment == "High") %>%
+  filter(TP_ID != "T1", TP_ID != "T2") 
+
+
+Genotype_High <- High$Genotype
+
+ggplot(High, aes(x = TP_ID, y = FvFm, color = Genotype)) +
+  geom_point() +
+  ggrepel::geom_text_repel(label= Genotype_High, nudge_x = 0.25) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  ggtitle("A.cer ED50s: T3 Sampling Timepoint")
+
+ggsave(filename = "plots/Acer_Timepoints_per_High.png", width = 150, height = 100, units = "mm")
+
+```
+
+# Acer Temperature vs FvFm at T3 Sampling Time  #
+```{r}
+Acer_T3 <- ACER %>%
+  filter(TubeNumber != "NA") %>%
+  filter(TP_ID == "T3") %>%
+  select(sample_ID, Geno, Treatment, Temperature, Timepoint, FvFm)
+
+ggplot(Acer_T3, aes(x = Temperature, y = FvFm, color = Geno)) +
+  geom_point() +
+  facet_wrap(~Geno) +
+  theme_bw() +
+  theme(legend.position = "none") +
+  xlab("Temperature") +
+  ggtitle("A.cer FvFm: Across Temperature from T3 Samples")
+
+
+```
+
+# CALC ROSS DATA AS 4 TEMP EXPERIMENT #
+```{r}
+RossPam <- readxl::read_xlsx("data/PAM/Ross_Mote_Pam_Data.xlsx") %>%
+  select(geno, FvFm = fvfm, Temp = target_temp) %>%
+  mutate(FacTemp = as.factor(Temp))
+
+  
+Ross_df <- RossPam %>%
+  filter(Temp == 37 | Temp == 35 | Temp == 33 | Temp == 30) %>%
+  mutate(Geno = case_when(geno == "ML7" ~ "07",
+                              geno == "ML31" ~ "31",
+                              geno == "ML34" ~ "34",
+                              geno == "ML41" ~ "41",
+                              geno == "ML48" ~ "48",
+                              geno == "ML50" ~ "50",
+                              geno == "ML62" ~ "62",
+                              geno == "CM5" ~ "CM5")) %>%
+  filter(Geno > 0) %>%
+  dplyr::group_by(Geno, Temp) %>%
+  mutate(Genoavg = mean(FvFm)) %>%
+  ungroup() %>%
+  select(Geno, Temp, FacTemp, FvFm = Genoavg)
+
+
+
+Ross_df <- unique(Ross_df)
+
+Ross_df$Geno<-as.factor(Ross_df$Geno)
+Ross_df$Temp<- as.integer(Ross_df$Temp)
+Ross_df<-as.data.frame(Ross_df)
+
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=Ross_df)
+leveneTest(FvFm ~ FacTemp, data=Ross_df)
+aggregate(FvFm ~ FacTemp, data=Ross_df, FUN= function(x) shapiro.test(x)$p.value)
+
+n1<-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), Ross_df)
+summary(n1)
+
+print(lsmeans(n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+str(Ross_df)
+
+# Full Curve Fit 
+Ross_DRCpam = drm(FvFm ~ Temp, data = Ross_df,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(Ross_DRCpam)
+plot(Ross_DRCpam)
+
+Ross_DRCpamgeno = drm(FvFm ~ Temp, data = Ross_df, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(Ross_DRCpamgeno)
+compParm(Ross_DRCpamgeno, 'ed50')
+compParm(Ross_DRCpamgeno, 'ed50', "-")
+plot(Ross_DRCpamgeno)
+ED(Ross_DRCpamgeno, c(50))[,1]
+
+Ross_ED <- ED(Ross_DRCpamgeno, c(50), interval = "delta")
+
+Ross_ED_df<- as.data.frame(Ross_ED) 
+
+Ross_ED50 <- setDT(Ross_ED_df, keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl("e:07", Geno) ~ "07",
+                              grepl("e:31", Geno) ~ "31",
+                              grepl("e:34", Geno) ~ "34",
+                              grepl("e:41", Geno) ~ "41",
+                              grepl("e:48", Geno) ~ "48",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl("e:62", Geno) ~ "62",
+                              grepl("e:CM", Geno) ~ "CM5"))
+
+Ross_ED50_geno <- Ross_ED50 %>%
+  select(Genotype, ED50 = Estimate)
+```
+
+# CALC COURTNEY'S DATA AS 4 TEMP EXPERIMENT #
+```{r}
+CourtPam <- readxl::read_xlsx("data/PAM/Courtney_Mote_Pam_Data.xlsx") %>%
+  select(Genotype, FvFm = Y, Temp) %>%
+  mutate(FacTemp = as.factor(Temp))
+
+CourtPam$FvFm<- as.numeric(CourtPam$FvFm)
+
+  
+Court_df <- CourtPam %>%
+  filter(Temp == 37 | Temp == 34.4 | Temp == 32.9 | Temp == 30.2) %>%
+  mutate(Geno = case_when(Genotype == "AC7" ~ "07",
+                          Genotype == "AC31" ~ "31",
+                          Genotype == "AC41" ~ "41",
+                          Genotype == "AC50" ~ "50",
+                          Genotype == "AC62" ~ "62")) %>%
+  select(Geno, FacTemp, Temp, FvFm) %>%
+  group_by(Geno, Temp) %>%
+  mutate(Genoavg = mean(FvFm)) %>%
+  ungroup() %>%
+  select(Geno, Temp, FacTemp, FvFm = Genoavg) %>%
+  filter(Geno > 0)
+
+
+Court_df$Geno<-as.factor(Court_df$Geno)
+Court_df$Temp<- as.integer(Court_df$Temp)
+Court_df<-as.data.frame(Court_df)
+
+str(Court_df)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=Court_df)
+leveneTest(FvFm ~ FacTemp, data=Court_df)
+aggregate(FvFm ~ FacTemp, data=Court_df, FUN= function(x) shapiro.test(x)$p.value)
+
+n1<-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), Court_df)
+summary(n1)
+
+print(lsmeans(n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+# Full Curve Fit 
+Court_DRCpam = drm(FvFm ~ Temp, data = Court_df,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(Court_DRCpam)
+plot(Court_DRCpam)
+
+Court_DRCpamgeno = drm(FvFm ~ Temp, data = Court_df, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(Court_DRCpamgeno)
+compParm(Court_DRCpamgeno, 'ed50')
+compParm(Court_DRCpamgeno, 'ed50', "-")
+plot(Court_DRCpamgeno)
+ED(Court_DRCpamgeno, c(50))[,1]
+
+Court_ED <- ED(Court_DRCpamgeno, c(50), interval = "delta")
+
+Court_ED_df<- as.data.frame(Court_ED) 
+
+Court_ED50 <- setDT(Court_ED_df, keep.rownames = "Geno") %>%
+  mutate(Genotype = case_when(grepl("e:07", Geno) ~ "07",
+                              grepl("e:31", Geno) ~ "31",
+                              grepl("e:41", Geno) ~ "41",
+                              grepl("e:50", Geno) ~ "50",
+                              grepl("e:62", Geno) ~ "62"))
+
+Court_ED50_geno <- Court_ED50 %>%
+  select(Genotype, ED50 = Estimate)
+```
+
+# COMBINE ROSS, COURTNEY, AND BARSHIS' DATA AS 4 TEMP EXPERIMENTS #
+```{r}
+Ross_run <- Ross_df %>%
+  mutate(run = "Ross") %>%
+  select(Geno, Temp, FvFm, run)
+
+Court_run <- Court_df %>%
+  mutate(run = "Courtney")%>%
+  select(Geno, Temp, FvFm, run)
+
+Court_run <- unique(Court_run)
+
+Barshis_run <- Acer_T3 %>%
+  mutate(run = "Barshis") %>%
+  select(Geno, Temp = Temperature, FvFm, run)
+
+allruns <-rbind(Ross_run, Court_run, Barshis_run) %>%
+  mutate(ID = paste(Geno, run))
+
+ggplot(allruns, aes(x = Temp, y = FvFm, color = run)) +
+  geom_point() +
+  facet_wrap(~Geno) 
+
+```
+
+# Generate curves and ED50s #
+```{r}
+DRC <- drm(FvFm ~ Temp, data = allruns, curveid = Geno, fct = LL.3(names = c('hill', 'max', 'ed50')))
+mselect(DRC, list(LL.2(), LL.4(), LL.5(), LL2.2(), LL2.3(), LL2.4(), LL2.5(), AR.2(), AR.3(), EXD.2(), EXD.3()), icfct = AIC)
+modelFit(DRC)
+summary(DRC)
+plot(DRC)
+
+#extract ED50
+geno_coeff<-DRC$coefficients[39:57]
+geno_coeffs<-data.frame(geno_coeff)
+
+#Run full model
+CBASS <- drm(FvFm ~ Temp, data = allruns, fct = LL.3())
+summary(CBASS)
+plot(CBASS)
+```
+
+#RUN MODEL FOR EACH GENOTYPE RUN # 
+```{r}
+###### GENOTYPE 07 ######
+AC07drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="07",], fct = LL.3())
+summary(AC07drc_R)
+plot(AC07drc_R)
+
+AC07drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="07",], fct = LL.3())
+summary(AC07drc_C)
+plot(AC07drc_C)
+
+AC07drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="07",], fct = LL.3())
+summary(AC07drc_B)
+plot(AC07drc_B)
+
+AC07_ED50_R <- data.frame(ED(AC07drc_R, c(50)))%>%round(digits = 2)
+AC07_ED50_C <- data.frame(ED(AC07drc_C, c(50)))%>%round(digits = 2)
+AC07_ED50_B <- data.frame(ED(AC07drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 31 ######
+AC31drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="31",], fct = LL.3())
+summary(AC31drc_R)
+plot(AC31drc_R)
+
+AC31drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="31",], fct = LL.3())
+summary(AC31drc_C)
+plot(AC31drc_C)
+
+AC31drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="31",], fct = LL.3())
+summary(AC31drc_B)
+plot(AC31drc_B)
+
+AC31_ED50_R <- data.frame(ED(AC31drc_R, c(50)))%>%round(digits = 2)
+AC31_ED50_C <- data.frame(ED(AC31drc_C, c(50)))%>%round(digits = 2)
+AC31_ED50_B <- data.frame(ED(AC31drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 34 ######
+AC34drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="34",], fct = LL.3())
+summary(AC34drc_R)
+plot(AC34drc_R)
+
+AC34drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="34",], fct = LL.3())
+summary(AC34drc_B)
+plot(AC34drc_B)
+
+AC34_ED50_R <- data.frame(ED(AC34drc_R, c(50)))%>%round(digits = 2)
+AC34_ED50_C <- data.frame(ED(AC34drc_C, c(50)))%>%round(digits = 2)
+AC34_ED50_B <- data.frame(ED(AC34drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 41 ######
+AC41drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="41",], fct = LL.3())
+summary(AC41drc_R)
+plot(AC41drc_R)
+
+AC41drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="41",], fct = LL.3())
+summary(AC41drc_C)
+plot(AC41drc_C)
+
+AC41drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="41",], fct = LL.3())
+summary(AC41drc_B)
+plot(AC41drc_B)
+
+AC41_ED50_R <- data.frame(ED(AC41drc_R, c(50)))%>%round(digits = 2)
+AC41_ED50_C <- data.frame(ED(AC41drc_C, c(50)))%>%round(digits = 2)
+AC41_ED50_B <- data.frame(ED(AC41drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 48 ######
+AC48drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="48",], fct = LL.3())
+summary(AC48drc_R)
+plot(AC48drc_R)
+
+AC48drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="48",], fct = LL.3())
+summary(AC07drc_C)
+plot(AC07drc_C)
+
+AC48drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="48",], fct = LL.3())
+summary(AC48drc_B)
+plot(AC48drc_B)
+
+AC48_ED50_R <- data.frame(ED(AC48drc_R, c(50)))%>%round(digits = 2)
+AC48_ED50_C <- data.frame(ED(AC48drc_C, c(50)))%>%round(digits = 2)
+AC48_ED50_B <- data.frame(ED(AC48drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 50 ######
+AC50drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="50",], fct = LL.3())
+summary(AC50drc_R)
+plot(AC50drc_R)
+
+AC50drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="50",], fct = LL.3())
+summary(AC50drc_C)
+plot(AC50drc_C)
+
+AC50drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="50",], fct = LL.3())
+summary(AC50drc_B)
+plot(AC50drc_B)
+
+AC50_ED50_R <- data.frame(ED(AC50drc_R, c(50)))%>%round(digits = 2)
+AC50_ED50_C <- data.frame(ED(AC50drc_C, c(50)))%>%round(digits = 2)
+AC50_ED50_B <- data.frame(ED(AC50drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE 62 ######
+AC62drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="62",], fct = LL.3())
+summary(AC62drc_R)
+plot(AC62drc_R)
+
+AC62drc_C <- drm(FvFm ~ Temp, data = Court_run[Court_run$Geno=="62",], fct = LL.3())
+summary(AC62drc_C)
+plot(AC62drc_C)
+
+AC62drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="62",], fct = LL.3())
+summary(AC62drc_B)
+plot(AC62drc_B)
+
+AC62_ED50_R <- data.frame(ED(AC62drc_R, c(50)))%>%round(digits = 2)
+AC62_ED50_C <- data.frame(ED(AC62drc_C, c(50)))%>%round(digits = 2)
+AC62_ED50_B <- data.frame(ED(AC62drc_B, c(50)))%>%round(digits = 2)
+
+###### GENOTYPE CM5 ######
+ACCM5drc_R <- drm(FvFm ~ Temp, data = Ross_run[Ross_run$Geno=="CM5",], fct = LL.3())
+summary(AC62drc_R)
+plot(AC62drc_R)
+
+ACCM5drc_B <- drm(FvFm ~ Temp, data = Barshis_run[Barshis_run$Geno=="CM5",], fct = LL.3())
+summary(ACCM5drc_B)
+plot(ACCM5drc_B)
+
+ACCM5_ED50_R <- data.frame(ED(ACCM5drc_R, c(50)))%>%round(digits = 2)
+ACCM5_ED50_B <- data.frame(ED(ACCM5drc_B, c(50)))%>%round(digits = 2)
+```
+
+#### Combine ED50 data plus predict curves from models for plotting ####
+```{r}
+# Overall DRC predictors
+CBASS_preddata = data.frame(Temp = seq(30,38, length.out = 100))
+CBASS_pred = as.data.frame(predict(CBASS, newdata = CBASS_preddata, interval = 'confidence'))
+CBASS_preddata = data.frame(CBASS_preddata, Y = CBASS_pred$Prediction, Lower = CBASS_pred$Lower, Upper = CBASS_pred$Upper)
+
+
+# Genotype predictors
+
+#### GENOTYPE 07 ####
+AC07_pred_R = as.data.frame(predict(AC07drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_R = data.frame(CBASS_preddata, Y = AC07_pred_R$Prediction, Lower = AC07_pred_R$Lower, Upper = AC07_pred_R$Upper)
+
+AC07_pred_C = as.data.frame(predict(AC07drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_C = data.frame(CBASS_preddata, Y = AC07_pred_C$Prediction, Lower = AC07_pred_C$Lower, Upper = AC07_pred_C$Upper)
+
+AC07_pred_B = as.data.frame(predict(AC07drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC07_preddata_B = data.frame(CBASS_preddata, Y = AC07_pred_B$Prediction, Lower = AC07_pred_B$Lower, Upper = AC07_pred_B$Upper)
+
+#### GENOTYPE 31 ####
+AC31_pred_R = as.data.frame(predict(AC31drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_R = data.frame(CBASS_preddata, Y = AC31_pred_R$Prediction, Lower = AC31_pred_R$Lower, Upper = AC31_pred_R$Upper)
+
+AC31_pred_C = as.data.frame(predict(AC31drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_C = data.frame(CBASS_preddata, Y = AC31_pred_C$Prediction, Lower = AC31_pred_C$Lower, Upper = AC31_pred_C$Upper)
+
+AC31_pred_B = as.data.frame(predict(AC31drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC31_preddata_B = data.frame(CBASS_preddata, Y = AC31_pred_B$Prediction, Lower = AC31_pred_B$Lower, Upper = AC31_pred_B$Upper)
+
+#### GENOTYPE 34 ####
+AC34_pred_R = as.data.frame(predict(AC34drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC34_preddata_R = data.frame(CBASS_preddata, Y = AC34_pred_R$Prediction, Lower = AC34_pred_R$Lower, Upper = AC34_pred_R$Upper)
+
+AC34_pred_B = as.data.frame(predict(AC34drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC34_preddata_B = data.frame(CBASS_preddata, Y = AC34_pred_B$Prediction, Lower = AC34_pred_B$Lower, Upper = AC34_pred_B$Upper)
+
+#### GENOTYPE 41 ####
+AC41_pred_R = as.data.frame(predict(AC07drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_R = data.frame(CBASS_preddata, Y = AC41_pred_R$Prediction, Lower = AC41_pred_R$Lower, Upper = AC41_pred_R$Upper)
+
+AC41_pred_C = as.data.frame(predict(AC41drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_C = data.frame(CBASS_preddata, Y = AC41_pred_C$Prediction, Lower = AC41_pred_C$Lower, Upper = AC41_pred_C$Upper)
+
+AC41_pred_B = as.data.frame(predict(AC41drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC41_preddata_B = data.frame(CBASS_preddata, Y = AC41_pred_B$Prediction, Lower = AC41_pred_B$Lower, Upper = AC41_pred_B$Upper)
+
+#### GENOTYPE 48 ####
+AC48_pred_R = as.data.frame(predict(AC48drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_R = data.frame(CBASS_preddata, Y = AC48_pred_R$Prediction, Lower = AC48_pred_R$Lower, Upper = AC48_pred_R$Upper)
+
+AC48_pred_C = as.data.frame(predict(AC48drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_C = data.frame(CBASS_preddata, Y = AC48_pred_C$Prediction, Lower = AC48_pred_C$Lower, Upper = AC48_pred_C$Upper)
+
+AC48_pred_B = as.data.frame(predict(AC48drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC48_preddata_B = data.frame(CBASS_preddata, Y = AC48_pred_B$Prediction, Lower = AC48_pred_B$Lower, Upper = AC48_pred_B$Upper)
+
+#### GENOTYPE 50 ####
+AC50_pred_R = as.data.frame(predict(AC50drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_R = data.frame(CBASS_preddata, Y = AC50_pred_R$Prediction, Lower = AC50_pred_R$Lower, Upper = AC50_pred_R$Upper)
+
+AC50_pred_C = as.data.frame(predict(AC50drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_C = data.frame(CBASS_preddata, Y = AC50_pred_C$Prediction, Lower = AC50_pred_C$Lower, Upper = AC50_pred_C$Upper)
+
+AC50_pred_B = as.data.frame(predict(AC50drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC50_preddata_B = data.frame(CBASS_preddata, Y = AC50_pred_B$Prediction, Lower = AC50_pred_B$Lower, Upper = AC50_pred_B$Upper)
+
+#### GENOTYPE 62 ####
+AC62_pred_R = as.data.frame(predict(AC62drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_R = data.frame(CBASS_preddata, Y = AC62_pred_R$Prediction, Lower = AC62_pred_R$Lower, Upper = AC62_pred_R$Upper)
+
+AC62_pred_C = as.data.frame(predict(AC62drc_C, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_C = data.frame(CBASS_preddata, Y = AC62_pred_C$Prediction, Lower = AC62_pred_C$Lower, Upper = AC62_pred_C$Upper)
+
+AC62_pred_B = as.data.frame(predict(AC62drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+AC62_preddata_B = data.frame(CBASS_preddata, Y = AC62_pred_B$Prediction, Lower = AC62_pred_B$Lower, Upper = AC62_pred_B$Upper)
+
+#### GENOTYPE CM5 ####
+ACCM5_pred_R = as.data.frame(predict(ACCM5drc_R, newdata = CBASS_preddata, interval = 'confidence'))
+ACCM5_preddata_R = data.frame(CBASS_preddata, Y = ACCM5_pred_R$Prediction, Lower = ACCM5_pred_R$Lower, Upper = ACCM5_pred_R$Upper)
+
+ACCM5_pred_B = as.data.frame(predict(ACCM5drc_B, newdata = CBASS_preddata, interval = 'confidence'))
+ACCM5_preddata_B = data.frame(CBASS_preddata, Y = ACCM5_pred_B$Prediction, Lower = ACCM5_pred_B$Lower, Upper = ACCM5_pred_B$Upper)
+```
+
+# PLOT  DRC FOR EACH GENO FOR EACH RUN # 
+```{r}
+#################### GENOTYPE 07 ####################
+gen07 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "07"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 07") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC07_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC07_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC07_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC07_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC07_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC07_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC07_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+
+#################### GENOTYPE 31 ####################
+
+
+gen31 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "31"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 31") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC31_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC31_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC31_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC31_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC31_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC31_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC31_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+
+
+#################### GENOTYPE 34 ####################
+
+
+gen34 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "34"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 34") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC34_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC34_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC34_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC34_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC34_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC34_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) 
+
+#################### GENOTYPE 41 ####################
+gen41 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "41"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 41") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC41_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC41_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC41_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC41_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC41_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC41_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC41_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+
+#################### GENOTYPE 48 ####################
+
+
+gen48 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "48"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 48") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC48_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC48_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC48_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC48_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC48_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC48_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) 
+
+
+####################  GENOTYPE 50 #################### 
+gen50 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "50"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 50") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC50_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC50_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC50_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC50_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC50_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC50_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC50_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+
+#################### GENOTYPE 62 ####################
+
+
+gen62 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "62"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Courtney" = "#7CAE00", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype 62") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+
+  geom_line(data = AC62_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", AC62_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#00BFC4', size = 3) +
+  
+  geom_line(data = AC62_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", AC62_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = AC62_preddata_C, aes(x = Temp, y = Y.1), color = "#7CAE00", show.legend = FALSE) +
+  geom_vline(data = AC62_ED50_C, aes(xintercept = Estimate), color = '#7CAE00', show.legend = FALSE) +
+  geom_text(aes(label = paste("Courtney", AC62_ED50_C$Estimate), fontface = "bold"), x = 32, y = 0.1, show.legend = FALSE, color = '#7CAE00', size = 3) 
+
+#################### GENOTYPE CM5 ####################
+
+
+genCM5 <- ggplot() +
+  geom_point(data = allruns%>%filter(Geno == "CM5"), aes(x = Temp, y = FvFm, color=run), size = 1, width = 0.25) +
+  scale_x_continuous(limits=c(30,37), breaks=c(29,31,33,35,37)) +
+  scale_y_continuous(limits=c(0, 0.7), breaks=c(0, 0.2, 0.4, 0.6)) +
+  scale_color_manual(values=c("Barshis" = "#F8766D", "Ross" = "#00BFC4")) +
+  ggtitle("Genotype CM5") +
+  theme_bw() +
+  theme(plot.title = element_text(size = 11, vjust = -1),
+        legend.position = "none",
+        axis.title = element_blank()) +
+  
+geom_line(data = ACCM5_preddata_B, aes(x = Temp, y = Y.1), color = "#F8766D", show.legend = FALSE) +
+  geom_vline(data = ACCM5_ED50_B, aes(xintercept = Estimate), color = '#F8766D', show.legend = FALSE) +
+  geom_text(aes(label = paste("Barshis", ACCM5_ED50_B$Estimate), fontface = "bold"), x = 32, y = 0.3, show.legend = FALSE, color = '#F8766D', size = 3) +
+  
+  geom_line(data = ACCM5_preddata_R, aes(x = Temp, y = Y.1), color = "#00BFC4", show.legend = FALSE) +
+  geom_vline(data = ACCM5_ED50_R, aes(xintercept = Estimate), color = '#00BFC4', show.legend = FALSE) +
+  geom_text(aes(label = paste("Ross", ACCM5_ED50_R$Estimate), fontface = "bold"), x = 32, y = 0.2, show.legend = FALSE, color = '#00BFC4', size = 3) 
+
+```
+
+# Combine all Genotype Figures #
+```{r}
+library(ggpubr)
+
+ggarrange(gen07, gen31, gen34, gen41, gen48, gen50, gen62, genCM5, ncol = 4, nrow = 2) %>%
+  annotate_figure(left = text_grob("FvFm", rot = 90), bottom = text_grob("Temp"))
+
+ggsave(filename = "plots/DRC_Genofit_per_Experiment.png", width = 300, height = 150, units = "mm")
+```
+
+#Correlation Testing#
+```{r}
+
+```
+

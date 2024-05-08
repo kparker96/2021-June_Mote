@@ -1,0 +1,328 @@
+---
+title: "Untitled"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# LOAD LIBRARIES #
+```{r}
+library(Hmisc)
+library(lsmeans)
+library(emmeans)
+library(car)
+library(drc)
+library(tidyverse)
+library(data.table)
+```
+
+# IMPORT DATA #
+```{r}
+OPa <- readxl::read_xlsx("data/PAM/2021-06-10_Past-4temps-Offshore.xlsx")
+
+Allpam <- OPa %>%
+  mutate(Species = case_when(Species == "Porites astreoides" ~ "PAST")) %>%
+  dplyr::select(sample_ID = SampleName, species = Species, Geno = Genotype, Location, Temp = Temp_Setpoint, Timepoint, FvFm = PAM) %>%
+  mutate(TP_ID = case_when(grepl("T1", sample_ID) ~ "T1",
+                           grepl("T2", sample_ID) ~ "T2",
+                           grepl("T3", sample_ID) ~ "T3",
+                           grepl("T4", sample_ID) ~ "T4",
+                           grepl("T5", sample_ID) ~ "T5",
+                           grepl("T0", sample_ID) ~ "T0",
+                           grepl("TF", sample_ID) ~ "TF"))
+
+
+Allpam$FacTemp<-as.factor(Allpam$Temp)
+Allpam$Geno<-as.factor(Allpam$Geno)
+Allpam$Temp<- as.integer(Allpam$Temp)
+Allpam<-as.data.frame(Allpam)
+```
+
+# T3 ANALYSIS (T3 & T4 & T5 Samples) #
+```{r}
+T3PAM <- Allpam %>%
+  filter(Timepoint == "T3")
+
+aggregate(FvFm ~ Temp, data=T3PAM, summary)
+
+aggregate(FvFm ~ Temp, data=T3PAM, length)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=T3PAM)
+leveneTest(FvFm ~ FacTemp, data=T3PAM)
+aggregate(FvFm ~ FacTemp, data=T3PAM, FUN= function(x) shapiro.test(x)$p.value)
+
+n1<-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), T3PAM)
+summary(n1)
+
+print(lsmeans(n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+
+# Full Curve Fit 
+DRCpam = drm(FvFm ~ Temp, data = T3PAM,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(DRCpam)
+plot(DRCpam)
+
+DRCpamgeno = drm(FvFm ~ Temp, data = T3PAM, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(DRCpamgeno)
+compParm(DRCpamgeno, 'ed50')
+compParm(DRCpamgeno, 'ed50', "-")
+plot(DRCpamgeno)
+ED(DRCpamgeno, c(50))[,1]
+
+# Plotting 
+
+# Population Average 
+temp_x<- seq(30, 40.5, length = 100)
+
+pdf("plots/2021-06-10_T3_CarlysOffshorePastRNASeq_DRC.pdf",10,7)
+line_width=2
+Colorz="#003A9D"
+Syms=16
+Denscity <- 45
+matplot(temp_x, predict(DRCpamgeno, data.frame(Temp = temp_x), interval="confidence"),
+        type="n",col=Colorz,lty=c(1,3,3),lwd=line_width,ylab="Fv/Fm",xlab="Temperature °C", xlim=c(29.5,41),ylim=c(0,0.65), cex.axis=1.5, cex.lab=1.5)
+polygon(c(temp_x, rev(temp_x)),c(predict(DRCpamgeno, data.frame(Temp = temp_x), interval="confidence")[,2],rev(predict(DRCpamgeno, data.frame(Temp = temp_x), interval="confidence")[,3])), col=Colorz, density = Denscity)
+matpoints(temp_x, predict(DRCpamgeno, data.frame(Temp = temp_x), interval="confidence"),
+          type="l",col=Colorz,lty=c(1,3,3),lwd=line_width)
+with(T3PAM,matpoints(Temp,FvFm,pch=Syms, col=Colorz, cex=1.5))
+
+title(main="Offshore Porites astreoides")
+abline(v=mean(ED(DRCpamgeno, c(50))[,1]), col=Colorz)
+text(mean(ED(DRCpamgeno, c(50))[,1])+0.6, 0.65,labels=as.character(round(mean(ED(DRCpamgeno, c(50))[,1]), digits=2)),col=Colorz, cex=1.5)
+dev.off()
+
+# Individual Genotypes
+pdf("plots/2021-06-10_T3_CarlysOffshorePastRNASeq_DRC_genofits.pdf",10,7)
+par(mar=c(5.1,5.1,4.1,2.1))
+Line_width=2.5
+with(T3PAM, plot(Temp,FvFm,xlim=c(29.5,41),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab="Temperature °C"))
+Colours<-c('#4575b4','#74add1','#fee090','#f46d43','#d73027')
+for(i in order(DRCpamgeno$coefficients[11:15])){
+  Geno=names(table(T3PAM$Geno))[i]
+  print(Geno)
+  print(summary(mod1<-drm(FvFm ~ Temp, data=T3PAM[T3PAM$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
+  points(T3PAM[T3PAM$Geno==Geno,"Temp"],T3PAM[T3PAM$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
+  lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
+}
+title(main="Offshore Porites astreoides")
+abline(v=DRCpamgeno$coefficients[11:15][order(DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
+legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(DRCpamgeno$coefficients)[11:15][order(DRCpamgeno$coefficients[11:15])],": ",round(DRCpamgeno$coefficients[11:15][order(DRCpamgeno$coefficients[11:15])], digits=2)))
+dev.off()
+```
+
+# T3 **SAMPLES** ANALYSIS
+```{r}
+justT3 <- Allpam %>%
+  filter(TP_ID == "T3")
+
+aggregate(FvFm ~ Temp, data=justT3, summary)
+aggregate(FvFm ~ Temp, data=justT3, length)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=justT3)
+leveneTest(FvFm ~ FacTemp, data=justT3)
+aggregate(FvFm ~ FacTemp, data=justT3, FUN= function(x) shapiro.test(x)$p.value)
+
+justT3_n1 <-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), justT3)
+summary(justT3_n1)
+
+print(lsmeans(justT3_n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+
+# Full Curve Fit 
+T3_DRCpam = drm(FvFm ~ Temp, data = justT3,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T3_DRCpam)
+plot(T3_DRCpam)
+
+T3_DRCpamgeno = drm(FvFm ~ Temp, data = justT3, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T3_DRCpamgeno)
+compParm(T3_DRCpamgeno, 'ed50')
+compParm(T3_DRCpamgeno, 'ed50', "-")
+plot(T3_DRCpamgeno)
+
+T3_ED <- ED(T3_DRCpamgeno, c(50), interval = "delta")
+
+T3_df<- as.data.frame(T3_ED) 
+
+T3_ED50 <- setDT(T3_df, keep.rownames = "Geno") %>%
+  mutate(Timepoint = "T3") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05"))
+T3_ED50_geno <- T3_ED50 %>%
+  select(Genotype, Timepoint, ED50 = Estimate)
+```
+
+# T4 **SAMPLES** ANALYSIS
+```{r}
+justT4 <- Allpam %>%
+  filter(Timepoint == "T3") %>%
+  filter(TP_ID == "T4")
+
+aggregate(FvFm ~ Temp, data=justT4, summary)
+aggregate(FvFm ~ Temp, data=justT4, length)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=justT4)
+leveneTest(FvFm ~ FacTemp, data=justT4)
+aggregate(FvFm ~ FacTemp, data=justT4, FUN= function(x) shapiro.test(x)$p.value)
+
+justT4_n1 <-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), justT4)
+summary(justT4_n1)
+
+print(lsmeans(justT4_n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+
+# Full Curve Fit 
+T4_DRCpam = drm(FvFm ~ Temp, data = justT4,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T4_DRCpam)
+plot(T4_DRCpam)
+
+T4_DRCpamgeno = drm(FvFm ~ Temp, data = justT4, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T4_DRCpamgeno)
+compParm(T4_DRCpamgeno, 'ed50')
+compParm(T4_DRCpamgeno, 'ed50', "-")
+plot(T4_DRCpamgeno)
+
+T4_ED <- ED(T4_DRCpamgeno, c(50), interval = "delta")
+
+T4_df<- as.data.frame(T4_ED) 
+
+T4_ED50 <- setDT(T4_df, keep.rownames = "Geno") %>%
+  mutate(Timepoint = "T4") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05"))
+T4_ED50_geno <- T4_ED50 %>%
+  select(Genotype, Timepoint, ED50 = Estimate)
+```
+
+# T5 **SAMPLES** ANALYSIS
+```{r}
+justT5 <- Allpam %>%
+  filter(Timepoint == "T3") %>%
+  filter(TP_ID == "T5")
+
+aggregate(FvFm ~ Temp, data=justT5, summary)
+aggregate(FvFm ~ Temp, data=justT5, length)
+
+# Homoscedasticity/ Equal Variance Testing 
+bartlett.test(FvFm ~ FacTemp, data=justT5)
+leveneTest(FvFm ~ FacTemp, data=justT5)
+aggregate(FvFm ~ FacTemp, data=justT5, FUN= function(x) shapiro.test(x)$p.value)
+
+justT5_n1 <-aov(FvFm ~ FacTemp + Error(Geno/FacTemp), justT5)
+summary(justT5_n1)
+
+print(lsmeans(justT5_n1, list(pairwise ~ FacTemp)), adjust = c("tukey"))
+
+
+# Full Curve Fit 
+T5_DRCpam = drm(FvFm ~ Temp, data = justT5,
+                 fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T5_DRCpam)
+plot(T5_DRCpam)
+
+T5_DRCpamgeno = drm(FvFm ~ Temp, data = justT5, curveid = Geno,
+             fct = LL.3(names = c('hill', 'max', 'ed50')))
+summary(T5_DRCpamgeno)
+compParm(T5_DRCpamgeno, 'ed50')
+compParm(T5_DRCpamgeno, 'ed50', "-")
+plot(T5_DRCpamgeno)
+
+T5_ED <- ED(T5_DRCpamgeno, c(50), interval = "delta")
+
+T5_df<- as.data.frame(T5_ED) 
+
+T5_ED50 <- setDT(T5_df, keep.rownames = "Geno") %>%
+  mutate(Timepoint = "T5") %>%
+  mutate(Genotype = case_when(grepl(":01", Geno) ~ "01",
+                              grepl(":02", Geno) ~ "02",
+                              grepl(":03", Geno) ~ "03",
+                              grepl(":04", Geno) ~ "04",
+                              grepl(":05", Geno) ~ "05"))
+T5_ED50_geno <- T5_ED50 %>%
+  select(Genotype, Timepoint, ED50 = Estimate)
+```
+
+# COMPARING T3 VS T4 VS T5 ED50s #
+```{r}
+All_ED50 <- rbind(T3_ED50_geno, T4_ED50_geno, T5_ED50_geno) 
+
+ggplot(All_ED50, aes(x = Timepoint, y = ED50, color = Genotype)) +
+  geom_point(size = 5) +
+  geom_line()
+
+library("writexl")
+
+All_ED50 %>%
+  spread(key = Timepoint, value = ED50) %>%
+  write_xlsx("ED50/Past_Offshore_Genets_ED50.xlsx")
+```
+
+# PLOTTING DRC FOR ALL GENOTYPES PER TIMEPOINT #
+```{r}
+# Population Average 
+temp_x<- seq(30, 40.5, length = 100)
+
+# Individual Genotypes
+pdf("plots/OPa__DRC_T3_genofits.pdf",width = 8, height = 13)
+par(mar=c(5.1,5.1,4.1,2.1), mfrow=c(3,1))
+Line_width=2.5
+
+with(justT3, plot(Temp,FvFm,xlim=c(29.5,41),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab=element_blank()))
+Colours<-c('#4575b4','#74add1','#fee090','#f46d43','#d73027')
+for(i in order(T3_DRCpamgeno$coefficients[11:15])){
+  Geno=names(table(justT3$Geno))[i]
+  print(Geno)
+  print(summary(mod1<-drm(FvFm ~ Temp, data=justT3[justT3$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
+  points(justT3[justT3$Geno==Geno,"Temp"],justT3[justT3$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
+  lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
+}
+title(main="Ipa T3")
+abline(v=T3_DRCpamgeno$coefficients[11:15][order(T3_DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
+legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(T3_DRCpamgeno$coefficients)[11:15][order(T3_DRCpamgeno$coefficients[11:15])],": ",round(T3_DRCpamgeno$coefficients[11:15][order(T3_DRCpamgeno$coefficients[11:15])], digits=2)))
+
+with(justT4, plot(Temp,FvFm,xlim=c(29.5,41),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab=element_blank()))
+Colours<-c('#4575b4','#74add1','#fee090','#f46d43','#d73027')
+for(i in order(T4_DRCpamgeno$coefficients[11:15])){
+  Geno=names(table(justT4$Geno))[i]
+  print(Geno)
+  print(summary(mod1<-drm(FvFm ~ Temp, data=justT4[justT4$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
+  points(justT4[justT4$Geno==Geno,"Temp"],justT4[justT4$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
+  lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
+}
+title(main="Ipa T4")
+abline(v=T4_DRCpamgeno$coefficients[11:15][order(T4_DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
+legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(T4_DRCpamgeno$coefficients)[11:15][order(T4_DRCpamgeno$coefficients[11:15])],": ",round(T4_DRCpamgeno$coefficients[11:15][order(T4_DRCpamgeno$coefficients[11:15])], digits=2)))
+
+with(justT5, plot(Temp,FvFm,xlim=c(29.5,41),ylim=c(0,0.60), type='n', cex.axis=2.5, cex.lab=2.5, ylab="Fv/Fm", xlab="Temperature °C"))
+Colours<-c('#4575b4','#74add1','#fee090','#f46d43','#d73027')
+for(i in order(T5_DRCpamgeno$coefficients[11:15])){
+  Geno=names(table(justT5$Geno))[i]
+  print(Geno)
+  print(summary(mod1<-drm(FvFm ~ Temp, data=justT5[justT5$Geno==Geno,],fct = LL.3(names = c('hill', 'max', 'ed50')))))
+  points(justT5[justT5$Geno==Geno,"Temp"],justT5[justT5$Geno==Geno,"FvFm"], col=Colours[i], pch=16)
+  lines(temp_x, predict(mod1, data.frame(Temp = temp_x)), col=Colours[i], lwd=Line_width)
+}
+title(main="Ipa T5")
+abline(v=T5_DRCpamgeno$coefficients[11:15][order(T5_DRCpamgeno$coefficients[11:15])], col=Colours, lwd=Line_width)
+legend("bottomleft", col=Colours, lty=1, cex=1.75, lwd=Line_width, paste0(names(T5_DRCpamgeno$coefficients)[11:15][order(T5_DRCpamgeno$coefficients[11:15])],": ",round(T5_DRCpamgeno$coefficients[11:15][order(T5_DRCpamgeno$coefficients[11:15])], digits=2)))
+
+dev.off()
+```

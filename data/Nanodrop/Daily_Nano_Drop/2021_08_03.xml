@@ -1,0 +1,240 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s23">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font x:Family="Swiss" ss:Bold="1"/>
+   <Interior ss:Color="#DCDCFF" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="s24">
+    <Font x:Family="Swiss" ss:Bold="1"/>
+  </Style>
+  <Style ss:ID="s25">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font x:Family="Swiss" ss:Bold="1"/>
+   <Interior ss:Color="#DCDCFF" ss:Pattern="Solid"/>
+   <NumberFormat ss:Format="hh:mm:ss.0"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Sheet1">
+  <Table>
+  <Column ss:Index="1" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="2" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="3" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="4" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="5" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="6" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="7" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="8" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="9" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="10" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="11" ss:AutoFitWidth="0" ss:Width="120.0"/>
+  <Column ss:Index="12" ss:AutoFitWidth="0" ss:Width="120.0"/>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s23"><Data ss:Type="String">#</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">Sample ID</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">User name</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">Date and Time</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">Nucleic Acid</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">Unit</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">A260 (Abs)</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">A280 (Abs)</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">260/280</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">260/230</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">Sample Type</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">Factor</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">1</Data></Cell>
+    <Cell><Data ss:Type="Number">363</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:03:05 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">14.9</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.372</Data></Cell>
+    <Cell><Data ss:Type="Number">0.191</Data></Cell>
+    <Cell><Data ss:Type="Number">1.94</Data></Cell>
+    <Cell><Data ss:Type="Number">0.94</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">2</Data></Cell>
+    <Cell><Data ss:Type="Number">364</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:04:48 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">13.6</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.340</Data></Cell>
+    <Cell><Data ss:Type="Number">0.166</Data></Cell>
+    <Cell><Data ss:Type="Number">2.05</Data></Cell>
+    <Cell><Data ss:Type="Number">0.68</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">3</Data></Cell>
+    <Cell><Data ss:Type="Number">365</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:05:41 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">21.2</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.531</Data></Cell>
+    <Cell><Data ss:Type="Number">0.320</Data></Cell>
+    <Cell><Data ss:Type="Number">1.66</Data></Cell>
+    <Cell><Data ss:Type="Number">0.71</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">4</Data></Cell>
+    <Cell><Data ss:Type="Number">366</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:06:33 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">24.4</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.610</Data></Cell>
+    <Cell><Data ss:Type="Number">0.308</Data></Cell>
+    <Cell><Data ss:Type="Number">1.98</Data></Cell>
+    <Cell><Data ss:Type="Number">0.71</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">5</Data></Cell>
+    <Cell><Data ss:Type="Number">367</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:07:14 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">10.8</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.269</Data></Cell>
+    <Cell><Data ss:Type="Number">0.138</Data></Cell>
+    <Cell><Data ss:Type="Number">1.95</Data></Cell>
+    <Cell><Data ss:Type="Number">0.55</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">6</Data></Cell>
+    <Cell><Data ss:Type="Number">368</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:07:56 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">18.1</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.453</Data></Cell>
+    <Cell><Data ss:Type="Number">0.227</Data></Cell>
+    <Cell><Data ss:Type="Number">1.99</Data></Cell>
+    <Cell><Data ss:Type="Number">1.05</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">7</Data></Cell>
+    <Cell><Data ss:Type="Number">369</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:08:36 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">14.4</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.361</Data></Cell>
+    <Cell><Data ss:Type="Number">0.177</Data></Cell>
+    <Cell><Data ss:Type="Number">2.04</Data></Cell>
+    <Cell><Data ss:Type="Number">0.63</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">8</Data></Cell>
+    <Cell><Data ss:Type="Number">370</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:09:22 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">16.0</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.400</Data></Cell>
+    <Cell><Data ss:Type="Number">0.202</Data></Cell>
+    <Cell><Data ss:Type="Number">1.98</Data></Cell>
+    <Cell><Data ss:Type="Number">0.81</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">9</Data></Cell>
+    <Cell><Data ss:Type="Number">371</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:10:08 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">15.9</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.398</Data></Cell>
+    <Cell><Data ss:Type="Number">0.203</Data></Cell>
+    <Cell><Data ss:Type="Number">1.97</Data></Cell>
+    <Cell><Data ss:Type="Number">1.16</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">10</Data></Cell>
+    <Cell><Data ss:Type="Number">372</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:10:53 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">10.3</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.258</Data></Cell>
+    <Cell><Data ss:Type="Number">0.124</Data></Cell>
+    <Cell><Data ss:Type="Number">2.08</Data></Cell>
+    <Cell><Data ss:Type="Number">0.91</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">11</Data></Cell>
+    <Cell><Data ss:Type="Number">373</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:11:30 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">22.8</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.569</Data></Cell>
+    <Cell><Data ss:Type="Number">0.262</Data></Cell>
+    <Cell><Data ss:Type="Number">2.17</Data></Cell>
+    <Cell><Data ss:Type="Number">1.05</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell><Data ss:Type="Number">12</Data></Cell>
+    <Cell><Data ss:Type="Number">374</Data></Cell>
+    <Cell><Data ss:Type="String">barshislab</Data></Cell>
+    <Cell><Data ss:Type="String">8/3/2021 4:12:10 PM</Data></Cell>
+    <Cell><Data ss:Type="Number">21.2</Data></Cell>
+    <Cell><Data ss:Type="String">ng/µl</Data></Cell>
+    <Cell><Data ss:Type="Number">0.531</Data></Cell>
+    <Cell><Data ss:Type="Number">0.268</Data></Cell>
+    <Cell><Data ss:Type="Number">1.98</Data></Cell>
+    <Cell><Data ss:Type="Number">1.04</Data></Cell>
+    <Cell><Data ss:Type="String">RNA</Data></Cell>
+    <Cell><Data ss:Type="Number">40.00</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+</Workbook>

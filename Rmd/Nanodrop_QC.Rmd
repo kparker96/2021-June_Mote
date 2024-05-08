@@ -1,0 +1,392 @@
+---
+title: "Untitled"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#LOAD LIBRARIES #
+```{r}
+library(tidyr)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+#IMPORT DATA#
+```{r}
+# Import Raw Nanodrop Data and Designate Extraction Origin#
+df <- readxl::read_xlsx("data/Nanodrop/Past_Nano_Working_Master.xlsx") %>%
+  mutate(origin = ifelse(grepl("F", Sample_ID), "Flash Frozen", "RNALater")) %>%
+  mutate(origin = ifelse(grepl("r", Sample_ID), "Re-extraction", origin))
+
+# no letter = original sample extracted from RNALater
+# F = number coincides with the RNALater sample #, but came from the Flash Frozen tissue
+# r = re-extraction of original sample from RNALater 
+
+#remove lettering system for easier sample analysis downstream, sample origin is denoted in "origin" column #
+df$Sample_ID<-gsub("F","",as.character(df$Sample_ID))
+df$Sample_ID<-gsub("r","",as.character(df$Sample_ID))
+
+
+# Import Additional Sample Data #
+sd <- readxl::read_xlsx("data/Nanodrop/Past_Sample_Data.xlsx") %>%
+  mutate(TP = case_when(grepl("TF", FrozenSampleName) ~ "TF",
+                        grepl("T0", FrozenSampleName) ~ "T0",
+                        grepl("T1", FrozenSampleName) ~ "T1",
+                        grepl("T2", FrozenSampleName) ~ "T2",
+                        grepl("T3", FrozenSampleName) ~ "T3",
+                        grepl("T4", FrozenSampleName) ~ "T4",
+                        grepl("T5", FrozenSampleName) ~ "T5")) %>%
+  mutate(Temperature = case_when(grepl("-C", FrozenSampleName) ~ "Control",
+                               grepl("-L", FrozenSampleName) ~ "Low",
+                               grepl("-M", FrozenSampleName) ~ "Medium",
+                               grepl("-H", FrozenSampleName) ~ "High"))
+
+
+sd$Sample_ID <- as.character(sd$Sample_ID)
+
+# Combine Nanodata with Sample Data and Add Genotype Column #
+nano <- right_join(df, sd, by = "Sample_ID") %>%
+  dplyr::select(FrozenSampleName, Sample_ID, origin,  Site, Date, ng_ul, r260_280, r260_230,  TP, Temperature) %>%
+  filter(!is.na(Date))%>%
+  mutate(geno = case_when(grepl("01", FrozenSampleName) ~ "01",
+                          grepl("02", FrozenSampleName) ~ "02",
+                          grepl("03", FrozenSampleName) ~ "03",
+                          grepl("04", FrozenSampleName) ~ "04",
+                          grepl("05", FrozenSampleName) ~ "05",
+                          grepl("06", FrozenSampleName) ~ "06",
+                          grepl("07", FrozenSampleName) ~ "07",
+                          grepl("08", FrozenSampleName) ~ "08",
+                          grepl("09", FrozenSampleName) ~ "09",
+                          grepl("10", FrozenSampleName) ~ "10"))
+
+# Convert Character Columns to Numeric #
+nano$ng_ul <- as.numeric(nano$ng_ul)
+nano$r260_280 <- as.numeric(nano$r260_280)
+nano$r260_230 <- as.numeric(nano$r260_230)
+
+# Round values to 2 decimal places #
+nano$ng_ul <- round(nano$ng_ul, digits = 2)
+nano$r260_280  <- round(nano$r260_280 , digits = 2)
+nano$r260_230 <- round(nano$r260_230, digits = 2)
+
+library("writexl")
+write_xlsx(nano,"extractions/extractions_master.xlsx")
+```
+
+#FILTERING GOOD AND BAD SAMPLES FROM ORIGINAL EXTRACTIONS#
+```{r}
+ogextract <- nano %>%
+  filter(origin == "RNALater")
+
+# RNA Samples >= 20ng/uL #
+goodRNA <- ogextract %>%
+  filter(ng_ul >= 18.5)
+
+# RNA Samples with low yields, < 20ng/uL but > 10ng/uL #
+lowyield <- ogextract %>%
+  filter(ng_ul < 18.5, ng_ul > 10)
+
+# RNA Samples with little to no RNA (< 10ng/uL) # 
+noRNA <- ogextract %>%
+  filter(ng_ul < 10)
+
+```
+
+#VISUALIZING DATA#
+```{r}
+# Boxplot: all samples separated by timepoint
+ggplot(nano, aes(x = TP, y = ng_ul, fill = TP)) +
+  geom_boxplot() +
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) 
+
+# Boxplot: samples <18.5 ng/uL by timepoint
+ggplot(lowyield, aes(x = TP, y = ng_ul, fill = TP)) +
+  geom_boxplot() +
+  geom_hline(yintercept=18.5, color = "red", size = 0.5)
+
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by timepoint 
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point() +
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) +
+  facet_wrap(~TP, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by timepoint 
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point() +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_grid(Site~TP, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by Date
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_wrap( ~ as.Date(Date), scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by Tank Temperature 
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_wrap( ~ Temperature, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+
+# Scatterplot: All data, Sample ng/uL of RNA for each sample, faceted by Genotype
+ggplot(nano, aes(x = Sample_ID, y = ng_ul, color = TP)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=20, color = "red", size = 0.5) +
+  facet_wrap( ~ geno, scales = "free_x") +
+  theme_bw() +
+  theme(axis.text.x = element_blank())
+```
+
+# QUANTIFYING GOOD AND BAD SAMPLES BY TIMEPOINT AND GENOTYPE #
+```{r}
+# Timepoint #
+extract_status_TP <- ogextract %>%
+  select(Sample_ID, ng_ul, r260_280, r260_230, TP) %>%
+  mutate(status = case_when(ng_ul >= 18.5 ~ "good",
+                            ng_ul > 10 & ng_ul < 18.5 ~ "lowyield",
+                            ng_ul < 10 ~ "noRNA")) %>%
+  filter(Sample_ID != 321) %>%
+  group_by(status, TP) %>%
+  summarise(n = n()) %>%
+  mutate(ncol = sum(n), label = paste0("N =", n))
+
+ggplot(extract_status_TP, aes(x = status, y = n, fill = status)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_fill_manual(values = c("Green3", "Yellow2", "Red2")) +
+  geom_text(aes(label = label, y = 1)) +
+  scale_y_discrete(expand = c(0,0)) +
+  facet_wrap(~TP) +
+  theme_bw()
+
+# Genotype #
+extract_status_geno <- ogextract %>%
+  select(Sample_ID, ng_ul, r260_280, r260_230, geno) %>%
+  mutate(status = case_when(ng_ul >= 18.5 ~ "good",
+                            ng_ul > 10 & ng_ul < 18.5 ~ "lowyield",
+                            ng_ul < 10 ~ "noRNA")) %>%
+  filter(Sample_ID != 321) %>%
+  group_by(status, geno) %>%
+  summarise(n = n()) %>%
+  mutate(ncol = sum(n), label = paste0("N =", n))
+
+ggplot(extract_status_geno, aes(x = status, y = n, fill = status)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_fill_manual(values = c("Green3", "Yellow2", "Red2")) +
+  geom_text(aes(label = label, y = 1)) +
+  scale_y_discrete(expand = c(0,0)) +
+  facet_wrap(~geno) +
+  theme_bw()
+```
+
+# SUMMARISING SAMPLE QUALITY #
+```{r}
+ yield_breakdown <- nano %>%
+  select(Sample_ID, ng_ul, r260_280, r260_230) %>%
+  mutate(status = case_when(ng_ul >= 18 ~ "good",
+                            ng_ul > 10 & ng_ul < 18 ~ "lowyield",
+                            ng_ul <= 10 ~ "noRNA"))%>%
+  select(Sample_ID, status, ng_ul, r260_280, r260_230)
+
+yield_breakdown %>%
+  group_by(status) %>%
+  summarise(n = n())
+
+goodextract <- yield_breakdown %>%
+  filter(status == "good")
+
+lowyieldextract <- yield_breakdown %>%
+  filter(status == "lowyield")
+
+badextract <- yield_breakdown %>%
+  filter(status == "bad")
+
+write_xlsx(yield_breakdown,"extractions/yield_breakdown.xlsx")
+
+```
+
+
+
+
+
+
+# COMPARE YIELDS FROM RE-EXTRACTION TO ORIGINAL EXTRACTION #
+```{r}
+# Samples that have been re-extracted #
+duplicate <- nano %>%
+  dplyr::count(Sample_ID) %>%
+  filter(n > 1)
+
+reextract <- nano %>%
+  filter(Sample_ID %in% duplicate$Sample_ID) %>%
+  arrange(Sample_ID)
+
+# RNALater Rextracts #
+RNALater <- reextract %>%
+  filter(origin == "RNALater" | origin == "Re-extraction") %>%
+  dplyr::count(Sample_ID) %>%
+  filter(n > 1)
+
+re_RNALater <- reextract %>%
+  filter(Sample_ID %in% RNALater$Sample_ID) %>%
+  arrange(Sample_ID)
+
+ggplot(re_RNALater, aes(x = Sample_ID, y = ng_ul, color = origin)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) +
+  ylim(0,20) +
+  facet_wrap(~TP, scales = "free_x") +
+  theme_bw()
+
+# Flash Frozen Rextracts #
+FlashFrozen <- reextract %>%
+  filter(origin == "RNALater" | origin == "Flash Frozen") %>%
+  dplyr::count(Sample_ID) %>%
+  filter(n > 1)
+
+FF_extract <- reextract %>%
+  filter(Sample_ID %in% FlashFrozen$Sample_ID) %>%
+  arrange(Sample_ID)
+
+ggplot(FF_extract, aes(x = Sample_ID, y = ng_ul, color = origin)) +
+  geom_point(size = 2) +
+  geom_hline(yintercept=18.5, color = "red", size = 0.5) + 
+  facet_grid(~TP, scales = "free") +
+  theme_bw() 
+```
+
+# UPDATING THE "GOODRNA" LIST WITH RE-EXTRACTED SAMPLES #
+```{r}
+# Samples that are worth trying re-extraction #
+# Using lowyields because it's probaly not worth re-extracting samples with no RNA originally #
+
+need_reextract <- lowyield %>%
+  filter(!Sample_ID %in% reextract$Sample_ID) %>%
+  arrange(Sample_ID)
+
+need_reextract$Sample_ID <- as.numeric(need_reextract$Sample_ID)
+
+# Re-Extractions that meet ng/uL yield)
+usable_re_x <- reextract %>%
+  filter(ng_ul > 18.5) 
+
+# Combining usable re-extractions with Good RNA from the first extraction #
+# Re-Extractions came from "lowyields" so goodRNA does not contain the same samples #
+usableRNA <- rbind(goodRNA, usable_re_x) 
+
+# Checking for duplicated Samples #
+dupe_check <- usableRNA%>%
+ dplyr::count(Sample_ID) %>%
+  filter(n > 1)
+
+# Filtering Duplicates #
+dupe_ID <- usableRNA %>%
+  filter(Sample_ID %in% dupe_check$Sample_ID) %>%
+  arrange(Sample_ID) %>%
+  distinct(Sample_ID, origin, .keep_all = TRUE) %>%
+  filter(origin == "Flash Frozen")
+
+# Specific Samples to be Sent Out for Sequencing #
+send_out <- usableRNA %>%
+  filter(!Sample_ID %in% dupe_ID$Sample_ID) %>%
+  distinct(Sample_ID, origin, .keep_all = TRUE)
+
+send_out$Sample_ID <- as.numeric(send_out$Sample_ID) 
+
+# Double Checking no Duplicated Samples #
+send_out %>%
+ dplyr::count(Sample_ID) %>%
+  filter(n > 1)
+ 
+# Export Sequencer Sample List to Excel File #
+write_xlsx(send_out,"extractions/samples_for_sequencing.xlsx")
+```
+
+# BREAKDOWN OF SAMPLES FOR SEQUENCING (I.E. TIMEPOINTS, GENOTYPES, TEMPERATURES)
+```{r}
+# Number of Samples per Timepoint #
+TP <- send_out %>%
+ dplyr::count(TP)
+
+write_xlsx(TP,"extractions/TP.xlsx")
+
+
+# Number of Samples per Genotype #
+geno <- send_out %>%
+  dplyr::count(geno)
+
+write_xlsx(geno,"extractions/geno.xlsx")
+
+
+# Number of Samples per Temperature Treatment #
+Temp <- send_out %>%
+  dplyr::count(Temperature)
+
+write_xlsx(Temp,"extractions/Temp.xlsx")
+
+
+# Number of Samples per Genotype per Timepoint
+TP_geno <- send_out %>%
+ dplyr::count(TP, geno) 
+
+write_xlsx(TP_geno,"extractions/TP_Geno.xlsx")
+
+
+# Number of Samples per Timepoint per Temperature Treatment #
+TP_Temp <- send_out %>%
+  dplyr::count(TP, Temperature)
+
+write_xlsx(TP_Temp,"extractions/TP_Temp.xlsx")
+```
+
+# COMPARING RNALATER RE-EXTRACTION TO FLASH FROZEN TISSUE #
+```{r}
+re_extracted <- nano %>% 
+  filter(origin == "Re-extraction" | origin == "Flash Frozen")
+
+ggplot(re_extracted,aes(x = Sample_ID, y = ng_ul, color = origin)) +
+  geom_point()
+
+```
+
+#vISUALIZING DATA FROM DIFFERENT HOMOGENIZATION PROTOCOL#
+```{r}
+flash_frozen <- df %>%
+  filter(Sample_ID == "4F"|Sample_ID == "5F"|Sample_ID == "6F"|Sample_ID == "7F"|Sample_ID == "8F"|
+           Sample_ID == "9F") %>%
+  mutate(Tissue = "Flash_Frozen")
+
+ggplot(flash_)
+  
+
+RNALater <- df %>%
+  filter(Sample_ID == "4"|Sample_ID == "5"|Sample_ID == "6"|Sample_ID == "7"|Sample_ID == "8"|Sample_ID == "9") %>%
+  mutate(Tissue = "RNALater") 
+
+Tissue <- rbind(flash_frozen, RNALater)%>% 
+  select(-Time) 
+
+ggplot(Tissue, aes(x = Sample_ID, y = ng_ul, color = Tissue)) +
+  geom_point(size = 2)
+```
+
+
+
+```{r}
+setdiff(nano$Sample_ID, re_extracted$Sample_ID)
+
+```
+
