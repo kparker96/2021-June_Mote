@@ -299,6 +299,14 @@ pcaData_Chlamy_N <- plotPCA(vstCounts, intgroup=c("Temp","Timepoint", "Origin"),
 
 #Add control values into the df and then do subtraction
 
+
+PrinPCA <- princomp(scaledcounts, cor = T)
+Loadings <- loadings(PrinPCA)
+sdev <- PrinPCA$sdev
+propvar <- PrinPCA$sdev^2/sum(PrinPCA$sdev^2)
+cumsum(propvar)
+
+
 T1_30_In <- pcaData_Chlamy_N %>%
   filter(group == "30:T1:MoteIn")
 
@@ -354,10 +362,17 @@ aggregate(PC1 ~ group, data=shift_data, length)
 shift_data <- shift_data %>%
   mutate(PC1_shift = (PC1- ContPC1) * 0.30)
 
+shift_data$PC1_shift <- abs(shift_data$PC1 - shift_data$ContPC1) * attr(pcaData_Chlamy_N, "percentVar")[1]
 
-shift_data_shifted <- read.delim("shift_data_shifted.txt") %>%
+shift_data$PC2_shift <- abs(shift_data$PC2 - shift_data$ContPC2) * attr(pcaData_Chlamy_N, "percentVar")[2]
+
+
+shift_data_shifted <- shift_data %>%
   dplyr::mutate(combo_shift = PC1_shift + PC2_shift) %>%
   filter(Temp != 30)
+
+write.table(shift_data_shifted, file = "2024-07-09_shift_data_update.txt", sep="\t", quote=F, row.names=TRUE)
+
 
 ggplot(shift_data_shifted, aes(x = Origin, y = combo_shift)) + #flip order of sites on axis so it goes from lowest to highest ed50
   geom_boxplot(aes(fill=Origin)) +
@@ -368,12 +383,12 @@ ggplot(shift_data_shifted, aes(x = Origin, y = combo_shift)) + #flip order of si
   facet_grid(Temp~Timepoint, scale = "free") +
   ylim(c(0,40)) +
   theme(legend.position = "none",
-        panel.spacing = unit(0, "lines"),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        panel.grid.major.y = element_blank(),
-        panel.border = element_blank(),
+        # panel.spacing = unit(0, "lines"),
+        # panel.grid.major.x = element_blank(),
+        # panel.grid.minor.x = element_blank(),
+        # panel.grid.minor.y = element_blank(),
+        # panel.grid.major.y = element_blank(),
+        # panel.border = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks = element_blank(),
         axis.title.y = element_text(size = 18),
@@ -759,7 +774,9 @@ GOGOGO %>%
 #################################################
 #################################################
 
+#In_30_T1
 
+scaledcounts
 
 
 
