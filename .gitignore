@@ -1,6 +1,13 @@
-data/
-permit/
-presentations/
-shedd_florida_keys/
+# R session and project files
+.Rdata
+.Rhistory
+.gitattributes
 
-.Rproj.user
+# Project folders to ignore
+manuscript/
+presentations/
+
+# Subproject folders to ignore
+Rmd/Archive
+data/Sequencing/Submission_and_Return_Sheets/
+data/Sequencing/Porites_astreoides/Archive/
