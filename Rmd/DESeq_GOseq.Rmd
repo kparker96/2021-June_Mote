@@ -1,0 +1,463 @@
+---
+title: "DESeq_GOseq"
+output: html_document
+date: "2025-06-10"
+editor_options: 
+  chunk_output_type: console
+---
+```{r load libraries}
+library(goseq) # install.packages("goseq")
+library(GO.db) # install.packages("GO.db")
+library(dplyr)
+library(ggplot2)
+library(DESeq2)
+library(gplots)
+```
+
+```{r load Annotations}
+Annotations<-read.delim("C:/Users/kpark/OneDrive/Documents/2021-June_Mote/data/Sequencing/Porites_astreoides/Kenkel_Genome/P_astreoides_Kenkel2013_totalannotated.txt")
+```
+
+# Identify Top 20 Contigs
+```{r CountSums and Top20Annos}
+#Import CountsTable 
+countsTable <- read.table("data/Sequencing/Porites_astreoides/DESeq/Dedup_Mote_Past_Counts_full_cleannames.txt")
+
+# row sums for top 20 contigs
+CountSums <- data.frame("ContigName"=row.names(countsTable), "CountSums"=rowSums(countsTable))
+head(CountSums[order(CountSums$CountSums, decreasing = T),], n=20)
+
+Top20Annos<-Annotations[Annotations$ContigName%in%row.names(head(CountSums[order(CountSums$CountSums, decreasing = T),], n=20)),]
+```
+
+# GOseq Analysis
+```{r establish goterms and padj cutoff}
+goterms<-strsplit(as.character(Annotations$GO), split=" // ")
+names(goterms)<-Annotations$ContigName
+
+length_data <- Annotations$ContigLength
+names(length_data) <- Annotations$ContigName
+
+# Define padj threshold
+padj_cutoff <- 0.1
+```
+
+```{r import results for GOseq}
+# from DESeq_Create_contrats.R 
+res_T0_T0 <- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resInvOffT0.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+res_34_T1 <- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_34_T1vIn_34_T1.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+res_34_T2 <- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_34_T2vIn_34_T2.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+res_34_T3 <- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_34_T3vIn_34_T3.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+res_34_T4 <- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_34_T4vIn_34_T4.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+res_34_T5 <- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_34_T5vIn_34_T5.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+```
+
+```{r Functional Enrichment}
+# Count number of genes with non-zero log2FoldChange
+sum(res_T0_T0$log2FoldChange != 0, na.rm = TRUE)
+sum(res_34_T1$log2FoldChange != 0, na.rm = TRUE)
+sum(res_34_T2$log2FoldChange != 0, na.rm = TRUE)
+sum(res_34_T3$log2FoldChange != 0, na.rm = TRUE)
+sum(res_34_T4$log2FoldChange != 0, na.rm = TRUE)
+sum(res_34_T5$log2FoldChange != 0, na.rm = TRUE)
+
+# Filter out NAs
+res_T0_T0_filtered <- res_T0_T0[!is.na(res_T0_T0$padj), ]
+res_34_T1_filtered <- res_34_T1[!is.na(res_34_T1$padj), ]
+res_34_T2_filtered <- res_34_T2[!is.na(res_34_T2$padj), ]
+res_34_T3_filtered <- res_34_T3[!is.na(res_34_T3$padj), ]
+res_34_T4_filtered <- res_34_T4[!is.na(res_34_T4$padj), ]
+res_34_T5_filtered <- res_34_T5[!is.na(res_34_T5$padj), ]
+
+# Create binary vector of DEGs
+genes_T0_T0 <- ifelse(res_T0_T0_filtered$padj < padj_cutoff, 1, 0)
+names(genes_T0_T0) <- rownames(res_T0_T0_filtered)
+
+genes_34_T1 <- ifelse(res_34_T1_filtered$padj < padj_cutoff, 1, 0)
+names(genes_34_T1) <- rownames(res_34_T1_filtered)
+
+genes_34_T2 <- ifelse(res_34_T2_filtered$padj < padj_cutoff, 1, 0)
+names(genes_34_T2) <- rownames(res_34_T2_filtered)
+
+genes_34_T3 <- ifelse(res_34_T3_filtered$padj < padj_cutoff, 1, 0)
+names(genes_34_T3) <- rownames(res_34_T3_filtered)
+
+genes_34_T4 <- ifelse(res_34_T4_filtered$padj < padj_cutoff, 1, 0)
+names(genes_34_T4) <- rownames(res_34_T4_filtered)
+
+genes_34_T5 <- ifelse(res_34_T5_filtered$padj < padj_cutoff, 1, 0)
+names(genes_34_T5) <- rownames(res_34_T5_filtered)
+
+# Number of significant genes (1) vs not significant (0)
+table(genes_T0_T0)
+table(genes_34_T1)
+table(genes_34_T2)
+table(genes_34_T3)
+table(genes_34_T4)
+table(genes_34_T5)
+
+# Subset gene lengths
+length_genes_T0_T0 <- length_data[names(genes_T0_T0)]
+length_genes_34_T1 <- length_data[names(genes_34_T1)]
+length_genes_34_T2 <- length_data[names(genes_34_T2)]
+length_genes_34_T3 <- length_data[names(genes_34_T3)]
+length_genes_34_T4 <- length_data[names(genes_34_T4)]
+length_genes_34_T5 <- length_data[names(genes_34_T5)]
+
+# Get probability weighting function
+pwf_T0_T0 <- nullp(genes_T0_T0, bias.data = length_genes_T0_T0)
+pwf_34_T1 <- nullp(genes_34_T1, bias.data = length_genes_34_T1)
+pwf_34_T2 <- nullp(genes_34_T2, bias.data = length_genes_34_T2)
+pwf_34_T3 <- nullp(genes_34_T3, bias.data = length_genes_34_T3)
+pwf_34_T4 <- nullp(genes_34_T4, bias.data = length_genes_34_T4)
+pwf_34_T5 <- nullp(genes_34_T5, bias.data = length_genes_34_T5)
+
+# Run GOseq enrichment
+GO_T0_T0 <- goseq(pwf_T0_T0, gene2cat = goterms)
+GO_34_T1 <- goseq(pwf_34_T1, gene2cat = goterms)
+GO_34_T1 <- goseq(pwf_34_T1, gene2cat = goterms)
+GO_34_T2 <- goseq(pwf_34_T2, gene2cat = goterms)
+GO_34_T3 <- goseq(pwf_34_T3, gene2cat = goterms)
+GO_34_T4 <- goseq(pwf_34_T4, gene2cat = goterms)
+GO_34_T5 <- goseq(pwf_34_T5, gene2cat = goterms)
+
+# FDR correction of GO p-values
+GO_T0_T0$padj <- p.adjust(GO_T0_T0$over_represented_pvalue, method = "fdr")
+GO_34_T1$padj <- p.adjust(GO_34_T1$over_represented_pvalue, method = "fdr")
+GO_34_T2$padj <- p.adjust(GO_34_T2$over_represented_pvalue, method = "fdr")
+GO_34_T3$padj <- p.adjust(GO_34_T3$over_represented_pvalue, method = "fdr")
+GO_34_T4$padj <- p.adjust(GO_34_T4$over_represented_pvalue, method = "fdr")
+GO_34_T5$padj <- p.adjust(GO_34_T5$over_represented_pvalue, method = "fdr")
+
+sum(GO_T0_T0$padj < 0.1)
+sum(GO_34_T1$padj < 0.1)
+sum(GO_34_T2$padj < 0.1)
+sum(GO_34_T3$padj < 0.1)
+sum(GO_34_T4$padj < 0.1)
+sum(GO_34_T5$padj < 0.1)
+
+# Sig Gene Lists: 
+GO_34_T2_df  <- GO_34_T2 %>%
+  filter(!is.na(padj)) %>%  # remove NA p-values
+  slice_max(order_by = -over_represented_pvalue, n = 12) %>%
+  mutate(hitsPerc = numDEInCat * 100 / numInCat)
+
+GO_34_T4_df  <- GO_34_T4 %>%
+  filter(!is.na(padj)) %>%  # remove NA p-values
+  slice_max(order_by = -over_represented_pvalue, n = 12) %>%
+  mutate(hitsPerc = numDEInCat * 100 / numInCat)
+
+GO_34_T2  %>%
+  filter(!is.na(padj)) %>%  # remove NA p-values
+  slice_max(order_by = -over_represented_pvalue, n = 12) %>%
+  mutate(hitsPerc = numDEInCat * 100 / numInCat) %>%
+  ggplot(aes(x = hitsPerc, y = term, colour = over_represented_pvalue, size = numDEInCat)) +
+  geom_point() +
+  expand_limits(x = 0) +
+  labs(x = "Hits (%)", y = "GO term", colour = "p value", size = "Count")
+```
+
+# Heat Maps 
+```{r load dds and scale counts}
+load("Rmd/dds.Rdata") # <- from DEseq_Create_Contrasts
+
+# Variance stabilized counts
+vstCounts<-varianceStabilizingTransformation(dds)
+
+# Make a counts table that is scaled by the size factors
+scaledcounts = counts(dds, normalize=T)
+head(scaledcounts)
+```
+
+```{r heat map res_34_T1}
+#count the number of significantly differentially expressed genes
+sum(res_34_T1$padj < 0.1, na.rm =T)
+sum(res_34_T1$pvalue < 0.05, na.rm =T)
+
+samples_34_T1 <- colData(dds)$Origin_Temp_Timepoint == "MoteOff_34_T1" | colData(dds)$Origin_Temp_Timepoint == "MoteIn_34_T1"
+selected_samples <- colnames(dds)[samples_34_T1]
+
+# Select genes to build the heat map with p < 0.05
+genes4heatmap<-res_34_T1[res_34_T1$padj< 0.1 & !is.na(res_34_T1$padj),]
+names(genes4heatmap)
+head(genes4heatmap)
+dim(genes4heatmap)
+data4heatmap <- scaledcounts[row.names(scaledcounts) %in% row.names(genes4heatmap), selected_samples]
+dim(data4heatmap)
+head(data4heatmap)
+
+temp = as.matrix(rowMeans(data4heatmap))
+head(temp)
+scaledmatrix<-matrix(data=temp, nrow=nrow(data4heatmap), ncol=ncol(data4heatmap), byrow=FALSE)
+data4heatmapscaled = data4heatmap/scaledmatrix
+head(data4heatmapscaled)
+
+dim(data4heatmapscaled)
+
+pairs.breaks <- seq(0, 3.0, by=0.1)
+length(pairs.breaks)
+mycol <- colorpanel(n=30, low="lightblue", high="darkblue") 
+
+# plot heatmap by row 
+pdf(file="C:/Users/kpark/OneDrive/Documents/2021-June_Mote/plots/GOseq/res_34_T1_heatmap_byrow.pdf",7,7)
+
+heatmap.2(data.matrix(data4heatmapscaled), Rowv=T, Colv=F, dendrogram = c("row"), scale="none", keysize=1, breaks=pairs.breaks, col=mycol, trace = "none", symkey = F, density.info = "density", colsep=c(24), sepcolor=c("white"), sepwidth=c(.1,.1), margins=c(10,10), labRow=F)
+
+dev.off()
+```
+
+```{r heat map res_34_T2}
+#count the number of significantly differentially expressed genes
+sum(res_34_T2$padj < 0.1, na.rm =T)
+sum(res_34_T2$pvalue < 0.05, na.rm =T)
+
+samples_34_T2 <- colData(dds)$Origin_Temp_Timepoint == "MoteOff_34_T2" | colData(dds)$Origin_Temp_Timepoint == "MoteIn_34_T2"
+selected_samples <- colnames(dds)[samples_34_T2]
+
+# Select genes to build the heat map with p < 0.05
+genes4heatmap<-res_34_T2[res_34_T2$padj< 0.1 & !is.na(res_34_T2$padj),]
+names(genes4heatmap)
+head(genes4heatmap)
+dim(genes4heatmap)
+data4heatmap <- scaledcounts[row.names(scaledcounts) %in% row.names(genes4heatmap), selected_samples]
+dim(data4heatmap)
+head(data4heatmap)
+
+temp = as.matrix(rowMeans(data4heatmap))
+head(temp)
+scaledmatrix<-matrix(data=temp, nrow=nrow(data4heatmap), ncol=ncol(data4heatmap), byrow=FALSE)
+data4heatmapscaled = data4heatmap/scaledmatrix
+head(data4heatmapscaled)
+
+dim(data4heatmapscaled)
+
+pairs.breaks <- seq(0, 3.0, by=0.1)
+length(pairs.breaks)
+mycol <- colorpanel(n=30, low="lightblue1", mid = "skyblue3", high="darkblue") 
+
+# plot heatmap by row 
+pdf(file="C:/Users/kpark/OneDrive/Documents/2021-June_Mote/plots/GOseq/res_34_T2_heatmap_byrow.pdf",7,7)
+
+heatmap.2(data.matrix(data4heatmapscaled), Rowv=T, Colv=F, dendrogram = c("row"), scale="none", keysize=1, breaks=pairs.breaks, col=mycol, trace = "none", symkey = F, density.info = "density", colsep=c(24), sepcolor=c("white"), sepwidth=c(.1,.1), margins=c(10,10), labRow=F)
+
+dev.off()
+```
+
+```{r Frontloading - Offshore }
+sum(res_T0_T0$padj < 0.1 & !is.na(res_T0_T0$padj))
+
+nrow(res_T0_T0 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+in_sig_up <- rownames(res_T0_T0 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# I need which genes are significant upregulated in Offshore @ 
+# Offshore 34_T1
+resOff_30_T1vOff_34_T1<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_30_T1vOff_34_T1.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+off_sig_up_T1 <- rownames(resOff_30_T1vOff_34_T1 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and offshore sig_up 
+sum(in_sig_up %in% off_sig_up_T1)
+
+# Offshore 34_T2
+resOff_30_T2vOff_34_T2<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_30_T2vOff_34_T2.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+off_sig_up_T2 <- rownames(resOff_30_T2vOff_34_T2 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and offshore sig_up 
+sum(in_sig_up %in% off_sig_up_T2)
+
+########################################
+# Offshore 34_T3
+resOff_30_T3vOff_34_T3<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_30_T3vOff_34_T3.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+off_sig_up_T3 <- rownames(resOff_30_T3vOff_34_T3 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and offshore sig_up 
+sum(in_sig_up %in% off_sig_up_T3)
+
+# Offshore 34_T4
+resOff_30_T4vOff_34_T4<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_30_T4vOff_34_T4.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+off_sig_up_T4 <- rownames(resOff_30_T4vOff_34_T4 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and offshore sig_up 
+sum(in_sig_up %in% off_sig_up_T4)
+
+# Offshore 34_T5
+resOff_30_T5vOff_34_T5<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resOff_30_T5vOff_34_T5.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+off_sig_up_T5 <- rownames(resOff_30_T5vOff_34_T5 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and offshore sig_up 
+sum(in_sig_up %in% off_sig_up_T5)
+```
+
+```{r Frontloading - Inshore}
+# Inshore 
+# Inshore 34_T1
+resIn_30_T1vIn_34_T1<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resIn_30_T1vIn_34_T1.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+in_sig_up_T1 <- rownames(resIn_30_T1vIn_34_T1 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+sum(in_sig_up %in% in_sig_up_T1)
+
+# Inshore 34_T2
+resIn_30_T2vIn_34_T2<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resIn_30_T2vIn_34_T2.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+In_sig_up_T2 <- rownames(resIn_30_T2vIn_34_T2 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and Inshore sig_up 
+sum(in_sig_up %in% In_sig_up_T2)
+
+########################################3
+# Inshore 34_T3
+resIn_30_T3vIn_34_T3<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resIn_30_T3vIn_34_T3.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+In_sig_up_T3 <- rownames(resIn_30_T3vIn_34_T3 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and Inshore sig_up 
+sum(in_sig_up %in% In_sig_up_T3)
+
+# Inshore 34_T4
+resIn_30_T4vIn_34_T4<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resIn_30_T4vIn_34_T4.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+In_sig_up_T4 <- rownames(resIn_30_T4vIn_34_T4 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and Inshore sig_up 
+sum(in_sig_up %in% In_sig_up_T4)
+
+# Inshore 34_T5
+resIn_30_T5vIn_34_T5<- read.table(
+  "data/Sequencing/Porites_astreoides/DESeq/resIn_30_T5vIn_34_T5.txt",
+  header = TRUE,
+  sep = "\t",
+  row.names = 1,
+  stringsAsFactors = FALSE)
+
+In_sig_up_T5 <- rownames(resIn_30_T5vIn_34_T5 %>%
+  filter(padj < 0.1) %>%
+  filter(log2FoldChange < 0))
+
+# What is both in inshore and Inshore sig_up 
+sum(in_sig_up %in% In_sig_up_T5)
+```
+
+```{r T2 Frontloading Test}
+# Which 8 from offshore T2 and see if they're in inshore T2
+
+in_sig_up[in_sig_up %in% off_sig_up_T2] %in% In_sig_up_T2
+
+contig_df <- data.frame(ContigName = in_sig_up[in_sig_up %in% off_sig_up_T2])
+
+frontloads <- left_join(contig_df, Annotations, by = "ContigName")
+
+head(scaledcounts)
+
+scaledcounts[row.names(scaledcounts) %in% in_sig_up[in_sig_up %in% off_sig_up_T2], grep("T0", colnames(scaledcounts))]
+```
+
+
+

@@ -1,0 +1,189 @@
+---
+title: "Fig S4: ITS2 Type Profiles"
+output: html_document
+date: "2025-08-04"
+editor_options: 
+  chunk_output_type: console
+---
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(EnvStats)
+library(ggthemes)
+library(car)
+library(FSA)
+```
+
+# Relative Abundance
+```{r read raw data and Fig S4}
+raw_lines <- readLines("data/Sequencing/Porites_astreoides/ITS2/SymPortal_Output/its2_type_profiles/543_20250107T095410_DBV_20250109T202716.profiles.relative.abund_and_meta.txt")
+
+# Find where the actual abundance data starts
+data_start <- grep("^211", raw_lines)[1]
+
+# Split the file
+metadata_lines <- raw_lines[1:(data_start - 1)]
+data_lines <- raw_lines[data_start:(length(raw_lines)-2)]
+extra_lines <- raw_lines[(length(raw_lines)-1):length(raw_lines)]
+
+
+# Read metadata table
+meta <- read.delim(text = paste(metadata_lines, collapse = "\n"), header = FALSE, sep = "\t", stringsAsFactors = FALSE)
+
+    # transpose table
+   meta_t <- as.data.frame(t(meta[ , -2]))
+    # set the first row as column names
+    colnames(meta_t) <- meta_t[1, ]
+    # remove first row
+    meta_t <- meta_t[-1, ]
+
+
+# Read abundance data
+relabund <- read.delim(text = paste(data_lines, collapse = "\n"), header = FALSE, sep = "\t", stringsAsFactors = FALSE)
+
+    # Add headers from last row of meta
+    headers <- as.character(meta[nrow(meta), 3:5])
+
+    # Create full header vector
+    full_headers <- c("sample_id", "sample_name", headers)
+
+    # Assign to relabund
+    colnames(relabund) <- full_headers
+
+    # Reshape dataframe to long format
+    relabund_long <- relabund %>% 
+      pivot_longer(cols = 3:ncol(relabund), 
+                   names_to = "ITS2_type_profile", 
+                   values_to = "relative_abundance") %>% 
+      mutate(location = case_when(grepl("Ipa", sample_name) ~ "Inshore",
+                                  grepl("Opa", sample_name) ~
+                                    "Offshore",
+                                  grepl("Neg", sample_name) ~
+                                    "Neg_Control")) %>%
+      filter(location == "Inshore" | location == "Offshore")
+    
+
+# Plot Relative Abundance 
+Fig_S4 <- ggplot(relabund_long, aes(x = sample_name, 
+                                    y = relative_abundance,
+                                    fill = ITS2_type_profile)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~location, scales = "free_x") +
+  scale_y_continuous(expand = c(0, 0)) +
+  coord_cartesian(ylim = c(0, 1)) +
+  scale_fill_manual(values = c("#4F9FD9","#1F5C99", "#C5E384")) +
+  theme_bw() +
+  labs(y = "Relative Abundance", fill = "Type Profile") +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks = element_blank(),
+        legend.spacing.x = unit(0.2, "cm"),  
+        legend.spacing.y = unit(0.1, "cm"),  
+        legend.key.size = unit(0.8, "lines"), 
+        legend.text = element_text(margin = margin(r = 2, unit = "pt")),
+        legend.title = element_blank(),
+  legend.position = "bottom",
+  legend.direction = "vertical")
+
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S4.png", 
+  plot = Fig_S4,               # Specify the plot to save
+  width = 5,                       # Width in inches
+  height = 4                        # Height in inches
+)
+```
+
+```{r PERMANOVA ITS2 Type}
+# Do the overall ITS2 type compositions differ between sites (Inshore vs Offshore) based on their relative abundances?
+relabund <- relabund %>%
+  filter(sample_name != "Neg_Control") %>%
+  mutate(Site = case_when(
+    grepl("^Ipa", sample_name) ~ "Inshore",
+    grepl("^Opa", sample_name) ~ "Offshore")) 
+ # gather(key = "ITS2_type", value = "rel_ab", -Site, -sample_id, -sample_name)
+
+its2_types <- relabund[, 3:(ncol(relabund)-1)]  # adjust column indices if needed
+
+set.seed(123)
+
+ITS2_type_permanova <- adonis2(its2_types ~ Site, data = relabund, method = "bray")
+
+ITS2_type_permanova
+```
+
+# ITS2 Sequences
+```{r Plot ITS2 sequences}
+ITS2_reads <- read_delim("data/Sequencing/Porites_astreoides/ITS2/SymPortal_Output/post_med_seqs/543_20250107T095410_DBV_20250109T202716.seqs.relative.abund_only.txt") %>%
+  dplyr::rename(sample_id = sample_uid)
+
+sample_names <- relabund %>%
+  dplyr::select(sample_id, sample_name)
+
+ITS2_reads <- left_join(sample_names, ITS2_reads) 
+
+ITS2_reads <- ITS2_reads %>%
+  mutate(location = case_when(grepl("Ipa", sample_name) ~ "Inshore",
+                              grepl("Opa", sample_name) ~ "Offshore")) %>%
+  dplyr::select(-sample_id)
+
+ITS2_reads_long <- ITS2_reads %>%
+  gather(key = "ITS2_seq", value = "rel_abundance", -sample_name,
+         -location) %>%
+  filter(location == "Inshore" | location == "Offshore") 
+
+ITS2_reads_long_condense <- ITS2_reads_long %>%
+  mutate(ITS2_combo = case_when(grepl("G", ITS2_seq) ~ "G",
+                                grepl("C", ITS2_seq) ~ "C",
+                                grepl("A", ITS2_seq) ~ "A",
+                                grepl("B", ITS2_seq) ~ "B",
+                                TRUE ~ ITS2_seq)) %>%
+  mutate(ITS2_simp = case_when(grepl("_A", ITS2_seq) ~ "A",
+                               grepl("A4", ITS2_seq) ~ "A4",
+                               grepl("_B", ITS2_seq) ~ "B",
+                               grepl("B1", ITS2_seq) ~ "B1",
+                               grepl("_C", ITS2_seq) ~ "C",
+                               grepl("C1", ITS2_seq) ~ "C1",
+                               grepl("C66", ITS2_seq) ~ "C66",
+                               grepl("_G", ITS2_seq) ~ "G",
+                               grepl("G3", ITS2_seq) ~ "G3"
+                               ))
+
+better_colors_87<- c(
+  "#f7f4f9", "#f0f9e8", "#fdb863", "#e6beff", "#f7fcf5", "#fdb462", "#f1eef6", "#f7f4f9", "#ffed6f", "#fdbf6f",
+  "#f7f4f9", "#ffb6c1", "#ff7f00", "#f781bf", "#ff6347", "#fdb863", "#ffff33", "#ffff99", "#fffac8", "#ffffb3",
+  "#e6ab02", "#e7298a", "#d4b9da", "#e78ac3", "#fdbf6f", "#ce1256", "#f0f9e8", "#fdbf6f", "#e31a1c", "#f7f4f9",
+  "#a6d854", "#a1dab4", "#a6bddb", "#b3de69", "#ccebc5", "#c7e9c0", "#8c6bb1", "#9ebcda", "#7b68ee", "#8856a7",
+  "#7570b3", "#984ea3", "#6a3d9a", "#6e016b", "#410f7c", "#02818a", "#016450", "#00441b", "#238b45", "#253494",
+  "#2c7fb8", "#3690c0", "#43a2ca", "#4daf4a", "#91003f", "#980043", "#e08214", "#b15928", "#b8860b", "#bdc9e1",
+  "#a6761d", "#a65628", "#b2df8a", "#b3b3b3", "#66c2a5", "#8da0cb", "#80b1d3", "#1f968b", "#b35806", "#999999",
+  "#d95f02", "#dc143c", "#e5c494", "#e6ab02", "#dd1c77", "#df65b0", "#a65628", "#6b8e23", "#7fffd4", "#ff69b4",
+  "#007fff", "#d2691e", "#ff8c00", "#bc8f8f", "#e5c494", "#8b008b", "#8c6bb1", "#6e016b", "#a65628"
+)
+
+
+ITS2_reads_ordered <- ITS2_reads_long %>%
+  group_by(sample_name) %>%
+  arrange(sample_name, desc(rel_abundance)) %>%  # largest first
+  mutate(ITS2_seq_ordered = factor(ITS2_seq, 
+                                   levels = rev(unique(ITS2_seq)))) %>%  # reverse order
+  ungroup()
+
+ggplot(ITS2_reads_ordered, aes(x = sample_name, y = rel_abundance, fill = ITS2_seq_ordered)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = better_colors_87) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme_bw() +
+  facet_wrap(~location, scale = "free_x") +
+  labs(fill = "ITS2 Sequence") +
+  theme(
+  axis.text.x = element_blank(),
+  axis.title.x = element_blank(),
+  axis.ticks = element_blank(),
+  legend.position = "bottom",
+  legend.spacing.x = unit(0.2, "cm"),  # horizontal space between legend items
+  legend.spacing.y = unit(0.1, "cm"),  # vertical space between legend rows
+  legend.key.size = unit(0.8, "lines"), # size of the colored boxes
+  legend.text = element_text(margin = margin(r = 2, unit = "pt"))  # reduce space between key and text
+) +
+  guides(fill = guide_legend(ncol = 15))
+```

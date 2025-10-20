@@ -1,0 +1,1399 @@
+---
+title: "Fig_5: PCA and Fig_6: Transcriptomic Shift"
+output: html_document
+date: "2025-06-06"
+This is an R script that implements the program DESeq2 for gene expression analysis. Much more information on the program and specific function (particularly for checking quality) can be found here: https://www.bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+editor_options: 
+  chunk_output_type: console
+---
+# Helpful Hints
+```{r setwd}
+#setwd("C:/Users/kpark/OneDrive/Documents/2021-June_Mote/")
+
+#data/Sequencing/Porites_astreoides/Pilot_Fail_New_Concat_Compiled/")  # The drag and drop from finder works in R, too.
+
+#useful functions
+#head() - prints out the top 6 lines
+#dim() - prints the dimensions of a variable
+#nrow() - returns the number of rows in a vector or matrix
+# ?[functionName] - opens documentation describing the functi
+```
+
+# Load Libraries
+```{r BiocManager setup and Libraries}
+#Only need to do this the first time to install the package
+#for R version 4.0
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#  install.packages("BiocManager")
+# 
+#BiocManager::install("DESeq2")
+#BiocManager::install("geneLenDataBase")
+#BiocManager::install("goseq")
+
+library(DESeq2) # install.packages("DESeq2")
+library(gplots)
+library(ggplot2)
+library(ggh4x)
+library(dplyr)
+library(knitr)
+library(tidyverse)
+library(cowplot)
+library(ggpubr)
+library(car)
+library(vegan)
+library(PCAtools)
+library(emmeans)
+library(multcomp)
+library(multcompView)
+library(writexl)
+```
+
+# Load dds (from DESeq_Create_Contrasts)
+```{r dds}
+# load R workspace with DEseq run 
+load("Rmd/dds.Rdata") # (created in DESeq_Create_Contrasts.R script)
+```
+
+```{r vstCounts}
+#transform counts to variance stablized counts
+vstCounts<-varianceStabilizingTransformation(dds)
+```
+
+# Cluster Dendrogram
+```{r scaledcounts}
+# Make a counts table that is scaled by the size factors
+scaledcounts = counts(dds, normalize=TRUE)
+head(scaledcounts)
+```
+
+```{r plot dendrogram and heatmap dendrogram}
+#plot cluster dendrogram across samples
+dists<-dist(t(assay(vstCounts)))
+
+# Deondrogram 
+pdf(file="Plots/Fig_5/Exploratory_PCAs/cluster_dendrogram.pdf",7,7)
+plot(hclust(dists))
+dev.off()
+
+# Dendrogram Heatmap
+pdf(file="Plots/Fig_5/Exploratory_PCAs/cluster_dendrogram_heatmap.pdf",7,7)
+heatmap.2(as.matrix(dists), key=F, trace="none",
+          col=colorpanel(100, "black", "white"),
+          margin=c(8, 8))
+dev.off()
+```
+
+# PCAs for specific results sets 
+```{r Origin}
+plotPCA(vstCounts, intgroup="Origin") +
+  ggtitle("Deduped: Origin") +
+  theme(legend.position = "bottom")
+ggsave("Plots/Fig_5/Exploratory_PCAs/Origin_PCA.jpg", height = 150, width = 150, units = c("mm"))
+```
+
+```{r Geno}
+plotPCA(vstCounts, intgroup="Geno") +
+  ggtitle("Deduped: Geno") +
+  theme(legend.position = "bottom")
+ggsave("Plots/Fig_5/Exploratory_PCAs/Geno_PCA.jpg", height = 150, width = 150, units = c("mm"))
+```
+
+```{r Temp}
+plotPCA(vstCounts, intgroup="Temp") +
+  ggtitle("Gene Exp") +
+  theme(legend.position = "bottom")
+ggsave("Plots/Fig_5/Exploratory_PCAs/Temp_PCA.jpg", height = 150, width = 150, units = c("mm"))
+```
+
+```{r Timepoint}
+plotPCA(vstCounts, intgroup="Timepoint") +
+  ggtitle("Deduped: Timepoint") +
+  theme(legend.position = "bottom")
+ggsave("Plots/Fig_5/Exploratory_PCAs/Timepoint_PCA.jpg", height = 150, width = 150, units = c("mm"))
+```
+
+# Fig S2 and Fig S3 (Visualizing additional PCs)
+```{r PCAtools}
+rownames(conds) <- conds$Sample
+
+# create matrix from vstCounts of top 500 genes with most variance
+vst_mat <- assay(vstCounts)
+top500 <- head(order(matrixStats::rowVars(vst_mat), 
+                     decreasing = TRUE), 500)
+vst_top500 <- vst_mat[top500, ]
+
+# create pca data 
+p <- PCAtools::pca(vst_top500, metadata = conds, removeVar = 0.1)
+
+# scree plot
+png("Plots/Supplemental_Figs/Fig_S2.png", width = 800, height = 600,
+    res = 150)
+PCAtools::screeplot(p, components = 1:10)
+dev.off()
+
+# pairsplots
+png("Plots/Fig_5/Exploratory_PCAs/pairsplot_temp.png", width = 800,
+    height = 600, res = 150)
+PCAtools::pairsplot(p, components = 1:4, colby = 'Temp')
+dev.off()
+
+png("Plots/Fig_5/Exploratory_PCAs/pairsplot_geno.png", width = 800,
+    height = 600, res = 150)
+PCAtools::pairsplot(p, components = 1:4, colby = 'Geno')
+dev.off()
+
+png("Plots/Fig_5/Exploratory_PCAs/pairsplot_origin.png", width = 800,
+    height = 600, res = 150)
+PCAtools::pairsplot(p, components = 1:4, colby = 'Origin')
+dev.off()
+
+# eigencorplot
+p$sampleInfo$Origin <- ifelse(p$sampleInfo$Origin == "Offshore", 1, 0)
+
+png("Plots/Supplemental_Figs/Fig_S3.png", width = 1300, height = 800,
+    res = 150)
+eigencorplot(p,
+    metavars = c('Origin', 'Geno', 'Temp', 'Timepoint'))
+dev.off()
+```
+
+# Extract Top 500 Genes used for PCA
+```{r top 500 Genes by Variance List}
+# Extract out gene names
+top500_genes <- rownames(vst_top500)
+gene_vars <- matrixStats::rowVars(vst_mat)
+
+variance_table <- data.frame(
+  Gene = top500_genes,
+  Variance = gene_vars[top500],
+  row.names = NULL
+)
+
+# Annotations 
+Annotations<-read.delim("data/Sequencing/Porites_astreoides/Kenkel_Genome/P_astreoides_Kenkel2013_totalannotated.txt")
+
+annot_top500 <- Annotations %>%
+  filter(ContigName %in% top500_genes)
+
+annot_variance <- cbind(variance_table, annot_top500[ , -1])  # drop ContigName to avoid duplication
+head(annot_variance)
+
+write_xlsx(annot_variance, "Plots/Supplemental_Figs/Top-500-Genes.xlsx")
+```
+
+# pcaData for Expression PCA
+```{r pcaData}
+# create pcaData
+pcaData <- plotPCA(vstCounts, intgroup=c("Temp","Timepoint",
+                                         "Origin"), returnData=TRUE)
+```
+
+# Fig 5
+```{r pcaData_CBASS (no TF)}
+# Removing TFs, only using sample from CBASS assay
+pcaData_CBASS <- pcaData %>%
+  filter(Timepoint != "TF")
+
+# calculate percent variance  
+percentVar <- round(100 * attr(pcaData_CBASS, "percentVar"))
+
+labs <- c("Inshore", "Offshore")
+names(labs) <- c("MoteIn", "MoteOff")
+pcaData_CBASS$Temp <- as.character(pcaData_CBASS$Temp)
+
+# Plot all points together (Fig 5)
+allpoints_PCA <- ggplot(pcaData_CBASS, aes(PC1, PC2, shape=Origin,
+                                           color = Temp)) +
+  geom_point(size=4,  alpha=.75) +
+  ylim(-75, 100) +
+  xlim(-50,75) +
+  #scale_shape_manual(values=c(21,24), name ="Origin") +
+  scale_color_manual(values = c("30" = "#00A5FF", "34" = "#00B81F",
+                                "37" = "#BB9D00", "39" = "#F8766D",
+                                "T0" = "#00A5FF"), 
+                     name = "Temperature") +
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  ggtitle("") +
+  theme_light()+            
+  theme(panel.spacing = unit(0.5, "lines"),
+        panel.border = element_rect(color = "black", fill = NA,
+                                    linewidth = 1),
+        axis.text.y = element_text(angle = 0, size = 14),
+        axis.text.x = element_text(angle = 0, size = 14),
+        axis.title = element_text(size = 16, face = "italic"),
+        strip.text = element_text(size = 18),
+        strip.background = element_rect(color = "black", size = 1)) 
+
+
+ggsave(
+  filename = "Plots/Fig_5/Exploratory_PCAs/Temp_Origin_PCA.png",  
+  plot = allpoints_PCA,               
+  width = 7,                       # Width in inches
+  height = 5                        # Height in inches
+)
+
+# Plot all points with Site Facet and Timpoint labels
+
+allpoints_PCA_labelled <- allpoints_PCA +
+   geom_point(size=7,  alpha=.75) +
+   geom_text(aes(label = Timepoint), 
+            color = "black", 
+            size = 3,
+            vjust = 0.5, 
+            hjust = 0.5) +
+  facet_wrap(~Origin) +
+  theme(legend.position = "bottom") 
+
+ggsave(
+  filename = "Plots/Fig_5/Exploratory_PCAs/Temp_Origin_Facet_PCA.png",
+  plot = allpoints_PCA_labelled,              
+  width = 7,                       # Width in inches
+  height = 5                        # Height in inches
+)
+
+# Set colors for facet labels 
+Site_colors <- c("Inshore" = '#8ADCE3', "Offshore" = "#003A9D")
+
+# Plot all points together with facet (Fig 5)
+allpoints_PCA_facet <- ggplot(pcaData_CBASS, aes(PC1, PC2, 
+                                                 shape = Origin)) +
+  geom_point(size = 4,  alpha = .75, aes(color = Temp)) +
+  ylim(-75, 100) +
+  xlim(-50,75) +
+  scale_color_manual(values = c("#4A90E2", "#FFDD44", "#FF9933",
+                                "#DB2F0D", "#4A90E2"), 
+                    name = "Temperature") + 
+  
+# Optional ellipses 
+#  scale_shape_manual(values=c(21,24), name ="Origin") +
+#  stat_ellipse(aes(color = Temp), level = 0.95) +
+#  scale_color_manual(values = c("#4A90E2", "#FFDD44", "#FF9933",
+#                               "#DB2F0D", "#4A90E2"), 
+#                  name = "Temperature") +  
+  
+  xlab(paste0("PC1: ",percentVar[1],"% variance")) +
+  ylab(paste0("PC2: ",percentVar[2],"% variance")) + 
+  coord_fixed()+ 
+  ggtitle("")+
+  theme_bw()+            
+  facet_grid2(Origin~Timepoint, labeller = labeller(Origin = labs), 
+              strip = strip_themed(background_y = elem_list_rect(fill = Site_colors), text_y = elem_list_text(color = c("black", "white")))) +
+  theme(panel.spacing = unit(0.5, "lines"),
+        panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+        legend.position = "bottom", 
+        axis.text.y = element_text(angle = 0, size = 7),
+        axis.text.x = element_text(angle = 0, size = 7),
+        axis.title = element_text(size = 10, face = "italic"),
+        strip.text = element_text(size = 10),
+        strip.background = element_rect(color = "black", size = 1)) 
+
+ggsave(
+  filename = "Plots/Fig_5/Fig_5.pdf",  # Name of the output file
+  plot = allpoints_PCA_facet,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 5                        # Height in inches
+)
+
+ggsave(
+  filename = "Plots/Fig_5/Fig_5.png",  # Name of the output file
+  plot = allpoints_PCA_facet,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 5                        # Height in inches
+)
+```
+
+# PCA Statistical Analyses of whole PCA
+```{r permanovas PC1 and PC2}
+# set seed
+set.seed(123)
+
+# Convert pca_Data to distance matrix
+pca_dist <- dist(pcaData_CBASS[, c("PC1", "PC2")])
+
+# Check dispersion for Temp
+disp_temp <- betadisper(pca_dist, pcaData_CBASS$Temp)
+permutest(disp_temp)
+
+# Check dispersion for Origin
+disp_origin <- betadisper(pca_dist,pcaData_CBASS$Origin)
+permutest(disp_origin)
+
+# Check dispersion for Timepoint
+disp_tp <- betadisper(pca_dist, pcaData_CBASS$Timepoint)
+permutest(disp_tp)
+
+# Temperature PERMANOVA
+perm_temp <- adonis2(pca_dist ~ Temp, data = pcaData_CBASS)
+print(perm_temp)
+
+# Origin PERMANOVA 
+perm_origin <- adonis2(pca_dist ~ Origin, data = pcaData_CBASS)
+print(perm_origin)
+
+# Timepoint PERMANOVA 
+perm_tp <- adonis2(pca_dist ~ Timepoint, data = pcaData_CBASS)
+print(perm_tp)
+
+# multivariate PERMANOVA
+perm_multi <- adonis2(pca_dist ~ Temp * Timepoint * Origin, 
+                      data = pcaData_CBASS)
+print(perm_multi)
+```
+
+```{r specifc PERMANOVAs - Controls}
+# Metadata of control samples 
+conds_30 <- conds[conds$Temp == 30, ]
+
+# Subset distance matrix to only those samples
+samples_30 <- conds_30$Sample
+pca_dist_conds_30 <- as.dist(as.matrix(pca_dist)[samples_30,
+                                                 samples_30])
+
+#1- Is there an effect of TIMEPOINT on the PCA distance in the controls? 
+
+# Dispersion test
+disp_30_TP <- betadisper(pca_dist_conds_30, conds_30$Timepoint)
+permutest(disp_30_TP)
+
+# Run PERMANOVA comparing 30s against Timepoint
+conds_30_TP_result <- adonis2(pca_dist_conds_30 ~ Timepoint, 
+                              data = conds_30)
+
+print(conds_30_TP_result)
+```
+
+```{r Inshore vs Offshore each Temp/Timepoint combo}
+# Is there an effect of Origin for each Temperature and Timepoint?
+
+# Initialize empty list to store results
+results_list <- list()
+
+# Get all unique combinations of Temp and Timepoint
+conds_all <- conds %>%
+  filter(Timepoint != "TF")
+
+comparisons_all <- conds_all %>%
+  distinct(Timepoint, Temp)
+
+# Set seed
+set.seed(123)
+
+# Loop through each combination of Timepoint and Temp
+for (i in 1:nrow(comparisons_all)) {
+  
+  timepoint_i <- comparisons_all$Timepoint[i]
+  temp_i <- comparisons_all$Temp[i]
+  
+  # Subset metadata to just this timepoint and temperature
+  metadata_sub <- conds_all %>%
+    filter(Timepoint == timepoint_i, Temp == temp_i)
+  
+  # Subset distance matrix to matching samples
+  samples_sub <- metadata_sub$Sample
+  pca_dist_sub <- as.dist(as.matrix(pca_dist)[samples_sub,
+                                              samples_sub])
+  
+  # Ensure that both Inshore and Offshore samples are available
+  if (length(unique(metadata_sub$Origin)) > 1) {
+    
+    # Run PERMANOVA for the current combination of Temp and Timepoint
+    permanova_res <- adonis2(pca_dist_sub ~ Origin, 
+                             data = metadata_sub)
+    
+    # Run PERMDISP for the current combination of Temp and Timepoint
+    betadisper_res <- betadisper(pca_dist_sub, metadata_sub$Origin)
+    perm_disp_res <- anova(betadisper_res)  # PERMDISP test
+    
+    # Extract result for the current combination
+    result <- data.frame(
+      Timepoint = timepoint_i,
+      Temp = temp_i,
+      Df = permanova_res$Df[1],
+      SumOfSqs = permanova_res$SumOfSqs[1],
+      R2 = permanova_res$R2[1],
+      F = permanova_res$F[1],
+      perma_p_value = permanova_res$`Pr(>F)`[1],
+      Dispersion_F = perm_disp_res$F[1],  # F-statistic from PERMDISP
+      Dispersion_p_value = perm_disp_res$`Pr(>F)`[1]  # p-value from PERMDISP
+    )
+    
+    # Store the result in the list
+    results_list[[i]] <- result
+  }
+}
+
+# Combine all the results into a single data frame
+permanova_summary <- do.call(rbind, results_list)
+
+# Add a significance column based on p_value for PERMANOVA
+permanova_summary <- permanova_summary %>%
+  mutate(perma_Significant = ifelse(perma_p_value < 0.05, "Yes", "No"),
+         Dispersion_Significant = ifelse(Dispersion_p_value < 0.05,
+                                         "Yes", "No"))
+
+# View the results
+print(permanova_summary)
+
+write.csv(permanova_summary, "Plots/Fig_5/PERMANOVA_results/IvsO_TP_permanova_dispersion.csv",
+          row.names = FALSE)
+```
+
+```{r Inshore 30s vs HS at each Timepoint}
+# Is there a difference between controls and HS within a timepoint and site. 
+# Example Inshore T1-30 vs Inshore T1-34 or Inshore T1 30 vs Inshore T1-38
+
+#Inshore T3 30 vs Inshore T3 34 
+conds_30_34_T3_inshore <- conds %>%
+  filter(Temp == 34 | Temp == 30) %>%
+  filter(Timepoint == "T3") %>%
+  filter(Origin == "MoteIn")
+
+samples_30_34_T3_inshore  <- conds_30_34_T3_inshore$Sample
+
+pca_dist_conds_30_34_T3_inshore <- as.dist(as.matrix(pca_dist)[samples_30_34_T3_inshore,
+                            samples_30_34_T3_inshore])
+
+conds_inshore_30_34_result <- adonis2(pca_dist_conds_30_34_T3_inshore ~
+                                        Temp, 
+                                      data = conds_30_34_T3_inshore)
+
+print(conds_inshore_30_34_result)
+
+# Set the seed
+set.seed(123)
+
+# Initialize empty list to store Inshore results
+results_inshore <- list()
+
+# Subset metadata to only Inshore samples
+metadata_inshore <- conds_all %>%
+  filter(Origin == "MoteIn") %>%
+  filter(Timepoint != "T0") # Remove T0 because they have no comparison 
+
+# Get unique Timepoints
+timepoints_inshore <- unique(metadata_inshore$Timepoint)
+
+# Initialize counter
+counter <- 1
+
+# Loop over each Timepoint
+for (timepoint_i in timepoints_inshore) {
+  
+  # Subset metadata for this Timepoint
+  metadata_timepoint <- metadata_inshore %>%
+    filter(Timepoint == timepoint_i)
+  
+  # Check if 30°C samples are available
+  if (30 %in% metadata_timepoint$Temp) {
+    
+    # Get all Temps other than 30°C for this Timepoint
+    temps_to_compare <- metadata_timepoint %>%
+      filter(Temp != 30) %>%
+      pull(Temp) %>%
+      unique()
+    
+    # Loop over each heat stress Temp
+    for (temp_j in temps_to_compare) {
+      
+      # Subset samples for 30°C and the heat stress Temp
+      metadata_sub <- metadata_timepoint %>%
+        filter(Temp %in% c(30, temp_j))
+      
+      samples_sub <- metadata_sub$Sample
+      
+      # Subset PCA distance matrix
+      pca_dist_sub <- as.dist(as.matrix(pca_dist)[samples_sub,
+                                                  samples_sub])
+      
+      # Ensure that samples from both Temps are available
+      if (length(unique(metadata_sub$Temp)) > 1) {
+        
+        
+        # Run PERMANOVA for Temp (30 vs heat stress temp)
+        permanova_res <- adonis2(pca_dist_sub ~ Temp, 
+                                 data = metadata_sub)
+        
+        # Run PERMDISP for Temp
+        betadisper_res <- betadisper(pca_dist_sub, metadata_sub$Temp)
+        perm_disp_res <- anova(betadisper_res)
+        
+        # Save result
+        result <- data.frame(
+          Origin = "Inshore",
+          Timepoint = timepoint_i,
+          Control_Temp = 30,
+          Stress_Temp = temp_j,
+          Df = permanova_res$Df[1],
+          SumOfSqs = permanova_res$SumOfSqs[1],
+          R2 = permanova_res$R2[1],
+          F = permanova_res$F[1],
+          perma_p_value = permanova_res$`Pr(>F)`[1],
+          Dispersion_F = perm_disp_res$F[1],
+          Dispersion_p_value = perm_disp_res$`Pr(>F)`[1]
+        )
+        
+        results_inshore[[counter]] <- result
+        counter <- counter + 1
+      }
+    }
+  }
+}
+
+# Combine results into dataframe
+permanova_inshore_summary <- do.call(rbind, results_inshore)
+
+# Add significance columns
+permanova_inshore_summary <- permanova_inshore_summary %>%
+  mutate(perma_Significant = ifelse(perma_p_value < 0.05, "Yes", "No"),
+         Dispersion_Significant = ifelse(Dispersion_p_value < 0.05,
+                                         "Yes", "No"))
+
+# View Inshore results
+print(permanova_inshore_summary)  
+
+write.csv(permanova_inshore_summary, "Plots/Fig_5/PERMANOVA_results/Inshore_CvHS_TP_permanova_dispersion.csv", row.names = FALSE)
+
+```
+
+```{r Offshore 30s vs HS at each Timepoint}
+# Is there a difference between controls and HS within a timepoint and site. 
+# Example Offshore T1-30 vs Offshore T1-34 or Offshore T1 30 vs Offshore T1-38
+
+#Offshore T3 30 vs Offshore T3 34 
+conds_30_34_T3_Offshore <- conds %>%
+  filter(Temp == 34 | Temp == 30) %>%
+  filter(Timepoint == "T3") %>%
+  filter(Origin == "MoteOff")
+
+samples_30_34_T3_Offshore  <- conds_30_34_T3_Offshore$Sample
+
+pca_dist_conds_30_34_T3_Offshore <- as.dist(as.matrix(pca_dist)[samples_30_34_T3_Offshore,
+                            samples_30_34_T3_Offshore])
+
+conds_Offshore_30_34_result <- adonis2(pca_dist_conds_30_34_T3_Offshore
+                                       ~ Temp, 
+                                       data = conds_30_34_T3_Offshore)
+
+print(conds_Offshore_30_34_result)
+
+# Set the seed
+set.seed(123)
+
+# Initialize empty list to store Offshore results
+results_Offshore <- list()
+
+# Subset metadata to only Offshore samples
+metadata_Offshore <- conds_all %>%
+  filter(Origin == "MoteOff") %>%
+  filter(Timepoint != "T0") # Remove T0 because they have no comparison
+
+# Get unique Timepoints
+timepoints_Offshore <- unique(metadata_Offshore$Timepoint)
+
+# Initialize counter
+counter <- 1
+
+# Loop over each Timepoint
+for (timepoint_i in timepoints_Offshore) {
+  
+  # Subset metadata for this Timepoint
+  metadata_timepoint <- metadata_Offshore %>%
+    filter(Timepoint == timepoint_i)
+  
+  # Check if 30°C samples are available
+  if (30 %in% metadata_timepoint$Temp) {
+    
+    # Get all Temps other than 30°C for this Timepoint
+    temps_to_compare <- metadata_timepoint %>%
+      filter(Temp != 30) %>%
+      pull(Temp) %>%
+      unique()
+    
+    # Loop over each heat stress Temp
+    for (temp_j in temps_to_compare) {
+      
+      # Subset samples for 30°C and the heat stress Temp
+      metadata_sub <- metadata_timepoint %>%
+        filter(Temp %in% c(30, temp_j))
+      
+      samples_sub <- metadata_sub$Sample
+      
+      # Subset PCA distance matrix
+      pca_dist_sub <- as.dist(as.matrix(pca_dist)[samples_sub,
+                                                  samples_sub])
+      
+      # Ensure that samples from both Temps are available
+      if (length(unique(metadata_sub$Temp)) > 1) {
+        
+        # Run PERMANOVA for Temp (30 vs heat stress temp)
+        permanova_res <- adonis2(pca_dist_sub ~ Temp, 
+                                 data = metadata_sub)
+        print(temp_j)
+        print(timepoint_i)
+        print(permanova_res)
+        # Run PERMDISP for Temp
+        betadisper_res <- betadisper(pca_dist_sub, metadata_sub$Temp)
+        perm_disp_res <- anova(betadisper_res)
+        
+        # Save result
+        result <- data.frame(
+          Origin = "Offshore",
+          Timepoint = timepoint_i,
+          Control_Temp = 30,
+          Stress_Temp = temp_j,
+          Df = permanova_res$Df[1],
+          SumOfSqs = permanova_res$SumOfSqs[1],
+          R2 = permanova_res$R2[1],
+          F = permanova_res$F[1],
+          perma_p_value = permanova_res$`Pr(>F)`[1],
+          Dispersion_F = perm_disp_res$F[1],
+          Dispersion_p_value = perm_disp_res$`Pr(>F)`[1]
+        )
+        
+        results_Offshore[[counter]] <- result
+        counter <- counter + 1
+      }
+    }
+  }
+}
+
+# Combine results into dataframe
+permanova_Offshore_summary <- do.call(rbind, results_Offshore)
+
+# Add significance columns
+permanova_Offshore_summary <- permanova_Offshore_summary %>%
+  mutate(perma_Significant = ifelse(perma_p_value < 0.05, "Yes", "No"),
+         Dispersion_Significant = ifelse(Dispersion_p_value < 0.05, "Yes", "No"))
+
+# View Offshore results
+print(permanova_Offshore_summary)  
+
+write.csv(permanova_Offshore_summary, "Plots/Fig_5/PERMANOVA_results/Offshore_CvHS_TP_permanova_dispersion.csv", row.names = FALSE)
+```
+
+# Shift Data Calculation 
+```{r create control dfs}
+T1_30_In <- pcaData %>%
+  filter(group == "30:T1:MoteIn")
+
+T1_30_Off <- pcaData %>%
+  filter(group == "30:T1:MoteOff")
+
+T2_30_In <- pcaData %>%
+  filter(group == "30:T2:MoteIn")
+
+T2_30_Off <- pcaData %>%
+  filter(group == "30:T2:MoteOff")
+
+T3_30_In <- pcaData %>%
+  filter(group == "30:T3:MoteIn")
+
+T3_30_Off <- pcaData %>%
+  filter(group == "30:T3:MoteOff")
+
+T4_30_In <- pcaData %>%
+  filter(group == "30:T4:MoteIn")
+
+T4_30_Off <- pcaData %>%
+  filter(group == "30:T4:MoteOff")
+
+T5_30_In <- pcaData %>%
+  filter(group == "30:T5:MoteIn")
+
+T5_30_Off <- pcaData %>%
+  filter(group == "30:T5:MoteOff")
+```
+
+```{r create shift data df} 
+shift_data <- pcaData %>%
+  filter(Timepoint != "T0" & Timepoint != "TF") %>%
+  arrange(Timepoint, Origin, Temp) 
+
+shift_data$ContPC1 <- c(rep(T1_30_In$PC1, 4), rep(T1_30_Off$PC1, 4),
+                        rep(T2_30_In$PC1, 4), rep(T2_30_Off$PC1, 4),
+                        rep(T3_30_In$PC1, 4), rep(T3_30_Off$PC1, 4),
+                        rep(T4_30_In$PC1, 4), rep(T4_30_Off$PC1, 4),
+                        rep(T5_30_In$PC1, 4), rep(T5_30_Off$PC1, 4))
+
+shift_data$ContPC2 <- c(rep(T1_30_In$PC2, 4), rep(T1_30_Off$PC2, 4),
+                        rep(T2_30_In$PC2, 4), rep(T2_30_Off$PC2, 4),
+                        rep(T3_30_In$PC2, 4), rep(T3_30_Off$PC2, 4),
+                        rep(T4_30_In$PC2, 4), rep(T4_30_Off$PC2, 4),
+                        rep(T5_30_In$PC2, 4), rep(T5_30_Off$PC2, 4))
+
+write.table(shift_data, file = "Plots/Fig_6/shift_data.txt", sep="\t",
+            quote=F, row.names=TRUE)
+```
+
+```{r calculate transcriptomic shift}
+# Check Sample #'s
+aggregate(PC1 ~ group, data=shift_data, length)
+aggregate(PC2 ~ group, data=shift_data, length)
+
+# Calculate PC1 Shift 
+shift_data$PC1_shift <- abs(shift_data$PC1 - shift_data$ContPC1) * attr(pcaData, "percentVar")[1]
+
+# Calculate PC2 Shift 
+shift_data$PC2_shift <- abs(shift_data$PC2 - shift_data$ContPC2) * attr(pcaData, "percentVar")[2]
+
+# Calculate Shift 
+shift_data_shifted <- shift_data %>%
+  dplyr::mutate(combo_shift = PC1_shift + PC2_shift) %>%
+  filter(Temp != 30)
+
+# Final Shift Table 
+write.table(shift_data_shifted, file = "Plots/Fig_6/shift_data_shifted.txt", sep="\t", quote=F,
+            row.names=TRUE)
+```
+
+# Shift Data Statistical Analysis 
+```{r all data}
+library(FSA)
+
+# Shift Data Histogram 
+ggplot(shift_data_shifted, aes(x = combo_shift)) +
+  geom_histogram(binwidth = 20)
+
+# Density Plot 
+ggdensity(shift_data_shifted$combo_shift,
+          main = "Density plot of transcriptomic shift",
+          xlab = "Shift") 
+
+ggqqplot(shift_data_shifted$combo_shift)
+
+# Normality Tests
+shapiro.test(shift_data_shifted$combo_shift)
+
+leveneTest(combo_shift ~ group, data = shift_data_shifted)
+
+# Homogeneity of Variances Test
+bartlett.test(combo_shift ~ group, 
+              data = as.matrix(shift_data_shifted))
+
+# Kruskal - Wallis test
+kruskal.test(combo_shift ~ group, data = shift_data_shifted)
+
+# dunn.test 
+shifted_dunnTest <- dunnTest(combo_shift ~ group,
+         data=shift_data_shifted,
+         method="bh")
+
+shifted_dunnTest_df <- as.data.frame(shifted_dunnTest$res)
+
+write_xlsx(shifted_dunnTest_df, "Plots/Fig_6/DunnTest_results/shfited_dunnTest_FDR_corrected.xlsx")
+```
+
+```{r 34C Treatment Only}
+# Shift Data for only 34C Treatment 
+
+shifted_34_inshore <- shift_data_shifted %>%
+  filter(Temp == 34 & Origin == "MoteIn")
+
+shifted_34_offshore <- shift_data_shifted %>%
+  filter(Temp == 34 & Origin == "MoteOff")
+
+# Normality Tests
+shapiro.test(shifted_34_inshore$combo_shift)
+shapiro.test(shifted_34_offshore$combo_shift)
+
+# Homogeneity of Variances Test
+leveneTest(combo_shift ~ group, data = shifted_34_inshore)
+leveneTest(combo_shift ~ group, data = shifted_34_offshore)
+
+# Kruskal - Wallis test
+kruskal.test(combo_shift ~ group, data = shifted_34_inshore)
+kruskal.test(combo_shift ~ group, data = shifted_34_offshore)
+
+# dunn.test 
+shifted_34_inshore_dunnTest <- dunnTest(combo_shift ~ group,
+         data=shifted_34_inshore,
+         method="bh")
+shifted_34_offshore_dunnTest <- dunnTest(combo_shift ~ group,
+         data=shifted_34_offshore,
+         method="bh")
+
+shifted_34_inshore_dunnTest_df <- as.data.frame(shifted_34_inshore_dunnTest$res)
+
+shifted_34_offshore_dunnTest_df <- as.data.frame(shifted_34_offshore_dunnTest$res)
+
+write_xlsx(shifted_34_inshore_dunnTest_df, "Plots/Fig_6/DunnTest_results/shifted_34_dunnTest_FDR_corrected_inshore.xlsx")
+
+write_xlsx(shifted_34_offshore_dunnTest_df, "Plots/Fig_6/DunnTest_results/shifted_34_dunnTest_FDR_corrected_offshore.xlsx")
+```
+
+```{r 37C Treatment Only}
+# Shift Data for only 37C Treatment 
+shifted_37_inshore <- shift_data_shifted %>%
+  filter(Temp == 37 & Origin == "MoteIn")
+
+shifted_37_offshore <- shift_data_shifted %>%
+  filter(Temp == 37 & Origin == "MoteOff")
+
+# Normality Tests
+shapiro.test(shifted_37_inshore$combo_shift)
+shapiro.test(shifted_37_offshore$combo_shift)
+
+# Homogeneity of Variances Test
+leveneTest(combo_shift ~ group, data = shifted_37_inshore)
+leveneTest(combo_shift ~ group, data = shifted_37_offshore)
+
+# Kruskal - Wallis test
+kruskal.test(combo_shift ~ group, data = shifted_37_inshore)
+kruskal.test(combo_shift ~ group, data = shifted_37_offshore)
+
+# dunn.test 
+shifted_37_dunnTest_inshore <- dunnTest(combo_shift ~ group,
+         data=shifted_37_inshore,
+         method="bh")
+
+shifted_37_dunnTest_offshore <- dunnTest(combo_shift ~ group,
+         data=shifted_37_offshore,
+         method="bh")
+
+shifted_37_dunnTest_inshore_df <- as.data.frame(shifted_37_dunnTest_inshore$res)
+
+shifted_37_dunnTest_offshore_df <- as.data.frame(shifted_37_dunnTest_offshore$res)
+
+write_xlsx(shifted_37_dunnTest_inshore_df, "Plots/Fig_6/DunnTest_results/shifted_37_dunnTest_FDR_corrected_inshore.xlsx")
+
+write_xlsx(shifted_37_dunnTest_offshore_df, "Plots/Fig_6/DunnTest_results/shifted_37_dunnTest_FDR_corrected_offshore.xlsx")
+```
+
+```{r 39C Treatment Only}
+# Shift Data for only 39C Treatment 
+
+shifted_39_inshore <- shift_data_shifted %>%
+  filter(Temp == 39 & Origin == "MoteIn")
+
+shifted_39_offshore <- shift_data_shifted %>%
+  filter(Temp == 39 & Origin == "MoteOff")
+
+# Normality Tests
+shapiro.test(shifted_39_inshore$combo_shift)
+shapiro.test(shifted_39_offshore$combo_shift)
+
+# Homogeneity of Variances Test
+leveneTest(combo_shift ~ group, data = shifted_39_inshore)
+leveneTest(combo_shift ~ group, data = shifted_39_offshore)
+
+# Kruskal - Wallis test
+kruskal.test(combo_shift ~ group, data = shifted_39_inshore)
+kruskal.test(combo_shift ~ group, data = shifted_39_offshore)
+
+# dunn.test 
+shifted_39_inshore_dunnTest <- dunnTest(combo_shift ~ group,
+         data=shifted_39_inshore,
+         method="bh")
+
+shifted_39_offshore_dunnTest <- dunnTest(combo_shift ~ group,
+         data=shifted_39_offshore,
+         method="bh")
+
+shifted_39_dunnTest_inshore_df <- as.data.frame(shifted_39_inshore_dunnTest$res)
+
+shifted_39_dunnTest_offshore_df <- as.data.frame(shifted_39_offshore_dunnTest$res)
+
+write_xlsx(shifted_39_dunnTest_inshore_df, "Plots/Fig_6/DunnTest_results/shifted_39_dunnTest_FDR_corrected_inshore.xlsx")
+
+write_xlsx(shifted_39_dunnTest_offshore_df, "Plots/Fig_6/DunnTest_results/shifted_39_dunnTest_FDR_corrected_offshore.xlsx")
+```
+
+```{r inshore vs offshore at each temp/timepoint}
+shift_data_shifted$Origin <- as.factor(shift_data_shifted$Origin)
+
+#34_T1
+shifted_34_T1 <- shift_data_shifted %>%
+  filter(Temp == 34 & Timepoint == "T1")
+
+shapiro.test(shifted_34_T1$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_34_T1)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_34_T1)
+
+#34_T2
+shifted_34_T2 <- shift_data_shifted %>%
+  filter(Temp == 34 & Timepoint == "T2")
+
+shapiro.test(shifted_34_T2$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_34_T2)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_34_T2)
+
+#34_T3
+shifted_34_T3 <- shift_data_shifted %>%
+  filter(Temp == 34 & Timepoint == "T3")
+
+shapiro.test(shifted_34_T3$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_34_T3)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_34_T3)
+
+#34_T4
+shifted_34_T4 <- shift_data_shifted %>%
+  filter(Temp == 34 & Timepoint == "T4")
+
+shapiro.test(shifted_34_T3$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_34_T4)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_34_T4)
+
+#34_T5
+shifted_34_T5 <- shift_data_shifted %>%
+  filter(Temp == 34 & Timepoint == "T5")
+
+shapiro.test(shifted_34_T5$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_34_T5)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_34_T5)
+```
+
+```{r inshore vs offshore at each temp/timepoint}
+#37_T1
+shifted_37_T1 <- shift_data_shifted %>%
+  filter(Temp == 37 & Timepoint == "T1")
+
+shapiro.test(shifted_37_T1$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_37_T1)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_37_T1)
+
+#37_T2
+shifted_37_T2 <- shift_data_shifted %>%
+  filter(Temp == 37 & Timepoint == "T2")
+
+shapiro.test(shifted_37_T2$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_37_T2)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_37_T2)
+
+#37_T3
+shifted_37_T3 <- shift_data_shifted %>%
+  filter(Temp == 37 & Timepoint == "T3")
+
+shapiro.test(shifted_37_T3$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_37_T3)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_37_T3)
+
+#37_T4
+shifted_37_T4 <- shift_data_shifted %>%
+  filter(Temp == 37 & Timepoint == "T4")
+
+shapiro.test(shifted_37_T3$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_37_T4)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_37_T4)
+
+#37_T5
+shifted_37_T5 <- shift_data_shifted %>%
+  filter(Temp == 37 & Timepoint == "T5")
+
+shapiro.test(shifted_37_T5$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_37_T5)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_37_T5)
+```
+
+```{r inshore vs offshore at each temp/timepoint}
+#39_T1
+shifted_39_T1 <- shift_data_shifted %>%
+  filter(Temp == 39 & Timepoint == "T1")
+
+shapiro.test(shifted_39_T1$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_39_T1)
+
+shifted_39_T1_wilcox <- wilcox.test(combo_shift ~ Origin, data = shifted_39_T1)
+
+#39_T2
+shifted_39_T2 <- shift_data_shifted %>%
+  filter(Temp == 39 & Timepoint == "T2")
+
+shapiro.test(shifted_39_T2$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_39_T2)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_39_T2)
+
+#39_T3
+shifted_39_T3 <- shift_data_shifted %>%
+  filter(Temp == 39 & Timepoint == "T3")
+
+shapiro.test(shifted_39_T3$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_39_T3)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_39_T3)
+
+#39_T4
+shifted_39_T4 <- shift_data_shifted %>%
+  filter(Temp == 39 & Timepoint == "T4")
+
+shapiro.test(shifted_39_T3$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_39_T4)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_39_T4)
+
+#39_T5
+shifted_39_T5 <- shift_data_shifted %>%
+  filter(Temp == 39 & Timepoint == "T5")
+
+shapiro.test(shifted_39_T5$combo_shift)
+
+leveneTest(combo_shift ~ Origin, data = shifted_39_T5)
+
+wilcox.test(combo_shift ~ Origin, data = shifted_39_T5)
+```
+
+```{r combine all stats}
+all_stats <- rbind(shifted_34_inshore_dunnTest_df,
+                   shifted_34_offshore_dunnTest_df,
+                   shifted_37_dunnTest_inshore_df,
+                   shifted_37_dunnTest_offshore_df,
+                   shifted_39_dunnTest_inshore_df,
+                   shifted_39_dunnTest_offshore_df)
+
+alpha <- 0.05
+
+sig_df <- all_stats %>%
+  filter(P.adj < alpha) %>%
+  mutate(
+    group1 = str_split(Comparison, " - ", simplify = TRUE)[,1],
+    group2 = str_split(Comparison, " - ", simplify = TRUE)[,2],
+
+    Temp   = str_split(group1, ":", simplify = TRUE)[,1],
+    xstart = str_remove(str_split(group1, ":", simplify = TRUE)[,2],
+                        "^T"),
+    Origin = ifelse(str_detect(group1, "MoteIn"), "MoteIn", "MoteOff"),
+    xend   = str_remove(str_split(group2, ":", simplify = TRUE)[,2],
+                        "^T"),
+
+    label = case_when(
+      P.adj < 0.001 ~ "***",
+      P.adj < 0.01  ~ "**",
+      P.adj < 0.05  ~ "*"
+    )
+  ) %>%
+  group_by(Temp, Origin) %>%
+  mutate(
+    y = max(shift_data_shifted$combo_shift, na.rm = TRUE) * 1.05 +
+        0.2 * row_number()
+  ) %>%
+  ungroup()
+
+sig_df_Off_34_T2_T5 <- sig_df %>%
+  filter(Comparison == "34:T2:MoteOff - 34:T5:MoteOff")
+
+sig_df_Off_34_T3_T5 <- sig_df %>%
+  filter(Comparison == "34:T3:MoteOff - 34:T5:MoteOff")
+
+sig_df_In_39_T1_T2 <- sig_df %>%
+  filter(Comparison == "39:T1:MoteIn - 39:T2:MoteIn")
+
+sig_df_In_39_T1_T5 <- sig_df %>%
+  filter(Comparison == "39:T1:MoteIn - 39:T5:MoteIn")
+
+sig_df_Off_39_T1_T2 <- sig_df %>%
+  filter(Comparison == "39:T1:MoteOff - 39:T2:MoteOff")
+
+sig_df_Off_39_T1_T4 <- sig_df %>%
+  filter(Comparison == "39:T1:MoteOff - 39:T4:MoteOff")
+```
+
+#Shift Data Plotting 
+```{r Fig 6 Panel A}
+labels <- labeller(Origin = c("MoteIn" = "Inshore", "MoteOff" = "Offshore"))
+
+Fig_6a <- ggplot(shift_data_shifted, aes(x = Timepoint, y = combo_shift)) +
+  geom_boxplot(aes(fill = Temp), lwd=0.25) +
+  scale_fill_manual(values = c("#FFDD44", "#FF9933", "#DB2F0D")) +
+  facet_wrap2(~Origin, labeller = labels, nrow = 1,
+              strip = strip_themed(background_x = elem_list_rect(fill = Site_colors),
+                                   text_x = elem_list_text(color = c("black", "white")))) +
+  
+# significance bars
+# Inshore 39 T1 - T2 *
+  geom_segment(data = sig_df_In_39_T1_T2,
+               aes(x = as.numeric(xstart), 
+                   xend = as.numeric(xend), 
+                   y = 0.5, yend = 0.5), color = "#DB2F0D", 
+               linewidth = 0.5,
+               inherit.aes = FALSE) +
+  
+  geom_text(data = sig_df_In_39_T1_T2,
+            aes(x = (as.numeric(xstart) + as.numeric(xend))/2,
+                y = 0.75, label = label),
+            inherit.aes = FALSE, color = "#DB2F0D", 
+            size = 5) +
+
+# Inshore 39 T1 - T5
+  geom_segment(data = sig_df_In_39_T1_T5,
+               aes(x = as.numeric(xstart), 
+                   xend = as.numeric(xend), 
+                   y = -1, yend = -1), color = "#DB2F0D", 
+               linewidth = 0.5,
+               inherit.aes = FALSE) +
+  
+  geom_text(data = sig_df_In_39_T1_T5,
+            aes(x = (as.numeric(xstart) + as.numeric(xend))/2,
+                y = -0.75, label = label),
+            inherit.aes = FALSE, color = "#DB2F0D", 
+            size = 5) +
+  
+# Offshore 34 T3 - T5
+  geom_segment(data = sig_df_Off_34_T3_T5,
+               aes(x = as.numeric(xstart), 
+                   xend = as.numeric(xend), 
+                   y = 0.25, yend = 0.25), color = "#FFDD44", 
+               linewidth = 0.5,
+               inherit.aes = FALSE) +
+  
+  geom_text(data = sig_df_Off_34_T3_T5,
+            aes(x = (as.numeric(xstart) + as.numeric(xend))/2,
+                y = 0.75, label = label),
+            inherit.aes = FALSE, color = "#FFDD44", 
+            size = 5) +
+  
+# Offshore 34 T2 - T5
+  geom_segment(data = sig_df_Off_34_T2_T5,
+               aes(x = as.numeric(xstart), 
+                   xend = as.numeric(xend), 
+                   y = -3.75, yend = -3.75), color = "#FFDD44", 
+               linewidth = 0.5,
+               inherit.aes = FALSE) +
+  
+  geom_text(data = sig_df_Off_34_T2_T5,
+            aes(x = (as.numeric(xstart) + as.numeric(xend))/2,
+                y = -3.25, label = label),
+            inherit.aes = FALSE, color = "#FFDD44", 
+            size = 5) +
+
+  
+# Offshore 39 T1 - T2
+  geom_segment(data = sig_df_Off_39_T1_T2,
+               aes(x = as.numeric(xstart), 
+                   xend = as.numeric(xend), 
+                   y = 0.5, yend = 0.5), color = "#DB2F0D", 
+               linewidth = 0.5,
+               inherit.aes = FALSE) +
+  
+  geom_text(data = sig_df_Off_39_T1_T2,
+            aes(x = (as.numeric(xstart) + as.numeric(xend))/2,
+                y = 0.75, label = label),
+            inherit.aes = FALSE, color = "#DB2F0D", 
+            size = 5) +
+  
+# Offshore 39 T1 - T4
+  geom_segment(data = sig_df_Off_39_T1_T4,
+               aes(x = as.numeric(xstart), 
+                   xend = as.numeric(xend), 
+                   y = -1, yend = -1), color = "#DB2F0D", 
+               linewidth = 0.5,
+               inherit.aes = FALSE) +
+  
+  geom_text(data = sig_df_Off_39_T1_T4,
+            aes(x = (as.numeric(xstart) + as.numeric(xend))/2,
+                y = -0.75, label = label),
+            inherit.aes = FALSE, color = "#DB2F0D", 
+            size = 5) +
+  
+  
+  scale_y_continuous(expand = c(0,1.25)) +
+  ylab("Transcriptomic Shift") +
+  xlab("Timepoint") +
+  labs(fill = "Temperature (°C)") +
+  theme_bw() +
+  theme(legend.position = "bottom", 
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        strip.text = element_text(size = 10),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
+        plot.margin = margin(t = 3, r = 5, b = 0, l = 5),
+        legend.margin = margin(t = 0, r = 0, b = 0, l = 0),
+        legend.box.margin = margin(0, 0, 0, 0))            
+
+ggsave(
+  filename = "Plots/Fig_6/Fig_6a.pdf",  # Name of the output file
+  plot = Fig_6a,               # Specify the plot to save
+  width = 5,                       # Width in inches
+  height = 4                        # Height in inches
+)
+
+
+ggsave(
+  filename = "Plots/Fig_6/Fig_6a.png",  # Name of the output file
+  plot = Fig_6a,               # Specify the plot to save
+  width = 5,                       # Width in inches
+  height = 4                        # Height in inches
+)
+```
+
+```{r Fig 6 Panel B}
+label_Temps <- labeller(Temp = c("34" = "34°C", "37" = "37°C", 
+                                 "39" = "39°C"))
+
+Temp_color <- c("34" = "#FFDD44", "37" = "#FF9933", "39" = "#DB2F0D")
+
+# Manual dfs for sig difs 
+sig_34_T3 <- data.frame(
+  Timepoint = "T3",  # must match your x-axis values
+  Temp = 34,         # facet variable
+  label = "*"
+)
+
+sig_37_T1 <- data.frame(
+  Timepoint = "T1",  # must match your x-axis values
+  Temp = 37,         # facet variable
+  label = "*"
+)
+
+sig_39_T5 <- data.frame(
+  Timepoint = "T5",  # must match your x-axis values
+  Temp = 39,         # facet variable
+  label = "*"
+)
+
+Fig_6b <- ggplot(shift_data_shifted, 
+       aes(x = Timepoint, y = combo_shift, fill = Origin)) +
+  geom_boxplot() +
+  scale_fill_manual(values = c('#8ADCE3', "#024CC9"), 
+                    labels = c("MoteIn" = "Inshore", 
+                               "MoteOff" = "Offshore")) +
+  facet_wrap2(~Temp, ncol = 3, labeller = label_Temps, 
+              strip = strip_themed(
+                background_x = elem_list_rect(
+                  fill = Temp_color  # uses your named vector
+                )
+              )) +
+# Significance 
+ geom_text(
+    data = sig_34_T3,
+    aes(x = 3, y = 0, label = label),
+    inherit.aes = FALSE,
+    color = "#FFDD44",
+    size = 8
+  ) +
+  
+ geom_text(
+    data = sig_37_T1,
+    aes(x = 1, y = 0, label = label),
+    inherit.aes = FALSE,
+    color = "#FF9933",
+    size = 8
+  ) +
+  
+  geom_text(
+    data = sig_39_T5,
+    aes(x = 5, y = 0, label = label),
+    inherit.aes = FALSE,
+    color = "#DB2F0D",
+    size = 8
+  ) +
+  
+  ylab("Transcriptomic Shift") +
+  theme_bw()+
+  theme(legend.position = "bottom", 
+      legend.title = element_blank(), 
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        strip.text = element_text(size = 10),
+        legend.text = element_text(size = 8),
+        plot.margin = margin(t = 3, r = 5, b = 0, l = 5),
+        legend.margin = margin(t = 0, r = 0, b = 2, l = 0),
+        legend.box.margin = margin(0, 0, 0, 0))
+
+ggsave(
+  filename = "Plots/Fig_6/Fig_6b.pdf", 
+  plot = Fig_6b,               
+  width = 5,                       
+  height = 4                       
+)
+
+ggsave(
+  filename = "Plots/Fig_6/Fig_6b.png", 
+  plot = Fig_6b,               
+  width = 5,                       
+  height = 4                     
+)
+```
+
+```{r Fig 6}
+Fig_6 <- cowplot::plot_grid(Fig_6a, Fig_6b,
+          labels = c("A", "B"),
+          ncol = 1,
+          rel_widths = 1)
+
+
+ggsave(
+  filename = "Plots/Fig_6/Fig_6.pdf", 
+  plot = Fig_6,               
+  width = 4,                       
+  height = 6                       
+)
+
+ggsave(
+  filename = "Plots/Fig_6/Fig_6.png", 
+  plot = Fig_6,               
+  width = 4,                       
+  height = 6                       
+)
+```
+
+```{r Plotting Shift Across Time}
+shift_test <- shift_data_shifted
+
+shift_test$Temp <- as.numeric(as.character(shift_test$Temp))
+
+head(shift_test)
+
+ggplot(shift_test, aes(x = Temp, y = combo_shift, color = Origin)) +
+  geom_smooth()
+
+shift_test$Timepoint <- as.numeric(sub("T", "", shift_test$Timepoint))
+shift_test$Temp <- as.character(shift_test$Temp)
+
+ggplot(shift_test, aes(x = Timepoint, 
+                       y = combo_shift, color = Origin)) +
+  geom_point(aes(shape = Origin)) +
+  geom_smooth(aes(fill = Origin), alpha = 0.25) +
+  scale_color_manual(values = c('#8ADCE3', "#003A9D")) +
+  scale_fill_manual(values = c('#8ADCE3', "#003A9D")) +
+  ylab("Transcriptomic Shift") +
+  facet_wrap(~Temp, ncol = 3, scales = "free") +
+  theme_bw() +
+  theme(legend.position = "bottom") 
+ 
+
+summary_data <- shift_test %>%
+  group_by(Timepoint, Temp, Origin) %>%
+  summarise(
+    mean_shift = mean(combo_shift, na.rm = TRUE),
+    se_shift = sd(combo_shift, na.rm = TRUE) / sqrt(n())
+  )
+
+# Plot
+ggplot(summary_data, aes(x = Timepoint, y = mean_shift, color = Temp,
+                         linetype = Origin)) +
+  geom_line(size = 1) +
+  geom_ribbon(aes(ymin = mean_shift - se_shift, 
+                  ymax = mean_shift + se_shift, color = Temp),  
+              alpha = 0.2) +
+  facet_wrap(~ Temp, ncol = 1, scales = "free") +
+  labs(x = "Timepoint", y = "Transcriptomic Shift", 
+       title = "Time Series of Transcriptomic Shift with SE Bands") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+```

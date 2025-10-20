@@ -1,0 +1,173 @@
+---
+title: "Fig 2: Temperature Profiles"
+output: html_document
+date: "2024-09-14"
+editor_options: 
+  chunk_output_type: console
+---
+
+# Libraries 
+```{r load libraries}
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+library(ggpubr)
+library(ggtext)
+```
+
+# Load data
+```{r ramps}
+ramps <- read.delim("data/LOG/2021-06-11_OPa_Ramp1_1-4_2pm_LOG.TXT", sep = "," )
+
+ramps$time<-strptime(paste(ramps$Date,paste(ramps$Th,ramps$Tm,ramps$Ts,sep=":"),sep=" "),format="%Y_%B_%d %H:%M:%S")
+ramps<-ramps[order(ramps$time),]
+
+ramps$time <- as.POSIXct(ramps$time)
+```
+
+# Format ramps 
+```{r ramps_df}
+ramps_df <- ramps %>%
+  dplyr::select(Date, time, T1SP, T1inT, T2SP, T2inT,T3SP, T3inT,T4SP, T4inT) %>%
+  gather(key = tank, value = sp, -Date, -time, -T1inT, -T2inT, -T3inT, -T4inT) %>%
+  gather(key = probe, value = inTemp, -Date, -time, -tank, -sp)
+
+ramps_df$inTemp <- as.numeric(ramps_df$inTemp)
+ramps_df$sp <- as.numeric(ramps_df$sp)
+```
+
+# Establish timepoints and figure parameters
+```{r time breaks}
+# Start and End Time
+start_time <- as.POSIXct("2021-06-10 12:00:00", format = "%Y-%m-%d %H:%M:%S")
+end_time <- as.POSIXct("2021-06-11 09:40:00", format = "%Y-%m-%d %H:%M:%S")
+
+# Filter just plotted time
+ramps_df_filtered <- subset(ramps_df, time >= start_time & time <= end_time & inTemp >= 30 & inTemp <= 39.2)
+
+# Reduce the dataset size if it has many rows
+ramps_df_sampled <- ramps_df_filtered[seq(1, nrow(ramps_df_filtered), by = 10), ]
+
+# X-axis Time Breaks
+time_breaks <- seq(from = as.POSIXct("2021-06-10 12:00:00"),
+                   to = as.POSIXct("2021-06-11 08:15:00"),
+                   by = "2 hour")
+
+# Dark Acclimated Time 
+night_start <- as.POSIXct("2021-06-10 20:30:00")
+night_end <- as.POSIXct("2021-06-11 07:00:00")
+
+# Sampling Timepoints
+TF <- as.POSIXct("2021-06-10 13:00:00")
+T0 <- as.POSIXct("2021-06-10 14:00:00")
+T1 <- as.POSIXct("2021-06-10 17:00:00")
+T2 <- as.POSIXct("2021-06-10 20:00:00")
+T3 <- as.POSIXct("2021-06-10 21:03:00")
+T4 <- as.POSIXct("2021-06-11 02:30:00")
+T5 <- as.POSIXct("2021-06-11 09:00:00")
+FvFm_end <- as.POSIXct("2021-06-10 22:05:00")
+
+# Compute shared values to avoid recalculating them repeatedly
+time_breaks_seq <- seq(start_time, end_time, by = "2.5 hours") # Adjust granularity if needed
+rect_center <- mean(c(night_start, night_end))             # Precompute the rectangle center
+y_segment_values <- c(32.4, 39.2, 39.2, 32.4, 32.4, 32.4)                  # Y values for segments
+
+# Pre-define time points for vertical lines
+time_points <- c(T0, T1, T2, T3, T4, T5)
+
+timepoint_labels <- data.frame(
+  x = time_points,
+  y = y_segment_values + 0.25,  # Slightly above the line ends for label positioning
+  label = c("T0", "T1", "T2", "T3", "T4", "T5")) 
+
+T3_adjusted <- data.frame(
+  x = T3,                     # Starting point of the line
+  xend = T3 + 3000,           # Shift the xend 1 hour to the right
+  y = 30,                     # Start at y = 30
+  yend = 32.4,                  # End at y = 32
+  label = "T3",               # Label for the timepoint
+  label_x = T3 + 3000,        # Place the label at the midpoint of the tilted line
+  label_y = 32.65)             # Position the label slightly above the line
+
+FvFm_adjusted <- data.frame(
+  x = T3,                     
+  xend_F = FvFm_end,           
+  y_F = 30,                     
+  yend_F = 31.8,                  
+  label_F = "Fv/Fm Measured",  # Keep it as a character              
+  label_x_F = FvFm_end + 7100,        
+  label_y_F = 31.95)
+```
+
+# Plot figure 2
+```{r Fig 2}
+Fig_2 <- ggplot(ramps_df_sampled, aes(x = time)) +
+  geom_line(aes(y = inTemp, color = probe), linewidth = 1.5, alpha = 0.55) +
+  scale_color_manual(values = c("#305CAA", "#ffcc33", "#ee6600", "#990000")) +
+  scale_x_datetime(limits = c(start_time, end_time), date_labels = "%H:%M",
+                   breaks = time_breaks_seq, expand = c(0, 0)) +
+  scale_y_continuous(limits = c(29.9, 40), breaks = seq(30, 39, by = 1.5), 
+                     expand = c(0, 0)) +
+  
+  # Add vertical lines for other sampling timepoints
+  geom_segment(data = data.frame(x = time_points[-4], 
+                                 yend = y_segment_values[-4]),
+               aes(x = x, y = 30, xend = x, yend = yend),
+               linewidth = 1.2, linetype = "dotted") +
+  
+  # Add the adjusted T3 line
+  geom_segment(data = T3_adjusted,
+               aes(x = x, y = y, xend = xend, yend = yend),
+               linewidth = 1.2, linetype = "dotted", color = "black") +
+ 
+   # Add the adjusted FvFm line
+ geom_segment(data = FvFm_adjusted,
+               aes(x = x, y = y_F, xend = xend_F, yend = yend_F),
+               linewidth = 1.2, linetype = "dotted", color = "black") +
+ 
+   # Add labels for other timepoints
+  geom_label(data = timepoint_labels[-4, ], aes(x = x, y = y, label = label),
+             color = "black", fill = "transparent", size = 4.5, 
+             label.size = 0.25, fontface = "bold") +
+ 
+   # Add adjusted label for T3
+  geom_label(data = T3_adjusted,
+             aes(x = label_x, y = label_y, label = label),
+             color = "black", fill = "transparent", size = 4.5, 
+             label.size = 0.25, fontface = "bold") +
+  
+  # Add adjusted label for FvFm
+  geom_label(data = FvFm_adjusted,
+           aes(x = label_x_F, y = label_y_F),
+           label = expression(bold(F[v]/F[m] ~ "Measured")),  
+           color = "black", fill = "transparent", size = 3.5, 
+           label.size = 0.25) +
+
+    annotate("rect", xmin = night_start, xmax = night_end, ymin = -Inf, 
+           ymax = Inf,  fill = "#999595", alpha = 0.3) +
+
+    annotate("richtext", x = rect_center, y = 38.1,
+           label = "**_Dark Acclimated_**", color = "#757070", size = 7, 
+           hjust = 0.5, fill = NA, label.color = NA) +
+  theme_classic() +
+  ylab("Temperature °C") +
+  xlab("Time") +
+  theme(legend.position = "none",
+        axis.title = element_text(size = 17),
+        axis.text = element_text(size = 13)) 
+
+ggsave(
+  filename = "Plots/Fig_2/Fig_2.pdf",  # Name of the output file
+  plot = Fig_2,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 5                        # Height in inches
+)
+
+
+ggsave(
+  filename = "Plots/Fig_2/Fig_2.png",  # Name of the output file
+  plot = Fig_2,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 5                        # Height in inches
+)
+```

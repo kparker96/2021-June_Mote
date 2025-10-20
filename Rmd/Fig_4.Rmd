@@ -1,0 +1,471 @@
+---
+title: "Fig_4: Total DEGs"
+output: html_document
+date: "2024-09-14"
+editor_options: 
+  chunk_output_type: console
+---
+# Libraries 
+```{r load libraries}
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+library(ggpubr)
+library(ggh4x)
+library(flextable)
+```
+
+# Import data
+```{r DEG counts}
+# DEG Counts table from Deduplicated DF
+DEG_counts <- read.delim('data/Sequencing/Porites_astreoides/DESeq/2025-06-03_DECalc_deduped-data.tab')  
+
+# Add Metadata to DEG_counts and clean up
+DEG_counts_df <- DEG_counts %>% 
+  mutate(SitevSite = 
+          case_when(grepl("resIn", Contrast) & grepl("vIn", Contrast) ~
+                      "InvIn",
+                    grepl("resIn", Contrast) & grepl("vOff", Contrast) ~
+                      "InvOff",
+                    grepl("resOff", Contrast) & grepl("vIn", Contrast) ~
+                      "OffvIn",
+                    grepl("resOff", Contrast) & grepl("vOff", Contrast) ~
+                      "OffvOff")) %>%
+  mutate(Trial = "deduped") %>%
+  
+  # Extract the first T# after resOff or resIn, including the "T"
+  mutate(TP1 = str_extract(Contrast, "T\\d+(?=v)")) %>%
+ 
+   # Extract the last two characters of the string, 
+  mutate(TP2 = str_sub(Contrast, -2, -1)) %>%
+  mutate(Temp = str_sub(Contrast, -5, -4)) %>%
+  mutate(TP1 = case_when(Contrast == "resInvOffT0" ~ "T0", 
+                         TRUE ~ TP1),
+         Temp = case_when(Contrast == "resInvOffT0" ~ "T0",
+                          TRUE ~ Temp)) %>%
+  mutate(Site = case_when(SitevSite == "InvIn" ~ "Inshore",
+                          SitevSite == "OffvOff" ~ "Offshore",
+                          SitevSite == "InvOff" | SitevSite == "OffvIn" ~
+                            "Across_Sites"))
+```
+
+# Fig 4a
+```{r Fig 4a}
+# Create long form dataframe 
+DEG_counts_df_long <- DEG_counts_df %>%
+  dplyr::select(-NumDEGsDown, -NumDEGsUp, -SitevSite) %>%
+  gather(key = DEG, value = counts, -Contrast, -Site, 
+         -TP1, -TP2, -Temp, -Trial) %>%
+  filter(Site == "Inshore" | Site == "Offshore") %>%
+  filter(Temp != "TF") %>%
+  filter(Temp > 30)
+
+# Create labels and colors for Temp Treatments 
+custom_labels_temp <- c("34" = "34°C", "37" = "37°C", "39" = "39°C", 
+                        "TF" = "TF")
+
+Temp_color <- c("34" = "#FFDD44", "37" = "#FF9933", "39" = "#DB2F0D")
+
+# Plot Fig 4
+Fig_4a <- ggplot(DEG_counts_df_long, aes(x = TP2, y = counts, 
+                                         fill = Site)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values=c('#8ADCE3', "#003A9D")) +
+  # scale_x_continuous(breaks=c(34, 37, 39)) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 5350)) +
+  facet_wrap2(~Temp, scales = "free_x", 
+              labeller = labeller(Temp = custom_labels_temp),
+              strip = strip_themed(background_x = elem_list_rect(fill = Temp_color))) +
+  theme_bw() +
+  ylab("# of DEGs") +
+  theme(legend.position="bottom",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent"),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(size = 11),
+        axis.title.x = element_blank(),
+        axis.text = element_text(size = 10),
+        strip.text = element_text(size = 11),
+        panel.spacing.x = unit(0.1, "lines"),
+        panel.spacing.y = unit(0.1, "lines"),
+        legend.margin = margin(t = -5, b = 0, unit = "pt"),  
+        plot.margin = margin(t = 10, r = 10, b = 10, l = 10)) 
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4a.pdf",  # Name of the output file
+  plot = Fig_4a,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 3                        # Height in inches
+)
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4a.png",  # Name of the output file
+  plot = Fig_4a,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 3                        # Height in inches
+)
+```
+
+# Table S2 - Total DEGs per Timepoint/Temp/Site
+```{r Table S2}
+DEG_Totals_Table <- DEG_counts_df_long %>%
+  select(Site, Timepoint = TP1, Temperature = Temp, counts) %>%
+  pivot_wider(
+    names_from = Site,        
+    values_from = counts,     
+    values_fill = 0) %>%
+  arrange(Temperature, Timepoint)
+
+DEG_Totals_Table_Nice <- nice_table(DEG_Totals_Table)
+
+save_as_docx(DEG_Totals_Table_Nice, path =  "Plots/Supplemental_Figs/Table_S2.docx")
+```
+
+# Fig S1 - Stacked Up and Down Regulation 
+```{r Fig S1}
+DEG_counts_UpDown <- DEG_counts_df %>%
+  dplyr::select(-TotalNumDEGs, -SitevSite) %>%
+  gather(key = DEG, value = counts, -Contrast, -Site, -TP1, -TP2, 
+         -Temp, -Trial) %>%
+  filter(Site == "Inshore" | Site == "Offshore") %>%
+  filter(Temp != "TF") %>%
+  filter(Temp > 30)
+
+
+# Set colors for facet labels 
+Site_colors <- c("Inshore" = '#8ADCE3', "Offshore" = "#003A9D")
+
+# Create labels for Temp Treatments 
+custom_labels_DEG <- c("NumDEGsDown" = "Down Regulated", 
+                       "NUMDEGsUp" = "Up Regulated")
+
+Fig_S1 <- DEG_counts_UpDown %>%
+  ggplot(aes(x = TP2, y = counts, fill = DEG)) +
+  geom_bar(stat = "identity", position = "stack") +
+  facet_grid2(Temp~Site, scales = "free_y",
+              labeller = labeller(Temp = custom_labels_temp),
+              strip = strip_themed(
+                background_x = elem_list_rect(fill = Site_colors), 
+                background_y = elem_list_rect(fill = Temp_color),
+                text_x = elem_list_text(color = c("black", "white")))) + 
+  scale_fill_manual(labels = c("Down-regulated", "Up-regulated"), 
+                    values = c("gray60", "gray30")) +
+  theme_bw() +
+  ylab("# of DEGs") +
+  theme(legend.position="bottom",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent"),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(size = 11),
+        axis.title.x = element_blank(),
+        axis.text = element_text(size = 10),
+        strip.text = element_text(size = 11),
+        panel.spacing.x = unit(0.1, "lines"),
+        panel.spacing.y = unit(0.1, "lines"),
+        legend.margin = margin(t = -5, b = 0, unit = "pt"), 
+        plot.margin = margin(t = 5, r = 5, b = 10, l = 5)) 
+
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S1.png", 
+  plot = Fig_S1,               
+  width = 5,                       # Width in inches
+  height = 7                        # Height in inches
+)
+
+```
+
+# Gene Counts 
+```{r top 30 Genes}
+contig_counts <- read.delim('data/Sequencing/Porites_astreoides/DESeq/Dedup_Mote_Past_Counts_full_cleannames.txt', sep = "")
+
+top_contig_sum <- contig_counts %>% 
+  rownames_to_column(var = "ContigName") %>%
+  mutate(read_sum = rowSums(contig_counts[ , -1])) %>%
+  dplyr::select(ContigName, read_sum_dedup = read_sum) %>%
+  arrange(desc(read_sum_dedup)) %>%
+  slice_head(n = 30)
+
+top_contig_mean <- contig_counts %>% 
+  rownames_to_column(var = "ContigName") %>%
+  mutate(read_mean = rowMeans(contig_counts[ , -1])) %>%
+  dplyr::select(ContigName, read_mean_dedup = read_mean) %>%
+  arrange(desc(read_mean_dedup)) %>%
+  slice_head(n = 30)
+
+base::setdiff(top_contig_sum$ContigName, top_contig_mean$ContigName)
+
+top30 <- top_contig_mean$ContigName
+```
+
+```{r import DEG Contrasts}
+# Set the path to the directory containing your files
+data_dir <- "data/Sequencing/Porites_astreoides/DESeq/"
+
+# Get all .txt file names in that directory
+file_list <- list.files(path = data_dir, pattern = "\\.txt$")
+
+# Loop through each file: read, preserve rownames, filter, reorder, assign
+for (file in file_list) {
+  df_name <- tools::file_path_sans_ext(file)
+  file_path <- file.path(data_dir, file)
+  
+  # Read the file and keep rownames
+  df <- read.table(file_path, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  df$Contig <- rownames(df)
+  rownames(df) <- NULL
+  
+  # Filter out NA padj 
+  df_filtered <- df[!is.na(df$padj), ]
+  
+  # Reorder columns to make Contig the first one
+  df_filtered <- df_filtered[, c("Contig", 
+                                 base::setdiff(names(df_filtered),
+                                               "Contig"))]
+  
+  # Assign to the environment
+  assign(df_name, df_filtered)
+  
+}
+```
+
+# Compare Inshore vs Offshore vs Shared DEGs
+```{r independent loop check}
+# resIn_30_T3vIn_34_T3
+inshore_check <- read.delim('data/Sequencing/Porites_astreoides/DESeq/resIn_30_T3vIn_34_T3.txt') %>% rownames_to_column(var = "Contig") %>%
+  mutate(Site = "Inshore") %>%
+  filter(padj < 0.1)
+
+# resOff_30_T3vOff_34_T3
+offshore_check <- read.delim('data/Sequencing/Porites_astreoides/DESeq/resOff_30_T3vOff_34_T3.txt') %>% rownames_to_column(var = "Contig") %>%
+  mutate(Site = "Offshore") %>%
+  filter(padj < 0.1)
+
+sum(offshore_check[offshore_check$padj<0.1,"Contig"]%in%inshore_check[inshore_check$padj<0.1,"Contig"])
+
+# Get vectors of contigs from filtered data
+inshore_contigs <- inshore_check$Contig
+offshore_contigs <- offshore_check$Contig
+
+# Compare
+shared <- base::intersect(inshore_contigs, offshore_contigs)
+inshore_only <- base::setdiff(inshore_contigs, offshore_contigs)
+offshore_only <- base::setdiff(offshore_contigs, inshore_contigs)
+
+# Make the result into a data frame
+loop_check <- data.frame(
+  Timepoint = "T3",
+  Temperature = 34,
+  Shared = length(shared),
+  Inshore = length(inshore_only),
+  Offshore = length(offshore_only)
+)
+
+print(loop_check)
+```
+
+```{r comparison table for each temp and timepoint}
+# Define  inshore and offshore contrast names
+inshore_names <- c(
+  "resIn_30_T1vIn_34_T1", "resIn_30_T2vIn_34_T2", "resIn_30_T3vIn_34_T3",
+  "resIn_30_T4vIn_34_T4", "resIn_30_T5vIn_34_T5", "resIn_30_T1vIn_37_T1",
+  "resIn_30_T2vIn_37_T2", "resIn_30_T3vIn_37_T3", "resIn_30_T4vIn_37_T4",
+  "resIn_30_T5vIn_37_T5", "resIn_30_T1vIn_39_T1", "resIn_30_T2vIn_39_T2",
+  "resIn_30_T3vIn_39_T3", "resIn_30_T4vIn_39_T4", "resIn_30_T5vIn_39_T5")
+
+offshore_names <- c(
+ "resOff_30_T1vOff_34_T1", "resOff_30_T2vOff_34_T2", 
+ "resOff_30_T3vOff_34_T3", "resOff_30_T4vOff_34_T4", 
+ "resOff_30_T5vOff_34_T5", "resOff_30_T1vOff_37_T1", 
+ "resOff_30_T2vOff_37_T2", "resOff_30_T3vOff_37_T3",
+ "resOff_30_T4vOff_37_T4", "resOff_30_T5vOff_37_T5", 
+ "resOff_30_T1vOff_39_T1", "resOff_30_T2vOff_39_T2",
+ "resOff_30_T3vOff_39_T3", "resOff_30_T4vOff_39_T4", 
+ "resOff_30_T5vOff_39_T5")
+
+# Initialize an empty list to collect results
+results_list <- list()
+
+# Loop through each inshore/offshore pair
+for (i in seq_along(inshore_names)) {
+  inshore_df <- get(inshore_names[i])
+  offshore_df <- get(offshore_names[i])
+  
+  # Filter to DEGs with padj < 0.1
+  inshore_df <- subset(inshore_df, padj < 0.1)
+  offshore_df <- subset(offshore_df, padj < 0.1)
+  
+  # Extract contigs
+  inshore_contigs <- inshore_df$Contig
+  offshore_contigs <- offshore_df$Contig
+  
+  # Split the filename by "_"
+  temp_split <- strsplit(inshore_names[i], "_")[[1]]
+  temperature <- as.numeric(temp_split[length(temp_split) - 1])
+  timepoint <- as.character(temp_split[length(temp_split)])
+  
+  # Compare contigs
+  shared <- base::intersect(inshore_contigs, offshore_contigs)
+  inshore_unique <- base::setdiff(inshore_contigs, offshore_contigs)
+  offshore_unique <- base::setdiff(offshore_contigs, inshore_contigs)
+  
+  # Store the results
+  results_list[[i]] <- data.frame(
+    Timepoint = timepoint,
+    Temperature = temperature,
+    Shared = length(shared),
+    Inshore = length(inshore_unique),
+    Offshore = length(offshore_unique)
+  )
+}
+
+# Combine into one data frame
+comparison_table <- do.call(rbind, results_list)
+
+# Reorder and include %
+comparison_table_final <- comparison_table %>%
+  mutate(Total = Shared + Inshore + Offshore) %>%
+  mutate(`% Inshore` = round(Inshore/Total * 100, 0)) %>%
+  mutate(`% Offshore` = round(Offshore/Total *100, 0)) %>%
+  mutate(`% Shared` = round(Shared/Total * 100, 0)) %>%
+  mutate(Inshore = paste0(Inshore, " (", `% Inshore`, "%)")) %>%
+  mutate(Offshore = paste0(Offshore, " (", `% Offshore`, "%)")) %>%
+  mutate(Shared = paste0(Shared, " (", `% Shared`, "%)")) %>%
+  dplyr::select(Timepoint, Temperature, Total, Shared, Inshore, Offshore)
+ 
+
+# View the results
+print(comparison_table_final)
+
+library(rempsyc)
+comparison_table_nice <- nice_table(comparison_table_final)
+
+flextable::save_as_docx(comparison_table_nice, path = "Plots/Fig_4/InvsOffvsShared_Table.docx")
+```
+
+# Fig 4b
+```{r Fig 4b}
+# Reformat comparison table for plotting
+comparison_table_long <- comparison_table %>%
+  gather(key = Group, value = DEGs, -Timepoint, -Temperature)
+
+# Reorder the Group factor so that "Shared" comes in the middle
+comparison_table_long$Group <- factor(comparison_table_long$Group, 
+                                      levels = c("Inshore", "Shared",
+                                                 "Offshore"))
+
+Fig_4b <- ggplot(comparison_table_long, aes(x = Timepoint, y = DEGs, fill = Group)) +
+  geom_bar(stat = "identity", position = "fill") +  
+  scale_fill_manual(name = "", labels = c("Inshore Specific", "Shared", "Offshore Specific"), values=c('#8ADCE3', "#458BC0","#003A9D")) +
+  scale_y_continuous(expand = c(0, 0)) +
+  facet_wrap2(~Temperature, 
+             labeller = labeller(Temperature = custom_labels_temp),
+             strip = strip_themed(background_x = elem_list_rect(fill = Temp_color))) +
+  labs(y = "% of DEGs", x = "", fill = "") +
+  theme_bw() +
+  theme(legend.position="bottom",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent"),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(size = 11),
+        axis.title.x = element_blank(),
+        axis.text = element_text(size = 10),
+        strip.text = element_text(size = 11),
+        panel.spacing.x = unit(0.1, "lines"),
+        panel.spacing.y = unit(0.1, "lines"),
+        legend.margin = margin(t = -5, b = 0, unit = "pt"),  
+        plot.margin = margin(t = 10, r = 10, b = 10, l = 10))
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4b.pdf",  # Name of the output file
+  plot = Fig_4b,               # Specify the plot to save
+  width = 8,                       # Width in inches
+  height = 4                        # Height in inches
+)
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4b.png",   # Name of the output file
+  plot = Fig_4b,               # Specify the plot to save
+  width = 8,                       # Width in inches
+  height = 4                        # Height in inches
+)
+```
+
+# Fig 4
+```{r combine Fig 4a and 4b}
+Fig_4 <- ggarrange(Fig_4a, Fig_4b, ncol = 1,
+          labels = c("A", "B"),
+          widths = c(1, 1),
+          heights = c(1,1))
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4.pdf",  # Name of the output file
+  plot = Fig_4,               # Specify the plot to save
+  width = 6,                       # Width in inches
+  height = 6                      # Height in inches
+)
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4.png",   # Name of the output file
+  plot = Fig_4,               # Specify the plot to save
+  width = 6,                       # Width in inches
+  height = 6                    # Height in inches
+)
+```
+
+# Check Annotations
+```{r attempt at DEG ID}
+Annotations<-read.delim("data/Sequencing/Porites_astreoides/Kenkel_Genome/P_astreoides_Kenkel2013_totalannotated.txt")
+
+shared_only <- as.data.frame(shared) %>%
+  select(ContigName = shared) %>%
+  mutate(class = "shared")
+
+inshore_only <- as.data.frame(inshore_unique) %>%
+  select(ContigName = inshore_unique) %>%
+  mutate(class = "inshore_unique")
+
+offshore_only <- as.data.frame(offshore_unique) %>%
+  select(ContigName = offshore_unique) %>%
+  mutate(class = "offshore_unique")
+
+contig_combo <- rbind(shared_only, inshore_only, offshore_only)
+
+contig_combo_annot <- right_join(Annotations, contig_combo, 
+                                 by = "ContigName") %>%
+  dplyr::select(ContigName, ContigLength, GOBP, class) 
+
+contig_combo_annot_grouped <- contig_combo_annot %>%
+  mutate(GOBP = case_when(grepl("Heat Shock", GOBP, ignore.case = TRUE) ~ "Heat Shock Protein", TRUE ~ GOBP)) %>%
+  mutate(GOBP = case_when(
+      grepl("binding", GOBP, ignore.case = TRUE) ~ "Molecule Binding",
+      grepl("transporter activity", GOBP, 
+            ignore.case = TRUE) ~ "Transporter Activity", 
+      grepl("ase activity", GOBP, 
+            ignore.case = TRUE) ~ "Enzyme Activity", 
+      grepl("receptor activity", GOBP, 
+            ignore.case = TRUE) ~ "Receptor Activity", 
+      grepl("regulator activity", GOBP, 
+            ignore.case = TRUE) ~ "Receptor Activity", 
+      grepl("channel activity", GOBP, 
+            ignore.case = TRUE) ~ "Channel Activity", 
+      TRUE ~ GOBP  # preserve original label for all others
+    )) %>%
+  group_by(GOBP, class) %>%
+  summarise(ContigCount = n()) %>%
+  mutate(GOBP = str_extract(GOBP, "^[^(]+")) %>%
+  filter(ContigCount > 10) %>%
+  mutate(GOBP = reorder(GOBP, -ContigCount))
+
+length(unique(contig_combo_annot_grouped$GOBP))
+
+ggplot(contig_combo_annot_grouped, aes(x = GOBP, y = ContigCount, fill = class)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values=c('#8ADCE3', "#458BF0", "#003A9D")) +
+  labs(y = "Number of Contigs", x = "", title = "Contig Counts per GOBP Term") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1)) 
+```

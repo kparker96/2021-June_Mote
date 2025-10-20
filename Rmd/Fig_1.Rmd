@@ -1,0 +1,215 @@
+---
+title: "Fig 1: Sampling Map"
+output: html_document
+date: "2025-01-03"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries 
+```{r libraries}
+library(ggplot2)
+library(ggspatial)
+library(tidyverse)
+library(cowplot)
+library(sf)
+library(rnaturalearth) # install.packages("terra", type = "binary")
+library(rnaturalearthdata)
+```
+
+# Create and Plot Maps
+```{r North America Map}
+north_america <- ne_countries(continent = "North America", returnclass = "sf")
+
+# Plot the filtered map with a square added
+na_map <- 
+  ggplot() +
+  geom_sf(data = north_america, fill = "lightgrey", color = "black") +
+  coord_sf(xlim = c(-105, -75), ylim = c(15, 35)) +
+  geom_rect(aes(xmin = -84, xmax = -80, ymin = 24, ymax = 26), 
+            fill = "transparent", size = 0.75, alpha = 0.5, color = "black") +
+  scale_x_continuous(breaks = seq(-105, -75, by = 15)) +  
+  scale_y_continuous(breaks = seq(15, 35, by = 10)) +
+  theme(panel.border = element_rect(color = "black", fill = NA, size = 0.5),
+        panel.background = element_blank(), 
+        plot.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        axis.title = element_blank(),
+        axis.text = element_text(size = 5)) +
+  #annotation_scale(location = "br", width_hint = 0.16) +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )
+
+ggsave("Plots/Fig_1/na_map_plot.png", plot = na_map, width = 4, height = 4, dpi = 300)
+```
+
+```{r Florida Keys Map}
+# Get spatial data for the USA
+usa <- ne_states(country = "United States of America", returnclass = "sf")
+
+# Filter to focus on Florida
+florida <- usa[usa$name == "Florida", ]
+
+# Define the bounding box for the Florida Keys
+keys_bbox <- st_bbox(c(xmin = -82, xmax = -80, ymin = 24.5, ymax = 25.5), crs = st_crs(florida))
+
+# Crop Florida data to the bounding box
+florida_keys <- st_crop(florida, keys_bbox)
+
+# Define sampling site coordinates (longitude, latitude)
+sampling_sites <- data.frame(
+  Site = c("Offshore", "Inshore"),
+  Longitude = c(-81.48355, -81.42903),  # Converted W degrees to negative longitude
+  Latitude = c(24.53145, 24.60577)     # Converted N degrees to decimal format
+)
+
+temperature_sites <- data.frame(
+  Site = c("Offshore", "Inshore"),
+  Longitude = c(-81.404000, -81.384000),  # Converted W degrees to negative longitude
+  Latitude = c(24.546000, 24.615000)     # Converted N degrees to decimal format
+)
+
+# Convert to spatial object
+sampling_sites_sf <- st_as_sf(sampling_sites, coords = c("Longitude", "Latitude"), crs = 4326)
+
+temperature_sites_sf <- st_as_sf(temperature_sites, coords = c("Longitude", "Latitude"), crs = 4326)
+
+# Add a new column 'Site_Type' to distinguish between Sampling and Temperature sites
+sampling_sites_sf$Site_Type <- "Sampling"
+temperature_sites_sf$Site_Type <- "Temperature"
+
+
+# Florida Keys Zoomed In 
+map <- ggplot() +
+  geom_sf(data = florida, fill = "lightgrey", color = "black") + 
+  geom_sf(data = florida_keys, fill = "lightgrey", color = "black") + 
+  geom_sf(data = sampling_sites_sf, aes(color = Site, shape = Site_Type), size = 3.5) + 
+  geom_point(data = temperature_sites_sf, aes(x = st_coordinates(geometry)[,1], y = st_coordinates(geometry)[,2], 
+                                              color = Site, shape = Site_Type), size = 3.5) +  
+  coord_sf(xlim = c(-81.8, -80.3), ylim = c(24.5, 25.4)) +  
+  scale_x_continuous(breaks = seq(-82, -80, by = 0.5)) +  
+  scale_y_continuous(breaks = seq(24.4, 25.4, by = 0.2)) +  
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    plot.background = element_blank(),
+    axis.title = element_text(size = 9),
+    axis.text = element_text(size = 8), 
+    legend.title = element_blank(),
+    legend.text = element_text(size = 7),
+    legend.spacing.y = unit(-0.35, "cm"),  
+    legend.key.size = unit(0.4, "cm"),
+    legend.position = c(0.86,0.17),  
+    #legend.box = "horizontal",  # Arrange legends horizontally
+    #legend.box.just = "center",  # Center the legends
+    legend.background = element_blank()
+  ) + 
+  scale_color_manual(values = c("Offshore" = "darkblue", "Inshore" = "lightblue")) + 
+  guides(
+    color = guide_legend(order = 1, ncol = 1),  # Sampling legend
+    shape = guide_legend(order = 2, ncol = 1)  # Temperature legend
+  ) +
+  scale_shape_manual(values = c("Sampling" = 16, "Temperature" = 17), labels = c("Colony Collection", "Temperature Monitoring")) +
+  annotation_scale(location = "br", width_hint = 0.2) +
+  labs(
+    x = "Longitude",
+    y = "Latitude"
+  )
+
+# Save the map plot
+ggsave("Plots/Fig_1/map_plot.png", plot = map, width = 8, height = 6, dpi = 300)
+```
+
+```{r Florida Keys Temperature Data}
+#Newfound Harbor Spotter Buoy
+inshore_temp <- read.csv("data/Environmental_Data/Inshore_data_site_3650_2024_10_19_2025_08_27.csv") %>%
+  dplyr::select(timestamp, dhw_noaa, satellite_temperature_noaa, sst_anomaly_noaa,  bottom_temperature_spotter, top_temperature_spotter) %>%
+  mutate(site = "Inshore")
+
+# Looe Key Reef Buoy 
+offshore_temp <- read.csv("data/Environmental_Data/Offshore_data_site_3649_2024_10_19_2025_08_28.csv") %>%
+  dplyr::select(timestamp, dhw_noaa, satellite_temperature_noaa, sst_anomaly_noaa,  bottom_temperature_spotter, top_temperature_spotter) %>%
+  mutate(site = "Offshore")
+
+site_temps <- rbind(inshore_temp, offshore_temp) 
+
+# Ensure the timestamp column is in datetime format
+site_temps$timestamp <- as.POSIXct(site_temps$timestamp, format = "%Y-%m-%dT%H:%M:%OSZ", tz = "UTC")
+
+# Filter the data for dates after 2024-10-22
+site_temps_plot <- site_temps %>%
+    filter(
+    site == "Inshore" |
+    (site == "Offshore" & timestamp <= as.POSIXct("2025-03-08", tz = "UTC")) |
+    (site == "Offshore" & timestamp >= as.POSIXct("2025-05-06", tz = "UTC"))
+  ) %>%
+  mutate(segment = case_when(
+    site == "Inshore"  ~ 1L,
+    site == "Offshore" & timestamp <= as.POSIXct("2025-03-08", tz = "UTC") ~ 1L,
+    site == "Offshore" & timestamp >= as.POSIXct("2025-05-06", tz = "UTC") ~ 2L
+  ))
+
+
+ temps<-
+   ggplot(site_temps_plot, aes(x = timestamp, 
+                       y = top_temperature_spotter, 
+                       color = site, group = interaction(site, segment))) +
+  geom_line(size = 0.75) + 
+  geom_hline(yintercept = 29.7, color = "orange1", linetype = "dashed", size = 0.6) +
+  scale_y_continuous(breaks = seq(18, 32, by = 7), limits = c(17.5, 33)) + 
+  # geom_hline(yintercept = 29.7, color = "black", size = 1) +
+  scale_color_manual(values = c("Offshore" = "darkblue", 
+                                "Inshore" = "lightblue")) +
+  scale_x_datetime(date_labels = "%b %Y", expand = c(0, 0)) +
+ 
+  labs(y = "Temperature (°C)", x = "") +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        panel.background = element_blank(),
+        plot.background = element_blank(),
+        legend.background = element_blank(),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7),
+        legend.direction = "horizontal",
+        legend.position = c(0.16,0.1))
+
+
+# Save the temperature plot
+ggsave("Plots/Fig_1/temps_plot.png", plot = temps, width = 7.75, height = 1.5, dpi = 300)
+```
+
+# Combine Maps and Save Fig 1
+```{r Fig 1}
+background <- ggplot() +
+  theme_void() +
+  theme(plot.background = element_rect(fill = "white", color = NA))
+
+Fig_1 <- ggdraw(background) +
+  draw_plot(map, x = 0, y = .21, width = 0.95, height = 0.8) +
+  draw_plot(na_map, x = 0.1, y = .65, width = 0.35, height = 0.35) +
+  draw_plot(temps, x = 0.036, y = -0.02, width = 0.915, height = .28) 
+
+ggsave(
+  filename = "Plots/Fig_1/Fig_1.pdf",  # Name of the output file
+  plot = Fig_1,               # Specify the plot to save
+  width = 6,                       # Width in inches
+  height = 5                        # Height in inches
+)
+
+
+ggsave(
+  filename = "Plots/Fig_1/Fig_1.png",  # Name of the output file
+  plot = Fig_1,               # Specify the plot to save
+  width = 6,                       # Width in inches
+  height = 5                        # Height in inches
+)
+
+```
