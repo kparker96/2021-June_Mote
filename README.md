@@ -31,7 +31,12 @@ ___
  - **GOseq:** Exploratory heat maps
  - **Supplemental_Figs/:** All supplemental figures, tables, and additional information
 
-**Rmd:**  
+**Rmd:**    
+ - **DESeq_Create_Contrasts.R:** Script to create all contrasts between sites (Inshore vs Offshore), Timepoints (T0-T5), and Temperatures (30°C, 34°C, 37°C, 39°C) for DEG analysis 
+ - **DESeq_GOseq.Rmd:** GOseq analysis to assess significant gene enrichment
+ -  **Fig_#.Rmd:** Plotting and statistical analysis for designated figure with output in corresponding Plots/Fig_# directory
+ -  **Nanodrop_QC.Rmd:** QC assment of RNA-seq extractions from raw Nanodrop data
+ -  **dds.RData**: DESeq object of all gene expression data created in DESeq_Create_Contrasts.Rmd and used for PCAs, Transcriptomic Shift, and GOseq analyses  
 
 **data:**  
   - **Environmental_Data/:** Temperature data from Aqualink Spotter Buoys for Fig 1 and experimental tank water chemistry YSI measurements.
