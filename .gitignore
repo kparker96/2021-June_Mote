@@ -1,7 +1,8 @@
 # R session and project files
-.Rdata
+.RData
 .Rhistory
 .gitattributes
+.Rproj.user/
 
 # Project folders to ignore
 manuscript/
