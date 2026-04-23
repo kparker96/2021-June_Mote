@@ -171,3 +171,78 @@ ggsave(
   height = 5                        # Height in inches
 )
 ```
+
+# Plotting both CBASS Experiment Days 
+```{r import inshore ramps }
+# Fig_1 Data 
+offshore_ramps <- ramps_df_sampled %>%
+  mutate(site = "Offshore")
+
+# Inshore Ramps 
+ramps_IPa <-  read.delim("data/LOG/2021-06-08_Ipast_Ramp1_1-4_2pm_LOG.TXT", sep = "," )
+
+ramps_IPa$time<-strptime(paste(ramps_IPa$Date,paste(ramps_IPa$Th,ramps_IPa$Tm,ramps_IPa$Ts,sep=":"),sep=" "),format="%Y_%B_%d %H:%M:%S")
+
+ramps_Ipa <-ramps_IPa[order(ramps_IPa$time),]
+
+ramps_IPa$time <- as.POSIXct(ramps_IPa$time)
+
+ramps_IPa_df <- ramps_IPa %>%
+  dplyr::select(Date, time, T1SP, T1inT, T2SP, T2inT,T3SP, T3inT,T4SP, T4inT) %>%
+  gather(key = tank, value = sp, -Date, -time, -T1inT, -T2inT, -T3inT, -T4inT) %>%
+  gather(key = probe, value = inTemp, -Date, -time, -tank, -sp)
+
+ramps_IPa_df$inTemp <- as.numeric(ramps_IPa_df$inTemp)
+ramps_IPa_df$sp <- as.numeric(ramps_IPa_df$sp)
+
+# Start and End Time
+start_time_IPa <- as.POSIXct("2021-06-08 12:00:00", format = "%Y-%m-%d %H:%M:%S")
+end_time_IPa <- as.POSIXct("2021-06-09 09:40:00", format = "%Y-%m-%d %H:%M:%S")
+
+# Filter just plotted time
+ramps_IPa_df_filtered <- subset(ramps_IPa_df, time >= start_time_IPa & time <= end_time_IPa & inTemp >= 30 & inTemp <= 39.2)
+
+# Reduce the dataset size if it has many rows
+ramps_IPa_df_sampled <- ramps_IPa_df_filtered[seq(1, nrow(ramps_IPa_df_filtered), by = 10), ]
+
+inshore_ramps <- ramps_IPa_df_sampled %>%
+  mutate(site = "Inshore")
+
+```
+
+```{r combine offshore and inshore ramps}
+all_ramps <- rbind(offshore_ramps, inshore_ramps) %>%
+  mutate()
+
+Fig_S5 <- ggplot(all_ramps, aes(x = time)) +
+  geom_line(aes(y = inTemp, color = probe), linewidth = 1.5, alpha = 0.55) +
+  facet_wrap(~site, scales = "free_x") +
+  scale_color_manual(values = c("#305CAA", "#ffcc33", "#ee6600", "#990000")) +
+  scale_y_continuous(limits = c(29.9, 40), breaks = seq(30, 39, by = 1.5), 
+                     expand = c(0, 0)) +
+  scale_x_datetime(date_labels = "%H:%M") +
+  theme_bw() +
+  ylab("Temperature °C") +
+  xlab("Time") +
+  theme(legend.position = "none",
+        axis.title = element_text(size = 17),
+        axis.text = element_text(size = 13),
+        strip.text = element_text(size = 17)) 
+
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S5.pdf",  # Name of the output file
+  plot = Fig_S5,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 5                        # Height in inches
+)
+
+
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S5.png",  # Name of the output file
+  plot = Fig_S5,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 5                        # Height in inches
+)
+
+```
+
