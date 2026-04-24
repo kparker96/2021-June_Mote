@@ -163,7 +163,8 @@ inshore_temp_df <-
 
 inshore_temp <- inshore_temp_df %>%
   select(YYYY, MM, DD, SST) %>%
-  filter(YYYY == 2020 | YYYY == 2021)
+  filter(YYYY == 2020 | YYYY == 2021) %>%
+  mutate(site = "Inshore")
   
 # Looe Key Reef Buoy 
 offshore_temp_df <- read.csv("data/Environmental_Data/Coral_Reef_Watch_Temp_Data/Looe-Key-Reef_NOAA_TimeSeries.csv") %>%
@@ -173,7 +174,8 @@ offshore_temp_df <- read.csv("data/Environmental_Data/Coral_Reef_Watch_Temp_Data
 
 offshore_temp <- offshore_temp_df %>%
   filter(YYYY == 2020 | YYYY == 2021) %>%
-  select(YYYY, MM, DD, SST) 
+  select(YYYY, MM, DD, SST) %>%
+  mutate(site = "Offshore")
 
 site_temps <- rbind(inshore_temp, offshore_temp) 
 
@@ -242,7 +244,7 @@ ggsave(
 # Long-Term Data plotting 
 ```{r}
 time_series <- rbind(inshore_temp_df, offshore_temp_df) %>%
-  filter(YYYY >= 2006)
+  filter(YYYY >= 2005)
 
 ggplot(time_series, aes(x = date, y = SST, color = site)) +
   geom_hline(yintercept = 29.7, linetype = "dashed", 
