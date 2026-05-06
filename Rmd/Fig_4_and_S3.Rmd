@@ -122,8 +122,8 @@ DEG_Totals_Table_Nice <- nice_table(DEG_Totals_Table)
 save_as_docx(DEG_Totals_Table_Nice, path =  "Plots/Supplemental_Figs/Table_S2.docx")
 ```
 
-# Fig S1 - Stacked Up and Down Regulation 
-```{r Fig S1}
+# Fig S3 - Stacked Up and Down Regulation 
+```{r Fig S3}
 DEG_counts_UpDown <- DEG_counts_df %>%
   dplyr::select(-TotalNumDEGs, -SitevSite) %>%
   gather(key = DEG, value = counts, -Contrast, -Site, -TP1, -TP2, 
@@ -140,7 +140,7 @@ Site_colors <- c("Inshore" = '#8ADCE3', "Offshore" = "#003A9D")
 custom_labels_DEG <- c("NumDEGsDown" = "Down Regulated", 
                        "NUMDEGsUp" = "Up Regulated")
 
-Fig_S1 <- DEG_counts_UpDown %>%
+Fig_S3 <- DEG_counts_UpDown %>%
   ggplot(aes(x = TP2, y = counts, fill = DEG)) +
   geom_bar(stat = "identity", position = "stack") +
   facet_grid2(Temp~Site, scales = "free_y",
@@ -168,8 +168,8 @@ Fig_S1 <- DEG_counts_UpDown %>%
         plot.margin = margin(t = 5, r = 5, b = 10, l = 5)) 
 
 ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S1.png", 
-  plot = Fig_S1,               
+  filename = "Plots/Supplemental_Figs/Fig_S3.png", 
+  plot = Fig_S3,               
   width = 5,                       # Width in inches
   height = 7                        # Height in inches
 )

@@ -99,7 +99,7 @@ FvFm_adjusted <- data.frame(
   label_y_F = 31.95)
 ```
 
-# Plot figure 2
+# Fig 2 Plotting
 ```{r Fig 2}
 Fig_2 <- ggplot(ramps_df_sampled, aes(x = time)) +
   geom_line(aes(y = inTemp, color = probe), linewidth = 1.5, alpha = 0.55) +
@@ -172,7 +172,7 @@ ggsave(
 )
 ```
 
-# Plotting both CBASS Experiment Days 
+# Fig S2: Plotting both CBASS Experiment Days 
 ```{r import inshore ramps }
 # Fig_1 Data 
 offshore_ramps <- ramps_df_sampled %>%
@@ -210,11 +210,11 @@ inshore_ramps <- ramps_IPa_df_sampled %>%
 
 ```
 
-```{r combine offshore and inshore ramps}
+```{r Fig S2}
 all_ramps <- rbind(offshore_ramps, inshore_ramps) %>%
   mutate()
 
-Fig_S5 <- ggplot(all_ramps, aes(x = time)) +
+Fig_S2 <- ggplot(all_ramps, aes(x = time)) +
   geom_line(aes(y = inTemp, color = probe), linewidth = 1.5, alpha = 0.55) +
   facet_wrap(~site, scales = "free_x") +
   scale_color_manual(values = c("#305CAA", "#ffcc33", "#ee6600", "#990000")) +
@@ -230,16 +230,8 @@ Fig_S5 <- ggplot(all_ramps, aes(x = time)) +
         strip.text = element_text(size = 17)) 
 
 ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S5.pdf",  # Name of the output file
-  plot = Fig_S5,               # Specify the plot to save
-  width = 7,                       # Width in inches
-  height = 5                        # Height in inches
-)
-
-
-ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S5.png",  # Name of the output file
-  plot = Fig_S5,               # Specify the plot to save
+  filename = "Plots/Supplemental_Figs/Fig_S2.png",  # Name of the output file
+  plot = Fig_S2,               # Specify the plot to save
   width = 7,                       # Width in inches
   height = 5                        # Height in inches
 )

@@ -1,5 +1,5 @@
 ---
-title: "Fig S4: ITS2 Type Profiles"
+title: "Fig S6: ITS2 Type Profiles"
 output: html_document
 date: "2025-08-04"
 editor_options: 
@@ -15,7 +15,7 @@ library(FSA)
 ```
 
 # Relative Abundance
-```{r read raw data and Fig S4}
+```{r read raw data and Fig S6}
 raw_lines <- readLines("data/Sequencing/Porites_astreoides/ITS2/SymPortal_Output/its2_type_profiles/543_20250107T095410_DBV_20250109T202716.profiles.relative.abund_and_meta.txt")
 
 # Find where the actual abundance data starts
@@ -64,7 +64,7 @@ relabund <- read.delim(text = paste(data_lines, collapse = "\n"), header = FALSE
     
 
 # Plot Relative Abundance 
-Fig_S4 <- ggplot(relabund_long, aes(x = sample_name, 
+Fig_S6 <- ggplot(relabund_long, aes(x = sample_name, 
                                     y = relative_abundance,
                                     fill = ITS2_type_profile)) +
   geom_bar(stat = "identity") +
@@ -86,8 +86,8 @@ Fig_S4 <- ggplot(relabund_long, aes(x = sample_name,
   legend.direction = "vertical")
 
 ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S4.png", 
-  plot = Fig_S4,               # Specify the plot to save
+  filename = "Plots/Supplemental_Figs/Fig_S6.png", 
+  plot = Fig_S6,               # Specify the plot to save
   width = 5,                       # Width in inches
   height = 4                        # Height in inches
 )

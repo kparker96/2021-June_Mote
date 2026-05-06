@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r libraries}
 library(ggplot2)
 library(ggspatial)
+library(ggpubr)
 library(tidyverse)
 library(cowplot)
 library(sf)
@@ -152,7 +153,7 @@ map <- ggplot() +
 ggsave("Plots/Fig_1/map_plot.png", plot = map, width = 8, height = 6, dpi = 300)
 ```
 
-```{r Florida Keys Temperature Data}
+```{r Florida Keys Temperature Data: Sampling Time Period}
 #Newfound Harbor Spotter Buoy
 inshore_temp_df <-
   read.csv("data/Environmental_Data/Coral_Reef_Watch_Temp_Data/Newfound-Harbor_NOAA_TimeSeries.csv") %>%
@@ -160,9 +161,8 @@ inshore_temp_df <-
          date = as.Date(paste(YYYY, MM, DD, sep = "-")),
          month_year = format(date, "%B %Y"))
 
-
 inshore_temp <- inshore_temp_df %>%
-  select(YYYY, MM, DD, SST) %>%
+  select(YYYY, MM, DD, date, month_year, SST) %>%
   filter(YYYY == 2020 | YYYY == 2021) %>%
   mutate(site = "Inshore")
   
@@ -173,8 +173,8 @@ offshore_temp_df <- read.csv("data/Environmental_Data/Coral_Reef_Watch_Temp_Data
          month_year = format(date, "%B %Y"))
 
 offshore_temp <- offshore_temp_df %>%
+  select(YYYY, MM, DD, date, month_year, SST) %>%
   filter(YYYY == 2020 | YYYY == 2021) %>%
-  select(YYYY, MM, DD, SST) %>%
   mutate(site = "Offshore")
 
 site_temps <- rbind(inshore_temp, offshore_temp) 
@@ -213,7 +213,7 @@ temps <- ggplot(site_temps, aes(x = date, y = SST, color = site)) +
 ggsave("Plots/Fig_1/temps_plot.png", plot = temps, width = 7.75, height = 1.5, dpi = 300)
 ```
 
-# Combine Maps and Save Fig 1
+# Fig 1: Combine Maps
 ```{r Fig 1}
 background <- ggplot() +
   theme_void() +
@@ -221,8 +221,10 @@ background <- ggplot() +
 
 Fig_1 <- ggdraw(background) +
   draw_plot(map, x = 0, y = .21, width = 0.95, height = 0.8) +
+  draw_plot_label("A", x = 0.02, y = 1, size = 14, fontface = "bold") +
   draw_plot(na_map, x = 0.1, y = .65, width = 0.35, height = 0.35) +
-  draw_plot(temps, x = 0.036, y = -0.02, width = 0.915, height = .28) 
+  draw_plot(temps, x = 0.036, y = -0.02, width = 0.915, height = .28) +
+  draw_plot_label("B", x = 0.02, y = 0.30, size = 14, fontface = "bold")
 
 ggsave(
   filename = "Plots/Fig_1/Fig_1.pdf",  # Name of the output file
@@ -230,7 +232,6 @@ ggsave(
   width = 6,                       # Width in inches
   height = 5                        # Height in inches
 )
-
 
 ggsave(
   filename = "Plots/Fig_1/Fig_1.png",  # Name of the output file
@@ -241,28 +242,75 @@ ggsave(
 
 ```
 
-# Long-Term Data plotting 
-```{r}
-time_series <- rbind(inshore_temp_df, offshore_temp_df) %>%
-  filter(YYYY >= 2005)
+# Fig S1
+```{r Florida Keys Temperature Data: Since 1985}
+time_series <- rbind(inshore_temp_df, offshore_temp_df) 
 
-ggplot(time_series, aes(x = date, y = SST, color = site)) +
-  geom_hline(yintercept = 29.7, linetype = "dashed", 
-             linewidth = 1, color = "orange") +
-  geom_line() +
+temp_time_series_sup_fig <-
+  ggplot(time_series, aes(x = date, y = SST, color = site)) +
+  geom_line(linewidth = 0.8) +
+  scale_x_date(date_labels = "%Y", expand = c(0, 0), date_breaks = "4 years") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_hline(yintercept = 29.7, color = "orange1", linetype = "dashed", size = 0.9) +
+  scale_y_continuous(breaks = seq(18, 32, by = 2)) +
+  scale_color_manual(values = c("Offshore" = "darkblue", 
+                                "Inshore" = "lightblue")) +
+ 
+  labs(y = "Temperature (°C)", x = "") +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.direction = "horizontal",
+        legend.position = c(0.16,0.1))
+
+
+DHW_time_series_sup_fig <-
+  ggplot(time_series, aes(x = date, y = DHW, color = site)) +
+  geom_line(linewidth = 0.8) +
+  scale_x_date(date_labels = "%Y", expand = c(0, 0), date_breaks = "4 years") +
   scale_color_manual(values = c(
     "Offshore" = "darkblue", 
     "Inshore" = "lightblue")) +
-  theme_classic()
+  labs(y = "DHW", x = "") +
+  theme_bw() +
+  theme(panel.grid = element_blank(),
+        axis.title = element_text(size = 9),
+        axis.text = element_text(size = 8),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.direction = "horizontal",
+        legend.position = c(0.16,0.025))
 
+Fig_S1 <- ggarrange(temp_time_series_sup_fig, DHW_time_series_sup_fig, 
+          ncol = 1, common.legend = TRUE, legend = "bottom", 
+          labels = c("A", "B")) 
 
-ggplot(time_series, aes(x = date, y = DHW, color = site)) +
-  geom_line(linewidth = 1) +
-  scale_color_manual(values = c(
-    "Offshore" = "darkblue", 
-    "Inshore" = "lightblue")) +
-  theme_bw()
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S1.png",  # Name of the output file
+  plot = Fig_S1,               # Specify the plot to save
+  width = 6,                       # Width in inches
+  height = 5                        # Height in inches
+)
 
 
 ```
 
+```{r Florida Keys Temperature Data differences in variability}
+sd(inshore_temp_df$SST)
+
+sd(offshore_temp_df$SST)
+
+range(inshore_temp_df$SST)
+diff(range(inshore_temp_df$SST))
+
+range(offshore_temp_df$SST)
+diff(range(offshore_temp_df$SST))
+
+inshore_yearly_sd <- tapply(inshore_temp_df$SST, inshore_temp_df$YYYY, sd)
+offshore_yearly_sd <- tapply(offshore_temp_df$SST, inshore_temp_df$YYYY, sd)
+
+t.test(inshore_yearly_sd, offshore_yearly_sd)
+```
