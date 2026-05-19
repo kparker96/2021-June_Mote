@@ -274,13 +274,13 @@ Fig_3 <- ggplot() +
               fill = site), alpha = 0.15, inherit.aes = FALSE) +
   
   # Add ED50 labels
-  annotate("text",x = 38.35, y = 0.61,
+  annotate("text",x = 38.44, y = 0.61,
            label = paste0(round(mean_in, 2), "°C"), color = '#8ADCE3', 
-           fontface = 'bold', size = 4) + 
+           fontface = 'bold', size = 5) + 
     
-  annotate("text",x = 36.35,y = 0.61,
+  annotate("text",x = 36.25,y = 0.61,
            label = paste0(round(mean_off, 2), "°C"), color = '#003A9D', 
-           fontface = 'bold', size = 4) +
+           fontface = 'bold', size = 5) +
  
    # Add data points for each fragment (n = 120)
   geom_point(data = T3pam, aes(x = Temperature, y = FvFm, 
