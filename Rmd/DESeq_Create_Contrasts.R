@@ -135,6 +135,7 @@ dds <- DESeq(dds)
 
 ####save dds, conds, and countsTable for downstream analysis####
 save(dds, countsTable, conds, file = "Rmd/dds.RData")
+# load("Rmd/dds.Rdata")
 
 ####specific contrasts####
 #### InvOff_34_T1 ####
@@ -582,4 +583,24 @@ summary(resIn_30_T5vIn_37_T5)
 summary(resIn_30_T5vIn_39_T5)
 date()
 
+#### MoteIn_30_T1 ####
+date()
+dds$Origin_Temp_Timepoint <- relevel(dds$Origin_Temp_Timepoint, ref = "MoteIn_30_T1")
+
+ddsIn_30_T5 <- DESeq(dds)
+
+dim(ddsIn_30_T5)
+resultsNames(ddsIn_30_T5)
+
+resIn_30_T5vIn_34_T5 <- results(ddsIn_30_T5, contrast=c("Origin_Temp_Timepoint", "MoteIn_30_T5", "MoteIn_34_T5"))
+write.table(resIn_30_T5vIn_34_T5, file="data/Sequencing/Porites_astreoides/DESeq/resIn_30_T5vIn_34_T5.txt", quote=F, row.names=T, sep="\t")
+resIn_30_T5vIn_37_T5 <- results(ddsIn_30_T5, contrast=c("Origin_Temp_Timepoint", "MoteIn_30_T5", "MoteIn_37_T5"))
+write.table(resIn_30_T5vIn_37_T5, file="data/Sequencing/Porites_astreoides/DESeq/resIn_30_T5vIn_37_T5.txt", quote=F, row.names=T, sep="\t")
+resIn_30_T5vIn_39_T5 <- results(ddsIn_30_T5, contrast=c("Origin_Temp_Timepoint", "MoteIn_30_T5", "MoteIn_39_T5"))
+write.table(resIn_30_T5vIn_39_T5, file="data/Sequencing/Porites_astreoides/DESeq/resIn_30_T5vIn_39_T5.txt", quote=F, row.names=T, sep="\t")
+
+summary(resIn_30_T5vIn_34_T5)
+summary(resIn_30_T5vIn_37_T5)
+summary(resIn_30_T5vIn_39_T5)
+date()
 

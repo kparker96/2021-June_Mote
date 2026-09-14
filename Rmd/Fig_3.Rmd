@@ -199,6 +199,47 @@ ED50_param_table <- data.frame(
 )
 ```
 
+```{r Curve fit metrics}
+# Inshore 
+# Fitted values at the observed temperatures
+pred_In <- fitted(Indrc)
+
+# Observed values
+obs_In <- Inpam$FvFm
+
+# Residuals
+res_In <- obs_In - pred_In
+
+# RMSE
+RMSE_In <- sqrt(mean(res_In^2))
+
+# Pseudo R²
+R2_In <- 1 - sum(res_In^2) / sum((obs_In - mean(obs_In))^2)
+
+RMSE_In
+R2_In
+
+# Offshore
+# Fitted values at the observed temperatures
+pred_Off <- fitted(Offdrc)
+
+# Observed values
+obs_Off <- Offpam$FvFm
+
+# Residuals
+res_Off <- obs_Off - pred_Off
+
+# RMSE
+RMSE_Off <- sqrt(mean(res_Off^2))
+
+# Pseudo R²
+R2_Off <- 1 - sum(res_Off^2) / sum((obs_Off - mean(obs_Off))^2)
+
+RMSE_Off
+R2_Off
+```
+
+
 ```{r model predictions}
 # Create prediction data frame across temperature range
 Innewdata <- expand.grid(
@@ -274,11 +315,11 @@ Fig_3 <- ggplot() +
               fill = site), alpha = 0.15, inherit.aes = FALSE) +
   
   # Add ED50 labels
-  annotate("text",x = 38.44, y = 0.61,
+  annotate("text",x = 38.48, y = 0.61,
            label = paste0(round(mean_in, 2), "°C"), color = '#8ADCE3', 
            fontface = 'bold', size = 5) + 
     
-  annotate("text",x = 36.25,y = 0.61,
+  annotate("text",x = 36.21,y = 0.61,
            label = paste0(round(mean_off, 2), "°C"), color = '#003A9D', 
            fontface = 'bold', size = 5) +
  
@@ -302,7 +343,7 @@ Fig_3 <- ggplot() +
 # Theme 
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.5, size = 20), 
-        legend.position = c(0.1,0.08),
+        legend.position = c(0.12,0.08),
         legend.title = element_blank(),
         legend.text = element_text(size = 14),
         axis.title = element_text(size = 15),
@@ -313,10 +354,12 @@ Fig_3 <- ggplot() +
   labs(x = expression("Temperature (" * degree * "C)"), y = bquote(F[v]/F[m]))
 
 ggsave(
-  filename = "Plots/Fig_3/Fig_3.pdf",  # Name of the output file
-  plot = Fig_3,               # Specify the plot to save
-  width = 7,                       # Width in inches
-  height = 5                        # Height in inches
+  filename = "Plots/Fig_3/Fig_3.pdf",
+  plot = Fig_3,
+  width = 169,
+  height = 121,
+  units = "mm",
+  dpi = 300
 )
 
 ggsave(

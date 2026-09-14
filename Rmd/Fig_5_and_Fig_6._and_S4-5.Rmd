@@ -289,10 +289,12 @@ allpoints_PCA_facet <- ggplot(pcaData_CBASS, aes(PC1, PC2,
         strip.background = element_rect(color = "black", size = 1)) 
 
 ggsave(
-  filename = "Plots/Fig_5/Fig_5.pdf",  # Name of the output file
-  plot = allpoints_PCA_facet,               # Specify the plot to save
-  width = 7,                       # Width in inches
-  height = 5                        # Height in inches
+  filename = "Plots/Fig_5/Fig_5.pdf",
+  plot = allpoints_PCA_facet,
+  width = 169,
+  height = 121,
+  units = "mm",
+  dpi = 300
 )
 
 ggsave(
@@ -1338,10 +1340,11 @@ Fig_6 <- cowplot::plot_grid(Fig_6a, Fig_6b,
 
 
 ggsave(
-  filename = "Plots/Fig_6/Fig_6.pdf", 
-  plot = Fig_6,               
-  width = 4,                       
-  height = 6                       
+  filename = "Plots/Fig_6/Fig_6.pdf",
+  plot = Fig_6,
+  width = 112,
+  height = 168,
+  units = "mm"
 )
 
 ggsave(

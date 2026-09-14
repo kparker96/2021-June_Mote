@@ -12,6 +12,7 @@ library(EnvStats)
 library(ggthemes)
 library(car)
 library(FSA)
+library(vegan)
 ```
 
 # Relative Abundance
@@ -160,6 +161,18 @@ better_colors_87<- c(
   "#007fff", "#d2691e", "#ff8c00", "#bc8f8f", "#e5c494", "#8b008b", "#8c6bb1", "#6e016b", "#a65628"
 )
 
+my_colors <- colorRampPalette(c(
+  "#f7e76d",
+  "#FFF7BC",  # pale yellow
+  "#E5F5B2",  # yellow-green
+  "#C7E9C0",  # light green
+  "#A1D99B",  # medium green
+  "#7FCDBB",  # teal
+  "#41B6C4",  # blue-green
+  "#2C7FB8",  # blue
+  "#081D58"   # dark navy
+))(87)
+
 
 ITS2_reads_ordered <- ITS2_reads_long %>%
   group_by(sample_name) %>%
@@ -168,22 +181,32 @@ ITS2_reads_ordered <- ITS2_reads_long %>%
                                    levels = rev(unique(ITS2_seq)))) %>%  # reverse order
   ungroup()
 
-ggplot(ITS2_reads_ordered, aes(x = sample_name, y = rel_abundance, fill = ITS2_seq_ordered)) +
+Fig_S6_seqs <- ggplot(ITS2_reads_ordered, aes(x = sample_name, y = rel_abundance, fill = ITS2_seq_ordered)) +
   geom_bar(stat = "identity") +
-  scale_fill_manual(values = better_colors_87) +
+  scale_fill_manual(values = my_colors) +
   scale_y_continuous(expand = c(0,0)) +
+  ylab("Relative Abundance") +
   theme_bw() +
   facet_wrap(~location, scale = "free_x") +
   labs(fill = "ITS2 Sequence") +
   theme(
-  axis.text.x = element_blank(),
-  axis.title.x = element_blank(),
-  axis.ticks = element_blank(),
-  legend.position = "bottom",
-  legend.spacing.x = unit(0.2, "cm"),  # horizontal space between legend items
-  legend.spacing.y = unit(0.1, "cm"),  # vertical space between legend rows
-  legend.key.size = unit(0.8, "lines"), # size of the colored boxes
-  legend.text = element_text(margin = margin(r = 2, unit = "pt"))  # reduce space between key and text
+    axis.text.x = element_blank(),
+    axis.title.x = element_blank(),
+    axis.ticks = element_blank(),
+    strip.text = element_text(size = 14),
+    legend.position = "bottom",
+    legend.spacing.x = unit(0.2, "cm"),  # horizontal space between legend items
+   legend.spacing.y = unit(0.1, "cm"),  # vertical space between legend rows
+   legend.key.size = unit(0.8, "lines"), # size of the colored boxes
+   legend.text = element_text(margin = margin(r = 2, unit = "pt")),  # reduce space between key and text
+   legend.title = element_blank()
 ) +
-  guides(fill = guide_legend(ncol = 15))
+  guides(fill = guide_legend(ncol = 8))
+
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S6_seqs.png", 
+  plot = Fig_S6_seqs,               # Specify the plot to save
+  width = 8,                       # Width in inches
+  height = 6                        # Height in inches
+)
 ```

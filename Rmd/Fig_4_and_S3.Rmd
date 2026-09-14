@@ -362,7 +362,7 @@ Fig_4b <- ggplot(comparison_table_long, aes(x = Timepoint, y = DEGs, fill = Grou
   facet_wrap2(~Temperature, 
              labeller = labeller(Temperature = custom_labels_temp),
              strip = strip_themed(background_x = elem_list_rect(fill = Temp_color))) +
-  labs(y = "% of DEGs", x = "", fill = "") +
+  labs(y = "Proportion of DEGs", x = "", fill = "") +
   theme_bw() +
   theme(legend.position="bottom",
         legend.title = element_blank(),
@@ -401,10 +401,12 @@ Fig_4 <- ggarrange(Fig_4a, Fig_4b, ncol = 1,
           heights = c(1,1))
 
 ggsave(
-  filename = "Plots/Fig_4/Fig_4.pdf",  # Name of the output file
-  plot = Fig_4,               # Specify the plot to save
-  width = 6,                       # Width in inches
-  height = 6                      # Height in inches
+  filename = "Plots/Fig_4/Fig_4.pdf",
+  plot = Fig_4,
+  width = 169,
+  height = 169,
+  units = "mm",
+  dpi = 300
 )
 
 ggsave(

@@ -1,0 +1,169 @@
+---
+title: "DEGs_InVOff_Reviewer-2"
+output: html_document
+date: "2026-08-19"
+editor_options: 
+  chunk_output_type: console
+---
+# Libraries 
+```{r load libraries}
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+library(ggpubr)
+library(ggh4x)
+library(flextable)
+```
+
+# Import data
+```{r DEG counts}
+# DEG Counts table from Deduplicated DF
+DEG_counts <- read.delim('data/Sequencing/Porites_astreoides/DESeq/2025-06-03_DECalc_deduped-data.tab')  
+
+# Add Metadata to DEG_counts and clean up
+DEG_counts_df <- DEG_counts %>% 
+  mutate(SitevSite = 
+          case_when(grepl("resIn", Contrast) & grepl("vIn", Contrast) ~
+                      "InvIn",
+                    grepl("resIn", Contrast) & grepl("vOff", Contrast) ~
+                      "InvOff",
+                    grepl("resOff", Contrast) & grepl("vIn", Contrast) ~
+                      "OffvIn",
+                    grepl("resOff", Contrast) & grepl("vOff", Contrast) ~
+                      "OffvOff")) %>%
+  mutate(Trial = "deduped") %>%
+  
+  # Extract the first T# after resOff or resIn, including the "T"
+  mutate(TP1 = str_extract(Contrast, "T\\d+(?=v)")) %>%
+ 
+   # Extract the last two characters of the string, 
+  mutate(TP2 = str_sub(Contrast, -2, -1)) %>%
+  mutate(Temp = str_sub(Contrast, -5, -4)) %>%
+  mutate(TP1 = case_when(Contrast == "resInvOffT0" ~ "T0", 
+                         TRUE ~ TP1),
+         Temp = case_when(Contrast == "resInvOffT0" ~ "T0",
+                          TRUE ~ Temp)) %>%
+  mutate(Site = case_when(SitevSite == "InvIn" ~ "Inshore",
+                          SitevSite == "OffvOff" ~ "Offshore",
+                          SitevSite == "InvOff" | SitevSite == "OffvIn" ~
+                            "Across_Sites"))
+```
+
+```{r}
+# Create long form dataframe 
+DEG_counts_df_long <- DEG_counts_df %>%
+  dplyr::select(-SitevSite) %>%
+  gather(key = DEG, value = counts, -Contrast, -Site, 
+         -TP1, -TP2, -Temp, -Trial) %>%
+  filter(Site == "Across_Sites") %>%
+  filter(DEG != "TotalNumDEGs") %>%
+  filter(Temp != 30) %>%
+  filter(TP1 != "T0")
+```
+
+```{r}
+ggplot(DEG_counts_df_long, aes(x = TP1, y = counts, fill = DEG)) +
+  geom_bar(stat = "identity", position = "stack") + 
+  scale_fill_manual(labels = c("Down-regulated", "Up-regulated"), 
+                    values = c("gray60", "gray30")) +
+  ggtitle("Offshore vs Inshore DEGs at 34C") +
+  theme_bw() +
+  ylab("# of DEGs") +
+  theme(legend.position="bottom",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent"),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(size = 11),
+        axis.title.x = element_blank(),
+        axis.text = element_text(size = 10),
+        strip.text = element_text(size = 11),
+        panel.spacing.x = unit(0.1, "lines"),
+        panel.spacing.y = unit(0.1, "lines"),
+        legend.margin = margin(t = -5, b = 0, unit = "pt"), 
+        plot.margin = margin(t = 5, r = 5, b = 10, l = 5))
+
+```
+
+```{r}
+DEG_counts_df_long_control <- DEG_counts_df %>%
+  dplyr::select(-SitevSite) %>%
+  gather(key = DEG, value = counts, -Contrast, -Site, 
+         -TP1, -TP2, -Temp, -Trial) %>%
+  filter(Site == "Across_Sites") %>%
+  filter(DEG != "TotalNumDEGs")  %>%
+  filter(Temp == 30)
+
+ggplot(DEG_counts_df_long_control, aes(x = TP1, y = counts, fill = DEG)) +
+  geom_bar(stat = "identity", position = "stack") + 
+  scale_fill_manual(labels = c("Down-regulated", "Up-regulated"), 
+                    values = c("gray60", "gray30")) +
+  ggtitle("Offshore vs Inshore DEGs at 30C (Control Temp)") +
+  theme_bw() +
+  ylab("# of DEGs") +
+  theme(legend.position="bottom",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent"),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(size = 11),
+        axis.title.x = element_blank(),
+        axis.text = element_text(size = 10),
+        strip.text = element_text(size = 11),
+        panel.spacing.x = unit(0.1, "lines"),
+        panel.spacing.y = unit(0.1, "lines"),
+        legend.margin = margin(t = -5, b = 0, unit = "pt"), 
+        plot.margin = margin(t = 5, r = 5, b = 10, l = 5))
+```
+
+```{r}
+OffvIn_T3_34 <- read.delim('data/Sequencing/Porites_astreoides/DESeq/resOff_34_T3vIn_34_T3.txt') %>%
+  filter(padj < 0.1) %>%
+  filter(!is.na(padj))
+
+In_T3_30v34 <- read.delim('data/Sequencing/Porites_astreoides/DESeq/resIn_30_T3vIn_34_T3.txt') %>%
+  filter(padj < 0.1) %>%
+  filter(!is.na(padj))
+
+Off_T3_30v34 <- read.delim('data/Sequencing/Porites_astreoides/DESeq/resOff_30_T3vOff_34_T3.txt')  %>%
+  filter(padj < 0.1) %>%
+  filter(!is.na(padj))
+
+overlap_genes <- intersect(
+  rownames(OffvIn_T3_34),
+  rownames(Off_T3_30v34))
+
+length(overlap_genes)
+
+overlap_df <- OffvIn_T3_34[overlap_genes, ] %>%
+  select(log2FoldChange, padj) %>%
+  rename(
+    log2FC_OffvIn = log2FoldChange,
+    padj_OffvIn = padj
+  ) %>%
+  bind_cols(
+    Off_T3_30v34[overlap_genes, ] %>%
+      select(log2FoldChange, padj) %>%
+      rename(
+        log2FC_Offv30v34 = log2FoldChange,
+        padj_Offv30v34 = padj))
+
+setdiff(rownames(Off_T3_30v34), rownames(overlap_df))
+
+setdiff(rownames(In_T3_30v34), rownames(Off_T3_30v34))
+
+Off_unique <- setdiff(
+  rownames(Off_T3_30v34),
+  rownames(In_T3_30v34))
+
+length(Off_unique)
+
+length(overlap_genes) / nrow(OffvIn_T3_34) * 100
+
+table(
+  sign(overlap_df$log2FC_OffvIn) ==
+  sign(overlap_df$log2FC_Offv30v34)
+)
+
+```
+

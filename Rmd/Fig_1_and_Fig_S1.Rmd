@@ -213,6 +213,35 @@ temps <- ggplot(site_temps, aes(x = date, y = SST, color = site)) +
 ggsave("Plots/Fig_1/temps_plot.png", plot = temps, width = 7.75, height = 1.5, dpi = 300)
 ```
 
+```{r average temps}
+inshore_2023 <- inshore_temp_df %>%
+  select(YYYY, MM, DD, date, month_year, SST) %>%
+  filter(date >= as.Date("2023-01-14"),
+         date <= as.Date("2024-01-19")) %>%
+  mutate(site= "Inshore")
+
+offshore_2023 <- offshore_temp_df %>%
+  select(YYYY, MM, DD, date, month_year, SST) %>%
+  filter(date >= as.Date("2023-01-14"),
+         date <= as.Date("2024-01-19")) %>%
+  mutate(site= "Offshore")
+
+temps_2023 <- rbind(inshore_2023, offshore_2023)
+
+summary_2023 <- temps_2023 %>%
+  arrange(site, date) %>%
+  group_by(site) %>%
+  mutate(day_to_day_change = abs(SST - lag(SST))) %>%
+  summarize(
+    mean_change = mean(day_to_day_change, na.rm = TRUE),
+    max_change = max(day_to_day_change, na.rm = TRUE),
+    max_temp = max(SST, na.rm = TRUE),
+    min_temp = min(SST, na.rm = TRUE),
+    temp_range = max_temp - min_temp)
+
+summary_2023
+```
+
 # Fig 1: Combine Maps
 ```{r Fig 1}
 background <- ggplot() +
@@ -227,10 +256,12 @@ Fig_1 <- ggdraw(background) +
   draw_plot_label("B", x = 0.02, y = 0.30, size = 14, fontface = "bold")
 
 ggsave(
-  filename = "Plots/Fig_1/Fig_1.pdf",  # Name of the output file
-  plot = Fig_1,               # Specify the plot to save
-  width = 6,                       # Width in inches
-  height = 5                        # Height in inches
+  "Fig_1.pdf",
+  Fig_1,
+  width = 112,
+  height = 93.3,
+  units = "mm",
+  dpi = 300
 )
 
 ggsave(
@@ -251,7 +282,7 @@ temp_time_series_sup_fig <-
   geom_line(linewidth = 0.8) +
   scale_x_date(date_labels = "%Y", expand = c(0, 0), date_breaks = "4 years") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  geom_hline(yintercept = 29.7, color = "orange1", linetype = "dashed", size = 0.9) +
+  geom_hline(yintercept = 30.7, color = "orange2", linetype = "dashed", size = 0.9) +
   scale_y_continuous(breaks = seq(18, 32, by = 2)) +
   scale_color_manual(values = c("Offshore" = "darkblue", 
                                 "Inshore" = "lightblue")) +

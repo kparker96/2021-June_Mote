@@ -157,12 +157,14 @@ Fig_2 <- ggplot(ramps_df_sampled, aes(x = time)) +
         axis.text = element_text(size = 13)) 
 
 ggsave(
-  filename = "Plots/Fig_2/Fig_2.pdf",  # Name of the output file
-  plot = Fig_2,               # Specify the plot to save
-  width = 7,                       # Width in inches
-  height = 5                        # Height in inches
+  filename = "Plots/Fig_2/Fig_2.pdf",
+  plot = Fig_2,
+  width = 169,
+  height = 121,
+  units = "mm",
+  dpi = 300
+  
 )
-
 
 ggsave(
   filename = "Plots/Fig_2/Fig_2.png",  # Name of the output file
