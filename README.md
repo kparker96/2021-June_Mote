@@ -32,6 +32,7 @@ ___
  - **Supplemental_Figs/:** All supplemental figures, tables, and additional information
 
 **Rmd:**    
+ - **DEG_calculations.R:** Script to calculate total # of DEGs with stronger magnitude of change for a population
  - **DESeq_Create_Contrasts_3#.R:** Scripts to create all interaction contrasts between sites (interaction for Offshore vs Inshore and individual Population Heat stress vs control) for all Timepoints (T0-T5). Separated into individual scripts per Temperature treatment (34°C, 37°C, 39°C) for DEG analysis 
  - **DESeq_GOseq.Rmd:** GOseq analysis to assess significant gene enrichment
  -  **Fig_#.Rmd:** Plotting and statistical analysis for designated figure with output in corresponding Plots/Fig_# directory
