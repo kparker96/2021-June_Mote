@@ -112,7 +112,7 @@ plotPCA(vstCounts, intgroup="Timepoint") +
 ggsave("Plots/Fig_5/Exploratory_PCAs/Timepoint_PCA.jpg", height = 150, width = 150, units = c("mm"))
 ```
 
-# Fig S4 and Fig S5 (Visualizing additional PCs)
+# Fig S5 and Fig S6 (Visualizing additional PCs)
 ```{r PCAtools}
 rownames(conds) <- conds$Sample
 
@@ -126,7 +126,7 @@ vst_top500 <- vst_mat[top500, ]
 p <- PCAtools::pca(vst_top500, metadata = conds, removeVar = 0.1)
 
 # scree plot
-png("Plots/Supplemental_Figs/Fig_S4.png", width = 800, height = 600,
+png("Plots/Supplemental_Figs/Fig_S5.png", width = 800, height = 600,
     res = 150)
 PCAtools::screeplot(p, components = 1:10)
 dev.off()
@@ -150,7 +150,7 @@ dev.off()
 # eigencorplot
 p$sampleInfo$Origin <- ifelse(p$sampleInfo$Origin == "Offshore", 1, 0)
 
-png("Plots/Supplemental_Figs/Fig_S5.png", width = 1300, height = 800,
+png("Plots/Supplemental_Figs/Fig_S6.png", width = 1300, height = 800,
     res = 150)
 eigencorplot(p,
     metavars = c('Origin', 'Geno', 'Temp', 'Timepoint'))

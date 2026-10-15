@@ -270,8 +270,8 @@ x <- DEGs_all_df %>%
 
 ```
 
-# Fig S3: DEG directions
-```{r Fig S3a same}
+# Fig S4: DEG directions
+```{r Fig S4a same}
 DEGs_all_df_direction_same <-  DEGs_all_df %>% 
   select(Gene, Timepoint, Temp, Offshore_LFC, Inshore_LFC, Direction) %>%
   filter(Direction == "Same direction") %>%
@@ -282,7 +282,7 @@ DEGs_all_df_direction_same <-  DEGs_all_df %>%
   summarise(n = n_distinct(Gene), .groups = "drop") %>%
   mutate(Population = "Both Populations")
   
-Fig_S3a <- ggplot(DEGs_all_df_direction_same, aes(x = Timepoint, y = n, fill = Regulated)) +
+Fig_S4a <- ggplot(DEGs_all_df_direction_same, aes(x = Timepoint, y = n, fill = Regulated)) +
     geom_bar(stat = "identity", position = "stack") +
   scale_fill_manual(values = c("gray60", "gray30")) +
   scale_y_continuous(expand = c(0,0), limits = c(0,3000)) +
@@ -306,8 +306,8 @@ Fig_S3a <- ggplot(DEGs_all_df_direction_same, aes(x = Timepoint, y = n, fill = R
     panel.spacing.y = unit(0.1, "lines"))
   
 ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S3a.png", 
-  plot = Fig_S3a,               
+  filename = "Plots/Supplemental_Figs/Fig_S4a.png", 
+  plot = Fig_S4a,               
   width = 7,                       # Width in inches
   height = 3                        # Height in inches
 )
@@ -315,7 +315,7 @@ ggsave(
 
 ```
 
-```{r Fig S3b opposite}
+```{r Fig S4b opposite}
 DEGs_all_df_direction_opp <-  DEGs_all_df %>% 
   select(Gene, Timepoint, Temp, Offshore_LFC, Inshore_LFC, Direction) %>%
   filter(Direction == "Opposite direction") %>%
@@ -332,7 +332,7 @@ DEGs_all_df_direction_opp <-  DEGs_all_df %>%
   filter(Regulation != "Not Present") %>%
   filter(Population == "Offshore")
   
-Fig_S3b <- ggplot(DEGs_all_df_direction_opp, aes(x = Timepoint,  y = n, fill = Regulation)) +
+Fig_S4b <- ggplot(DEGs_all_df_direction_opp, aes(x = Timepoint,  y = n, fill = Regulation)) +
   geom_bar(stat = "Identity", position = "stack") +
     scale_fill_manual(values = c("gray60", "gray30")) +
   scale_y_continuous(expand = c(0,0), limits = c(0,3000)) +
@@ -357,33 +357,21 @@ Fig_S3b <- ggplot(DEGs_all_df_direction_opp, aes(x = Timepoint,  y = n, fill = R
     panel.spacing.y = unit(0.1, "lines"))
 
 ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S3b.png", 
-  plot = Fig_S3b,               
+  filename = "Plots/Supplemental_Figs/Fig_S4b.png", 
+  plot = Fig_S4b,               
   width = 5,                       # Width in inches
   height = 7                        # Height in inches
 )
 ```
 
-```{r Fig_S3}
-Fig_S3 <- ggarrange(Fig_S3a, Fig_S3b, ncol = 1, common.legend = TRUE, legend = "bottom", labels = c("A","B"))
+```{r Fig_S4}
+Fig_S4 <- ggarrange(Fig_S4a, Fig_S4b, ncol = 1, common.legend = TRUE, legend = "bottom", labels = c("A","B"))
 
 ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S3.png", 
-  plot = Fig_S3,               
+  filename = "Plots/Supplemental_Figs/Fig_S4.png", 
+  plot = Fig_S4,               
   width = 5,                       # Width in inches
   height = 7                        # Height in inches
 )
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-

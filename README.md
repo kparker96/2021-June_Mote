@@ -32,7 +32,7 @@ ___
  - **Supplemental_Figs/:** All supplemental figures, tables, and additional information
 
 **Rmd:**    
- - **DESeq_Create_Contrasts.R:** Script to create all contrasts between sites (Inshore vs Offshore), Timepoints (T0-T5), and Temperatures (30°C, 34°C, 37°C, 39°C) for DEG analysis 
+ - **DESeq_Create_Contrasts_3#.R:** Scripts to create all interaction contrasts between sites (interaction for Offshore vs Inshore and individual Population Heat stress vs control) for all Timepoints (T0-T5). Separated into individual scripts per Temperature treatment (34°C, 37°C, 39°C) for DEG analysis 
  - **DESeq_GOseq.Rmd:** GOseq analysis to assess significant gene enrichment
  -  **Fig_#.Rmd:** Plotting and statistical analysis for designated figure with output in corresponding Plots/Fig_# directory
  -  **Nanodrop_QC.Rmd:** QC assment of RNA-seq extractions from raw Nanodrop data
