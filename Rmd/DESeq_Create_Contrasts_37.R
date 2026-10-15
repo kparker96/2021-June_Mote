@@ -39,7 +39,7 @@ countsTable <- pivot_wider(countsTable_newname, names_from = sample, values_from
 colSums(countsTable)
 colSums(countsTable)[order(colSums(countsTable), decreasing=T)]
 
-write.table(countsTable, "data/Sequencing/Porites_astreoides/DESeq_rev2/Dedup_Mote_Past_Counts_full_cleannames.txt")
+write.table(countsTable, "data/Sequencing/Porites_astreoides/DESeq/Dedup_Mote_Past_Counts_full_cleannames.txt")
 
 ####make a table with conditions of each individual####
 #(e.g. "VA" and "RI")  There should be the same number of conditions described as there are samples in your data file, and in the same order.
@@ -89,6 +89,14 @@ max_reads <- max(library_reads)
 mean_reads <- mean(library_reads)
 
 #### count data sets####
+#Only need to run this once and then save: 
+#dds <- DESeqDataSetFromMatrix(countData=countsTable, colData=conds, design=~ Origin_Temp_Timepoint)
+
+#dds <- DESeq(dds)
+
+#save(dds, countsTable, conds, file = "Rmd/dds.RData")
+
+#### Load dds ####
 load("Rmd/dds.Rdata")
 
 #### Reviewer interaction contrast ####
@@ -143,7 +151,7 @@ summary(res_int_T1)
 # Save results
 write.table(
   res_int_T1,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_interaction-test_37_T1.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_interaction-test_37_T1.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -166,7 +174,7 @@ res_int_T2 <- results(
 
 write.table(
   res_int_T2,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_interaction-test_37_T2.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_interaction-test_37_T2.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -190,7 +198,7 @@ res_int_T3 <- results(
 
 write.table(
   res_int_T3,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_interaction-test_37_T3.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_interaction-test_37_T3.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -214,7 +222,7 @@ res_int_T4 <- results(
 
 write.table(
   res_int_T4,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_interaction-test_37_T4.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_interaction-test_37_T4.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -238,7 +246,7 @@ res_int_T5 <- results(
 
 write.table(
   res_int_T5,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_interaction-test_37_T5.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_interaction-test_37_T5.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -264,7 +272,7 @@ res_off_T1 <- results(
 
 write.table(
   res_off_T1,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Offshore_37-30_T1.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Offshore_37-30_T1.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -285,7 +293,7 @@ res_in_T1 <- results(
 
 write.table(
   res_in_T1,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Inshore_37-30_T1.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Inshore_37-30_T1.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -308,7 +316,7 @@ res_off_T2 <- results(
 
 write.table(
   res_off_T2,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Offshore_37-30_T2.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Offshore_37-30_T2.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -329,7 +337,7 @@ res_in_T2 <- results(
 
 write.table(
   res_in_T2,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Inshore_37-30_T2.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Inshore_37-30_T2.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -352,7 +360,7 @@ res_off_T3 <- results(
 
 write.table(
   res_off_T3,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Offshore_37-30_T3.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Offshore_37-30_T3.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -373,7 +381,7 @@ res_in_T3 <- results(
 
 write.table(
   res_in_T3,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Inshore_37-30_T3.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Inshore_37-30_T3.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -396,7 +404,7 @@ res_off_T4 <- results(
 
 write.table(
   res_off_T4,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Offshore_37-30_T4.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Offshore_37-30_T4.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -417,7 +425,7 @@ res_in_T4 <- results(
 
 write.table(
   res_in_T4,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Inshore_37-30_T4.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Inshore_37-30_T4.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -440,7 +448,7 @@ res_off_T5 <- results(
 
 write.table(
   res_off_T5,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Offshore_37-30_T5.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Offshore_37-30_T5.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"
@@ -461,7 +469,7 @@ res_in_T5 <- results(
 
 write.table(
   res_in_T5,
-  file = "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/rev2_res_Inshore_37-30_T5.txt",
+  file = "data/Sequencing/Porites_astreoides/DESeq/37/rev2_res_Inshore_37-30_T5.txt",
   quote = FALSE,
   row.names = TRUE,
   sep = "\t"

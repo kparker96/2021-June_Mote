@@ -19,24 +19,24 @@ library(rempsyc)
 # Import data
 ```{r DEG counts}
 #34
-DEGs_34 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/34/rev2_34C_interaction_classification_all_timepoints.txt") %>%
+DEGs_34 <- read.delim("data/Sequencing/Porites_astreoides/DESeq/34/rev2_34C_interaction_classification_all_timepoints.txt") %>%
   mutate(Temp = 34)
 
-DEG_counts_34 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/34/rev2_34C_interaction_category_counts.txt") %>%
+DEG_counts_34 <- read.delim("data/Sequencing/Porites_astreoides/DESeq/34/rev2_34C_interaction_category_counts.txt") %>%
   mutate(Temp = 34)
 
 #37
-DEGs_37 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/37/rev2_37C_interaction_classification_all_timepoints.txt") %>%
+DEGs_37 <- read.delim("data/Sequencing/Porites_astreoides/DESeq/37/rev2_37C_interaction_classification_all_timepoints.txt") %>%
   mutate(Temp = 37)
 
-DEG_counts_37 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/37/rev2_37C_interaction_category_counts.txt") %>%
+DEG_counts_37 <- read.delim("data/Sequencing/Porites_astreoides/DESeq/37/rev2_37C_interaction_category_counts.txt") %>%
   mutate(Temp = 37)
 
 #39
-DEGs_39 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/39/rev2_39C_interaction_classification_all_timepoints.txt") %>%
+DEGs_39 <- read.delim("data/Sequencing/Porites_astreoides/DESeq/39/rev2_39C_interaction_classification_all_timepoints.txt") %>%
   mutate(Temp = 39)
 
-DEG_counts_39 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/39/rev2_39C_interaction_category_counts.txt") %>%
+DEG_counts_39 <- read.delim("data/Sequencing/Porites_astreoides/DESeq/39/rev2_39C_interaction_category_counts.txt") %>%
   mutate(Temp = 39)
 ```
 

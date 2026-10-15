@@ -1,10 +1,14 @@
-library(dplyr)
+# Script runs individually per temperature treatment. To change
+# which temperature treatment, do a find and replace for temperature 
+# treatment of interest (I.e. Find "39" and Replace all with "34" to 
+# count DEGs for the 34 treatment)
 
+library(dplyr)
 # ---------------------------------------------------------
 # 1. Set folder
 # ---------------------------------------------------------
 
-folder <- "data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/39"
+folder <- "data/Sequencing/Porites_astreoides/DESeq/39"
 
 # Timepoints
 timepoints <- paste0("T", 1:5)
