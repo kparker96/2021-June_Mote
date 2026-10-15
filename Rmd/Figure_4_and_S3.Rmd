@@ -1,0 +1,389 @@
+---
+title: "Fig_4: Total DEGs"
+output: html_document
+date: "2024-09-14"
+editor_options: 
+  chunk_output_type: console
+---
+# Libraries 
+```{r load libraries}
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+library(ggpubr)
+library(ggh4x)
+library(flextable)
+library(rempsyc)
+```
+
+# Import data
+```{r DEG counts}
+#34
+DEGs_34 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/34/rev2_34C_interaction_classification_all_timepoints.txt") %>%
+  mutate(Temp = 34)
+
+DEG_counts_34 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/34/rev2_34C_interaction_category_counts.txt") %>%
+  mutate(Temp = 34)
+
+#37
+DEGs_37 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/37/rev2_37C_interaction_classification_all_timepoints.txt") %>%
+  mutate(Temp = 37)
+
+DEG_counts_37 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/37/rev2_37C_interaction_category_counts.txt") %>%
+  mutate(Temp = 37)
+
+#39
+DEGs_39 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/39/rev2_39C_interaction_classification_all_timepoints.txt") %>%
+  mutate(Temp = 39)
+
+DEG_counts_39 <- read.delim("data/Sequencing/Porites_astreoides/DESeq_rev2/Reviewer-Code-Run/39/rev2_39C_interaction_category_counts.txt") %>%
+  mutate(Temp = 39)
+```
+
+# Combine DEG Counts
+```{r}
+DEGs_all <- rbind(DEGs_34, DEGs_37, DEGs_39)
+
+DEG_counts_all <- rbind(DEG_counts_34, DEG_counts_37, DEG_counts_39)
+```
+
+# Count Genes
+```{r}
+length(unique(DEGs_all$Gene))
+
+DEGs_sam_dir <- DEGs_all %>%
+  filter(grepl("Same direction", Category))
+
+length(unique(DEGs_sam_dir$Gene))
+
+DEGs_opp_dir <- DEGs_all %>%
+  filter(grepl("Opposite direction", Category))
+
+length(unique(DEGs_opp_dir$Gene))
+
+DEGs_one_dir <- DEGs_all %>%
+  filter(grepl("only", Category))
+
+length(unique(DEGs_one_dir$Gene))
+```
+
+```{r}
+DEGs_all_df <- DEGs_all %>%
+  mutate(
+    Category_Direction = case_when(
+      
+      # Opposite-direction responses
+      Category == "Opposite direction" & abs(Offshore_LFC) > abs(Inshore_LFC) ~
+      "Opposite direction, Stronger Offshore",
+      
+      Category == "Opposite direction" & abs(Inshore_LFC) > abs(Offshore_LFC) ~
+      "Opposite direction, Stronger Inshore",
+
+      # Population-specific responses
+      Category == "Offshore only" ~ "Opposite direction, Stronger Offshore",
+      Category == "Inshore only" ~ "Opposite direction, Stronger Inshore",
+
+      # Keep same-direction categories unchanged
+      TRUE ~ Category)) %>%
+  mutate(
+    Direction = case_when(
+      grepl("Opposite direction", Category_Direction) ~ "Opposite direction",
+      grepl("Same direction", Category_Direction) ~ "Same direction",
+      TRUE ~ NA_character_),
+    Stronger_Population = case_when(
+      grepl("Offshore", Category_Direction, ignore.case = TRUE) ~ "Offshore",
+      grepl("Inshore", Category_Direction, ignore.case = TRUE) ~ "Inshore",
+      TRUE ~ NA_character_)) %>%
+  select(Gene, Temp, Timepoint, Interaction_LFC, Offshore_LFC, Inshore_LFC, Category, Direction, Category_Direction, Stronger_Population)
+```
+
+# Fig 4a: Plot DEGs by # with stronger magnitude 
+```{r}
+Summary_counts_population <- DEGs_all_df %>%
+  group_by(Temp, Timepoint, Stronger_Population) %>%
+  summarise(Total_DEGs = n_distinct(Gene), .groups = "drop")
+
+# Create labels and colors for Temp Treatments 
+custom_labels_temp <- c("34" = "34°C", "37" = "37°C", "39" = "39°C", 
+                        "TF" = "TF")
+
+Temp_color <- c("34" = "#FFDD44", "37" = "#FF9933", "39" = "#DB2F0D")
+
+
+Fig_4a <- ggplot(Summary_counts_population, 
+       aes(x = Timepoint, y = Total_DEGs, 
+           fill = Stronger_Population)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c('#8ADCE3', "#003A9D"),
+                    labels = c("Stronger Inshore", "Stronger Offshore")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,3000)) +
+  facet_wrap2(~Temp, 
+    labeller = labeller(Temp = custom_labels_temp),
+    strip = strip_themed(
+      background_x = elem_list_rect(fill = Temp_color))) +
+  theme_bw() +
+  ylab("# of DEGs") +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10),
+    legend.background = element_rect(fill = "transparent"),
+    axis.ticks = element_blank(),
+    axis.title.y = element_text(size = 11),
+    axis.title.x = element_blank(),
+    axis.text = element_text(size = 10),
+    strip.text = element_text(size = 11),
+    panel.spacing.x = unit(0.1, "lines"),
+    panel.spacing.y = unit(0.1, "lines"),
+    legend.margin = margin(t = -5, b = 0, unit = "pt"),  
+    plot.margin = margin(t = 10, r = 10, b = 10, l = 10))
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4a_magnitude.pdf",  # Name of the output file
+  plot = Fig_4a,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 3                        # Height in inches
+)
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4a_magnitude.png",  # Name of the output file
+  plot = Fig_4a,               # Specify the plot to save
+  width = 7,                       # Width in inches
+  height = 3                        # Height in inches
+)
+```
+
+# Table S2
+```{r}
+Summary_counts_population_wide <- Summary_counts_population %>%
+  pivot_wider(
+    names_from = Stronger_Population,
+    values_from = Total_DEGs,
+    names_glue = "{Stronger_Population}_DEGs")
+
+DEG_Totals_Table_Nice <- nice_table(Summary_counts_population_wide)
+
+save_as_docx(DEG_Totals_Table_Nice, path =  "Plots/Supplemental_Figs/Table_S2.docx")
+
+
+```
+
+# Fig 4B: DEG Overlap
+```{r}
+DEGs_all_venn <- DEGs_all_df %>%
+  dplyr::select(Gene, Timepoint, Temp, Category) %>%
+  mutate(
+    Population = case_when(
+      grepl("direction", Category) ~ "Both",
+      grepl("Inshore only", Category) ~ "Inshore Specific",
+      grepl("Offshore only", Category) ~ "Offshore Specific")) %>%
+  group_by(Timepoint, Temp, Population) %>%
+  summarise(n = n_distinct(Gene), .groups = "drop") %>%
+  group_by(Timepoint, Temp) %>%
+  mutate(Percentage = n / sum(n) * 100) %>%
+  ungroup()  %>% 
+  mutate(
+    Population = factor(
+      Population,
+      levels = c( "Inshore Specific","Both",  "Offshore Specific")))
+
+
+Fig_4b <- ggplot(DEGs_all_venn, aes(x = Timepoint, y = Percentage, fill = Population)) +
+  geom_bar(stat = "identity", position = "fill") +
+  scale_y_continuous(expand = c(0, 0)) +
+  scale_fill_manual(name = "", values=c('#8ADCE3',"#458BC0","#003A9D")) +
+  scale_y_continuous(expand = c(0, 0)) +
+  facet_wrap2(~Temp, 
+             labeller = labeller(Temp = custom_labels_temp),
+             strip = strip_themed(background_x = elem_list_rect(fill = Temp_color))) +
+  labs(y = "Proportion of DEGs", x = "", fill = "") +
+  theme_bw() +
+  theme(legend.position="bottom",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 10),
+        legend.background = element_rect(fill = "transparent"),
+        axis.ticks = element_blank(),
+        axis.title.y = element_text(size = 11),
+        axis.title.x = element_blank(),
+        axis.text = element_text(size = 10),
+        strip.text = element_text(size = 11),
+        panel.spacing.x = unit(0.1, "lines"),
+        panel.spacing.y = unit(0.1, "lines"),
+        legend.margin = margin(t = -5, b = 0, unit = "pt"),  
+        plot.margin = margin(t = 10, r = 10, b = 10, l = 10))
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4b.pdf",  # Name of the output file
+  plot = Fig_4b,               # Specify the plot to save
+  width = 8,                       # Width in inches
+  height = 4                        # Height in inches
+)
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4b.png",   # Name of the output file
+  plot = Fig_4b,               # Specify the plot to save
+  width = 8,                       # Width in inches
+  height = 4                        # Height in inches
+)
+
+```
+
+# Fig 4
+```{r}
+Fig_4 <- ggarrange(Fig_4a, Fig_4b, ncol = 1,
+          labels = c("A", "B"),
+          widths = c(1, 1),
+          heights = c(1,1))
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4.pdf",
+  plot = Fig_4,
+  width = 169,
+  height = 169,
+  units = "mm",
+  dpi = 300
+)
+
+ggsave(
+  filename = "Plots/Fig_4/Fig_4.png",   # Name of the output file
+  plot = Fig_4,               # Specify the plot to save
+  width = 6,                       # Width in inches
+  height = 6                    # Height in inches
+)
+```
+
+# Fig 4b - Annotations
+```{r}
+Annotations<-read.delim("data/Sequencing/Porites_astreoides/Kenkel_Genome/P_astreoides_Kenkel2013_totalannotated.txt") %>%
+  select(Gene = ContigName, Description, GOCC, GOBP, GOMF, Keywords)
+  
+
+x <- DEGs_all_df %>%
+  select(Gene, Timepoint, Temp, Category, Offshore_LFC, Inshore_LFC) %>%
+  mutate(
+    Population = case_when(
+      grepl("direction", Category) ~ "Both",
+      grepl("Inshore only", Category) ~ "Inshore Specific",
+      grepl("Offshore only", Category) ~ "Offshore Specific")) %>%
+  left_join(Annotations, by = "Gene") %>%
+  select(Timepoint, Temp, Population:Keywords)
+
+```
+
+# Fig S3: DEG directions
+```{r Fig S3a same}
+DEGs_all_df_direction_same <-  DEGs_all_df %>% 
+  select(Gene, Timepoint, Temp, Offshore_LFC, Inshore_LFC, Direction) %>%
+  filter(Direction == "Same direction") %>%
+ mutate(Regulated = case_when(Offshore_LFC > 0 & Inshore_LFC > 0 ~ "Upregulated",
+                              Offshore_LFC < 0 & Inshore_LFC < 0 ~ "Downregulated",
+                              TRUE ~ NA_character_)) %>%
+  group_by(Direction, Temp,  Timepoint, Regulated) %>%
+  summarise(n = n_distinct(Gene), .groups = "drop") %>%
+  mutate(Population = "Both Populations")
+  
+Fig_S3a <- ggplot(DEGs_all_df_direction_same, aes(x = Timepoint, y = n, fill = Regulated)) +
+    geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("gray60", "gray30")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,3000)) +
+     facet_grid2(Population~Temp, 
+    labeller = labeller(Temp = custom_labels_temp),
+    strip = strip_themed(
+      background_x = elem_list_rect(fill = Temp_color))) +
+    theme_bw() +
+  ylab("# of DEGs") +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10),
+    legend.background = element_rect(fill = "transparent"),
+    axis.ticks = element_blank(),
+    axis.title.y = element_text(size = 11),
+    axis.title.x = element_blank(),
+    axis.text = element_text(size = 10),
+    strip.text = element_text(size = 11),
+    panel.spacing.x = unit(0.1, "lines"),
+    panel.spacing.y = unit(0.1, "lines"))
+  
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S3a.png", 
+  plot = Fig_S3a,               
+  width = 7,                       # Width in inches
+  height = 3                        # Height in inches
+)
+
+
+```
+
+```{r Fig S3b opposite}
+DEGs_all_df_direction_opp <-  DEGs_all_df %>% 
+  select(Gene, Timepoint, Temp, Offshore_LFC, Inshore_LFC, Direction) %>%
+  filter(Direction == "Opposite direction") %>%
+ mutate(Offshore = case_when(Offshore_LFC > 0  ~ "Upregulated",
+                             Offshore_LFC < 0 ~ "Downregulated",
+                             Offshore_LFC == 0 ~ "Not Present")) %>%
+  mutate(Inshore = case_when(Inshore_LFC > 0  ~ "Upregulated",
+                             Inshore_LFC < 0 ~ "Downregulated",
+                             Inshore_LFC == 0 ~ "Not Present")) %>%
+  pivot_longer(cols = c(Offshore, Inshore), names_to = "Population",
+               values_to = "Regulation") %>%
+  group_by(Timepoint, Temp, Population, Regulation) %>%
+  summarise(n = n_distinct(Gene), .groups = "drop") %>%
+  filter(Regulation != "Not Present") %>%
+  filter(Population == "Offshore")
+  
+Fig_S3b <- ggplot(DEGs_all_df_direction_opp, aes(x = Timepoint,  y = n, fill = Regulation)) +
+  geom_bar(stat = "Identity", position = "stack") +
+    scale_fill_manual(values = c("gray60", "gray30")) +
+  scale_y_continuous(expand = c(0,0), limits = c(0,3000)) +
+     facet_grid2(Population~Temp, 
+    labeller = labeller(Temp = custom_labels_temp),
+    strip = strip_themed(background_x = elem_list_rect(fill = Temp_color),
+                         background_y = elem_list_rect(fill = "#003A9D"),
+                         text_y = element_text(color = "white"))) +
+    theme_bw() +
+  ylab("# of DEGs") +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10),
+    legend.background = element_rect(fill = "transparent"),
+    axis.ticks = element_blank(),
+    axis.title.y = element_text(size = 11),
+    axis.title.x = element_blank(),
+    axis.text = element_text(size = 10),
+    strip.text = element_text(size = 11),
+    panel.spacing.x = unit(0.1, "lines"),
+    panel.spacing.y = unit(0.1, "lines"))
+
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S3b.png", 
+  plot = Fig_S3b,               
+  width = 5,                       # Width in inches
+  height = 7                        # Height in inches
+)
+```
+
+```{r Fig_S3}
+Fig_S3 <- ggarrange(Fig_S3a, Fig_S3b, ncol = 1, common.legend = TRUE, legend = "bottom", labels = c("A","B"))
+
+ggsave(
+  filename = "Plots/Supplemental_Figs/Fig_S3.png", 
+  plot = Fig_S3,               
+  width = 5,                       # Width in inches
+  height = 7                        # Height in inches
+)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+

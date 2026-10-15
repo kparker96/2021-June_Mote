@@ -23,7 +23,7 @@ else:
 	for InFileName in FileList:
 		InFile = open(InFileName, 'r') # open the infile
 		Contrast = InFileName[:-4]
-		Headerline = "Contrast,NumDEGsUp,NumDEGsDown,TotalNumDEGs"
+		Headerline = "Contrast\tNumDEGsUp\tNumDEGsDown\tTotalNumDEGs"
 		if FileNumber == 0:
 			CombinedOutFile.write(Headerline + '\n')
 		LineNumber = 0
