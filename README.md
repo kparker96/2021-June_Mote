@@ -1,8 +1,8 @@
-[DOI LINK]
+[10.1111/mec.70652]
 
 This repository includes data and analysis to accompany the manuscript:
 
-# High temporal resolution gene expression analysis reveals contrasting dynamics of thermal tolerance in *Porites astreoides* from the Florida Keys  
+# High temporal resolution gene expression analysis reveals contrasting dynamics of thermal tolerance in the coral *Porites astreoides* from the Florida Keys  
 
 **Authors:** Katherine E. Parker<sup>1</sup>, Nicolas S. Locatelli<sup>2</sup>, Trinity L. Conn<sup>2</sup>, Emma L. Vlcek<sup>1</sup>, Veronica Z. Radice<sup>1</sup>, Nicolas R. Evensen<sup>1</sup>, Iliana B. Baums<sup>2,3,4,5</sup>, Christian R. Voolstra<sup>6</sup>, Line K. Bay<sup>7</sup>, Jacob J. Valenzuela<sup>8</sup>, Wei-Ju Wu<sup>8</sup>, Serdar Turkurslan<sup>8</sup>, Nitin S. Baliga<sup>8,9,10,11</sup>, Daniel J. Barshis<sup>1</sup>
 
@@ -19,8 +19,8 @@ This repository includes data and analysis to accompany the manuscript:
 10.	Department of Microbiology University of Washington, Seattle, WA, USA
 11.	Department of Molecular Engineering and Sciences, University of Washington, Seattle, WA, USA
 
-**Journal:** [LINK]  
-**Link:** [LINK]  
+**Journal:** [Molecular Ecology](https://onlinelibrary.wiley.com/journal/1365294x)  
+**Link:** [Manuscript PDF](https://onlinelibrary.wiley.com/doi/epdf/10.1111/mec.70652)  
 ___  
 
 **Repository Contents:**

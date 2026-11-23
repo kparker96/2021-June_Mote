@@ -1,5 +1,5 @@
 ---
-title: "Fig S6: ITS2 Type Profiles"
+title: "Fig S7: ITS2 Type Profiles"
 output: html_document
 date: "2025-08-04"
 editor_options: 
@@ -16,7 +16,7 @@ library(vegan)
 ```
 
 # Relative Abundance
-```{r read raw data and Fig S6}
+```{r read raw data and Fig S7}
 raw_lines <- readLines("data/Sequencing/Porites_astreoides/ITS2/SymPortal_Output/its2_type_profiles/543_20250107T095410_DBV_20250109T202716.profiles.relative.abund_and_meta.txt")
 
 # Find where the actual abundance data starts
@@ -65,7 +65,7 @@ relabund <- read.delim(text = paste(data_lines, collapse = "\n"), header = FALSE
     
 
 # Plot Relative Abundance 
-Fig_S6 <- ggplot(relabund_long, aes(x = sample_name, 
+Fig_S7 <- ggplot(relabund_long, aes(x = sample_name, 
                                     y = relative_abundance,
                                     fill = ITS2_type_profile)) +
   geom_bar(stat = "identity") +
@@ -87,8 +87,8 @@ Fig_S6 <- ggplot(relabund_long, aes(x = sample_name,
   legend.direction = "vertical")
 
 ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S6.png", 
-  plot = Fig_S6,               # Specify the plot to save
+  filename = "Plots/Supplemental_Figs/Fig_S7.png", 
+  plot = Fig_S7,               # Specify the plot to save
   width = 5,                       # Width in inches
   height = 4                        # Height in inches
 )
@@ -181,7 +181,7 @@ ITS2_reads_ordered <- ITS2_reads_long %>%
                                    levels = rev(unique(ITS2_seq)))) %>%  # reverse order
   ungroup()
 
-Fig_S6_seqs <- ggplot(ITS2_reads_ordered, aes(x = sample_name, y = rel_abundance, fill = ITS2_seq_ordered)) +
+Fig_S7_seqs <- ggplot(ITS2_reads_ordered, aes(x = sample_name, y = rel_abundance, fill = ITS2_seq_ordered)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = my_colors) +
   scale_y_continuous(expand = c(0,0)) +
@@ -204,8 +204,8 @@ Fig_S6_seqs <- ggplot(ITS2_reads_ordered, aes(x = sample_name, y = rel_abundance
   guides(fill = guide_legend(ncol = 8))
 
 ggsave(
-  filename = "Plots/Supplemental_Figs/Fig_S6_seqs.png", 
-  plot = Fig_S6_seqs,               # Specify the plot to save
+  filename = "Plots/Supplemental_Figs/Fig_S7_seqs.png", 
+  plot = Fig_S7_seqs,               # Specify the plot to save
   width = 8,                       # Width in inches
   height = 6                        # Height in inches
 )
